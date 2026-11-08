@@ -26,14 +26,15 @@ React 19, TypeScript, Vinext, Cloudflare Worker/D1, Yjs, Pyodide и Fengari.
 ### Подключить GitHub и домен
 
 1. В Cloudflare добавь `code-together.ru` как активную зону. Если домен ещё не использует Cloudflare DNS, у регистратора укажи nameservers из панели Cloudflare. Перед подключением проверь записи домена: [Workers Custom Domain](https://developers.cloudflare.com/workers/configuration/routing/custom-domains/) не подключается поверх существующего CNAME на этом имени.
-2. Создай в Cloudflare D1 базу данных с именем `codetogether` и скопируй её ID. До подключения автодеплоя войди локально через `npx wrangler login`, собери приложение с этими значениями и примени миграции:
+2. Создай в Cloudflare D1 базу данных с именем `codetogether` и скопируй её ID. База должна быть в том же аккаунте и активной зоне Cloudflare; для ученических данных выбери регион ЕС. До подключения автодеплоя войди локально через `npx wrangler login`, собери приложение с этими значениями и примени миграции:
 
        CLOUDFLARE_D1_DATABASE_ID=<ID-базы> CLOUDFLARE_D1_DATABASE_NAME=codetogether CLOUDFLARE_CUSTOM_DOMAIN=code-together.ru npm run build
        npm run db:migrate:remote
+       npm run deploy:cloudflare
 
    [D1 migrations](https://developers.cloudflare.com/d1/reference/migrations/) создадут схему приложения и историю миграций в новой пустой базе. Повторно применять те же миграции вручную не нужно.
 
-3. В Workers & Pages подключи приватный GitHub-репозиторий `gwinell/codeTogether`, ветка `main`, корневой каталог `/`. Разреши Cloudflare GitHub App читать репозиторий. Имя Worker должно быть `codetogether`.
+3. В Workers & Pages подключи приватный GitHub-репозиторий `gwinell/codeTogether`, ветка `main`, корневой каталог `/`. Разреши Cloudflare GitHub App читать репозиторий. Имя Worker должно быть `codetogether`. Custom Domain `code-together.ru` сначала создаётся единственным ручным Wrangler deploy из шага 2.
 4. В настройках сборки укажи:
 
    - Build command: `npm run build`
@@ -41,9 +42,8 @@ React 19, TypeScript, Vinext, Cloudflare Worker/D1, Yjs, Pyodide и Fengari.
    - Node.js: 22 (`.nvmrc` уже закрепляет эту основную версию);
    - Build variable `CLOUDFLARE_D1_DATABASE_ID` — ID созданной D1 базы;
    - Build variable `CLOUDFLARE_D1_DATABASE_NAME` — `codetogether`;
-   - Build variable `CLOUDFLARE_CUSTOM_DOMAIN` — `code-together.ru`.
 
-   Эти значения нужны во время сборки, не добавляй в GitHub секреты. ID D1 не является паролем, но задавай его в панели Cloudflare, чтобы конфигурация Worker всегда ссылалась на нужную базу. При подключённой активной зоне Wrangler создаст Custom Domain `code-together.ru` при деплое.
+   Эти значения нужны во время сборки, не добавляй их в GitHub. Не добавляй `CLOUDFLARE_CUSTOM_DOMAIN` в настройки Workers Builds: домен уже связан с Worker и управляется в его разделе **Settings → Domains & Routes**. Тогда автоматический deploy сможет обновлять код без повторного изменения привязки домена и прав на зону. ID D1 не является паролем, но задавай его в панели Cloudflare, чтобы конфигурация Worker всегда ссылалась на нужную базу.
 
 5. До первого production deployment в настройках Worker открой **Settings → Variables and Secrets** и добавь серверные секреты из списка ниже. Затем запусти Cloudflare Build или выполни `npm run deploy:cloudflare` локально. Для локальной публикации сначала задай build variables и выполни `npm run build`.
 
