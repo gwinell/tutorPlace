@@ -1,9 +1,9 @@
 export type Role = 'student' | 'teacher';
 export type User = { id: string; name: string; role: Role; login?: string; age?: number; parent_name?: string; phone?: string; parent_phone?: string; balance: number };
-export type Lesson = { id: string; student_id?: string; name: string; start: string; end: string; type: string; status: string; meet_url?: string; topic?: string; cancelled_at?: string; charged?: number; homework?: string };
+export type Lesson = { id: string; student_id?: string; name: string; start: string; end: string; type: string; status: string; meet_url?: string; topic?: string; cancelled_at?: string; charged?: number; homework?: string; move_id?: string | null; move_start?: string | null };
 export type Topic = { id: string; title: string; description: string; content: string; format: string; colab_url?: string; locked?: boolean; position?: number };
 export type Assignment = { id: string; topic_id: string; lesson_id?: string; title: string; kind: string; prompt: string; options?: string | string[] };
-export type Submission = { id: string; assignment_id: string; student_id: string; content: string; result: string; created_at: string };
+export type Submission = { id: string; assignment_id: string; student_id: string; content: string; result: string; created_at: string; feedback?: string; feedback_at?: string };
 export type Room = { id: string; student_id: string; name: string; language: string; student_code: string; teacher_code: string; student_state?:string;teacher_state?:string; revision: number; last_active: number };
 export type Notice = { id: string; title: string; body: string; created_at: string; read?: number };
 export type Schedule = { days: number[]; from: string; to: string; timezone: string; meetUrl: string };
@@ -32,3 +32,34 @@ export function createSlots(date: string, minutes: number, schedule: Schedule, b
 }
 export const PYTHON_START = '# Твоя первая программа\nname = input("Как тебя зовут? ")\nprint(f"Привет, {name}! Давай программировать вместе.")\n';
 export const TEACHER_START = '# Разберём решение вместе\ndef greet(name):\n    return f"Привет, {name}!"\n\nprint(greet("мир"))\n';
+
+// ── Добавление урока в календарь ученика ──
+const calDate = (iso: string) => new Date(iso).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+export const lessonTitle = (l: Lesson) => (l.type === 'trial' ? 'Пробный урок' : 'Урок Python') + ' · codeTogether';
+const lessonDetails = (l: Lesson) => [l.topic || '', l.meet_url ? 'Ссылка на созвон: ' + l.meet_url : ''].filter(Boolean).join('\n');
+export function googleCalendarUrl(l: Lesson): string {
+  return 'https://calendar.google.com/calendar/render?action=TEMPLATE&' + new URLSearchParams({ text: lessonTitle(l), dates: calDate(l.start) + '/' + calDate(l.end), details: lessonDetails(l), ...(l.meet_url ? { location: l.meet_url } : {}) });
+}
+export function lessonIcs(l: Lesson): string {
+  const esc = (s: string) => s.replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\n/g, '\\n');
+  return ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//codeTogether//lessons//RU', 'BEGIN:VEVENT', 'UID:' + l.id + '@codetogether', 'DTSTAMP:' + calDate(new Date().toISOString()), 'DTSTART:' + calDate(l.start), 'DTEND:' + calDate(l.end), 'SUMMARY:' + esc(lessonTitle(l)), 'DESCRIPTION:' + esc(lessonDetails(l)), ...(l.meet_url ? ['LOCATION:' + esc(l.meet_url)] : []), 'END:VEVENT', 'END:VCALENDAR'].join('\r\n');
+}
+// Вызывать только в браузере.
+export function downloadIcs(l: Lesson) {
+  const url = URL.createObjectURL(new Blob([lessonIcs(l)], { type: 'text/calendar;charset=utf-8' }));
+  const a = document.createElement('a'); a.href = url; a.download = 'urok-' + l.start.slice(0, 10) + '.ics'; a.click(); URL.revokeObjectURL(url);
+}
+
+// ── Прогресс ученика по курсу ──
+export function latestSubmissions(submissions: Submission[], studentId: string) {
+  const map = new Map<string, Submission>();
+  for (const s of submissions) { if (s.student_id !== studentId) continue; const prev = map.get(s.assignment_id); if (!prev || s.created_at > prev.created_at) map.set(s.assignment_id, s); }
+  return map;
+}
+export function topicProgress(topics: Topic[], assignments: Assignment[], submissions: Submission[], studentId: string) {
+  const latest = latestSubmissions(submissions, studentId);
+  const passedCount = (a: Assignment) => { const s = latest.get(a.id); if (!s) return 0; try { return JSON.parse(s.result).status === 'passed' ? 1 : 0; } catch { return 0; } };
+  const per = topics.map(t => { const tasks = assignments.filter(a => a.topic_id === t.id); return { topic: t, total: tasks.length, passed: tasks.reduce((n, a) => n + passedCount(a), 0) }; });
+  const total = per.reduce((n, p) => n + p.total, 0), passed = per.reduce((n, p) => n + p.passed, 0);
+  return { per, total, passed, percent: total ? Math.round((passed / total) * 100) : 0 };
+}

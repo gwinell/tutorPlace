@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, uniqueIndex } from 'drizzle-orm/sqlite-core';
+import { sqliteTable, text, integer, index, uniqueIndex } from 'drizzle-orm/sqlite-core';
 
 export const users = sqliteTable('users', {
   id: text('id').primaryKey(), login: text('login').notNull().unique(), password: text('password').notNull(),
@@ -11,6 +11,13 @@ export const lessons = sqliteTable('lessons', {
   id: text('id').primaryKey(), studentId: text('student_id'), name: text('name').notNull(), phone: text('phone'),
   start: text('start').notNull(), end: text('end').notNull(), type: text('type').notNull(), status: text('status').notNull(),
   eventId: text('event_id'), meetUrl: text('meet_url'), topic: text('topic'), cancelledAt: text('cancelled_at'), charged: integer('charged').default(0),
+  trialPhone: text('trial_phone'),
+  moveId: text('move_id'), moveStart: text('move_start'), moveEnd: text('move_end'),
+}, t => [index('lessons_trial_phone_idx').on(t.trialPhone)]);
+export const trialBookingLimits = sqliteTable('trial_booking_limits', {
+  client: text('client').primaryKey(),
+  windowStart: integer('window_start').notNull(),
+  attempts: integer('attempts').notNull(),
 });
 export const slotLocks = sqliteTable('slot_locks', { slot: text('slot').primaryKey(), lessonId: text('lesson_id').notNull() });
 export const topics = sqliteTable('topics', {
@@ -25,6 +32,7 @@ export const assignments = sqliteTable('assignments', {
 export const submissions = sqliteTable('submissions', {
   id: text('id').primaryKey(), assignmentId: text('assignment_id').notNull(), studentId: text('student_id').notNull(),
   content: text('content').notNull(), result: text('result').notNull(), createdAt: text('created_at').notNull(),
+  feedback: text('feedback'), feedbackAt: text('feedback_at'),
 });
 export const rooms = sqliteTable('rooms', {
   id: text('id').primaryKey(), studentId: text('student_id').notNull(), name: text('name').notNull(), language: text('language').notNull(),

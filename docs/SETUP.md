@@ -13,6 +13,8 @@ React 19, TypeScript, Vinext, Cloudflare Worker/D1, Yjs, Pyodide и Fengari.
 
     node --import ./scripts/sites-env.mjs node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0000_simple_sleepwalker.sql
     node --import ./scripts/sites-env.mjs node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0001_outgoing_quentin_quire.sql
+    node --import ./scripts/sites-env.mjs node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0002_yummy_lockheed.sql
+    node --import ./scripts/sites-env.mjs node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0003_booking_recovery.sql
     npm run dev -- --port 5173
 
 Адрес: http://127.0.0.1:5173/. Облачная база отдельная; Sites применяет миграции при публикации.
@@ -44,7 +46,9 @@ React 19, TypeScript, Vinext, Cloudflare Worker/D1, Yjs, Pyodide и Fengari.
 
 Бронирование проверяет рабочие часы, Google freeBusy и внутренние записи; атомарно резервирует в D1 все 5-минутные участки урока; создаёт событие Google с детерминированным ID, затем подтверждает запись. При однозначной ошибке резерв снимается. При неопределённом результате внешнего запроса время удерживается до проверки репетитором, чтобы не допустить двойную запись.
 
-Перенос проверяет исходный урок (минимум 2 часа до начала), исключает его событие при проверке нового окна, резервирует новое время и обновляет Google. Отмена удаляет событие и освобождает окно.
+Пробная запись приводит телефон к единому формату и проверяет дубли при резервировании слота. На один IP допускается до трёх попыток с корректно заполненными полями за час.
+
+Перенос проверяет исходный урок (минимум 2 часа до начала), исключает его событие при проверке нового окна и резервирует новое время. После тайм-аута сервер сверяет событие по ID. Если сверка недоступна, оба окна остаются зарезервированными и в расписании появляется кнопка «Проверить перенос». Отмена удаляет событие и освобождает окно.
 
 Первые 3 отмены оплаченных уроков за календарный месяц Москвы не списываются, четвёртая и следующие списывают занятие. Пробные уроки не входят в счётчик. Перед подтверждением видно списание, сервер проверяет условие повторно. Параллельные отмены одного ученика сериализуются.
 

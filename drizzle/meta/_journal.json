@@ -15,6 +15,20 @@
       "when": 1793995448266,
       "tag": "0001_outgoing_quentin_quire",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1794089190253,
+      "tag": "0002_yummy_lockheed",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1794089197235,
+      "tag": "0003_booking_recovery",
+      "breakpoints": true
     }
   ]
 }
