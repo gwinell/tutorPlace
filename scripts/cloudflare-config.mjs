@@ -12,8 +12,13 @@ export function readCloudflareConfig() {
 
   const config = JSON.parse(readFileSync(outputConfigPath, "utf8"));
   const database = config.d1_databases?.find((binding) => binding.binding === "DB");
+  const isPlaceholderId = database?.database_id === "00000000-0000-4000-8000-000000000000";
 
-  if (!database || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(database.database_id)) {
+  if (
+    !database ||
+    isPlaceholderId ||
+    !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(database.database_id)
+  ) {
     throw new Error(
       "В сборке нет реального ID D1. Задай CLOUDFLARE_D1_DATABASE_ID при сборке и повтори npm run build.",
     );
