@@ -17,7 +17,47 @@ React 19, TypeScript, Vinext, Cloudflare Worker/D1, Yjs, Pyodide и Fengari.
     node --import ./scripts/sites-env.mjs node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0003_booking_recovery.sql
     npm run dev -- --port 5173
 
-Адрес: http://127.0.0.1:5173/. Облачная база отдельная; Sites применяет миграции при публикации.
+Адрес: http://127.0.0.1:5173/. Локальная D1 хранится отдельно от production-базы.
+
+## Публикация в Cloudflare
+
+Приложение публикуется как **Cloudflare Worker**. Ему нужны серверные API и D1, поэтому Cloudflare Pages для статических файлов не подходит. Репозиторий подготовлен к [Cloudflare Workers Builds](https://developers.cloudflare.com/workers/ci-cd/builds/) с GitHub.
+
+### Подключить GitHub и домен
+
+1. В Cloudflare добавь `code-together.ru` как активную зону. Если домен ещё не использует Cloudflare DNS, у регистратора укажи nameservers из панели Cloudflare. Перед подключением проверь записи домена: [Workers Custom Domain](https://developers.cloudflare.com/workers/configuration/routing/custom-domains/) не подключается поверх существующего CNAME на этом имени.
+2. Создай в Cloudflare D1 базу данных с именем `codetogether` и скопируй её ID. До подключения автодеплоя войди локально через `npx wrangler login`, собери приложение с этими значениями и примени миграции:
+
+       CLOUDFLARE_D1_DATABASE_ID=<ID-базы> CLOUDFLARE_D1_DATABASE_NAME=codetogether CLOUDFLARE_CUSTOM_DOMAIN=code-together.ru npm run build
+       npm run db:migrate:remote
+
+   [D1 migrations](https://developers.cloudflare.com/d1/reference/migrations/) создадут схему приложения и историю миграций в новой пустой базе. Повторно применять те же миграции вручную не нужно.
+
+3. В Workers & Pages подключи приватный GitHub-репозиторий `gwinell/codeTogether`, ветка `main`, корневой каталог `/`. Разреши Cloudflare GitHub App читать репозиторий. Имя Worker должно быть `codetogether`.
+4. В настройках сборки укажи:
+
+   - Build command: `npm run build`
+   - Deploy command: `npm run deploy:cloudflare`
+   - Node.js: 22 (`.nvmrc` уже закрепляет эту основную версию);
+   - Build variable `CLOUDFLARE_D1_DATABASE_ID` — ID созданной D1 базы;
+   - Build variable `CLOUDFLARE_D1_DATABASE_NAME` — `codetogether`;
+   - Build variable `CLOUDFLARE_CUSTOM_DOMAIN` — `code-together.ru`.
+
+   Эти значения нужны во время сборки, не добавляй в GitHub секреты. ID D1 не является паролем, но задавай его в панели Cloudflare, чтобы конфигурация Worker всегда ссылалась на нужную базу. При подключённой активной зоне Wrangler создаст Custom Domain `code-together.ru` при деплое.
+
+5. До первого production deployment в настройках Worker открой **Settings → Variables and Secrets** и добавь серверные секреты из списка ниже. Затем запусти Cloudflare Build или выполни `npm run deploy:cloudflare` локально. Для локальной публикации сначала задай build variables и выполни `npm run build`.
+
+Для публикации из GitHub Cloudflare Builds использует тот же Wrangler, что закреплён в `package.json`. Не включай Preview deployments с production D1. Для previews создай отдельную D1 базу и задай preview build variables отдельно.
+
+### Секреты Worker
+
+Добавь значения как **Secrets**, не как build variables и не в GitHub:
+
+- `ADMIN_LOGIN` и `ADMIN_PASSWORD` — для первого входа репетитора; после первого успешного входа `ADMIN_PASSWORD` можно удалить;
+- `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REFRESH_TOKEN`, `GOOGLE_CALENDAR_ID` — для пробной записи и синхронизации уроков;
+- `JUDGE0_URL`, `JUDGE0_TOKEN`, `JUDGE0_PYTHON_LANGUAGE_ID` — если включаешь автопроверку кода.
+
+Значения для локальной разработки можно скопировать из `.dev.vars.example` в `.dev.vars`. Настоящие `.dev.vars` и `.env` уже исключены из Git.
 
 Демонстрации: /?demo=student и /?demo=teacher. Примеры явно помечены, сохраняются только в браузере, не создают настоящие аккаунты или события календаря. Две роли в двух вкладках одного браузера могут проверить общий код. Кнопка «Сбросить» восстанавливает примеры.
 
@@ -25,7 +65,7 @@ React 19, TypeScript, Vinext, Cloudflare Worker/D1, Yjs, Pyodide и Fengari.
 
 В исходниках нет встроенного пароля администратора. Задать серверные секреты ADMIN_LOGIN и ADMIN_PASSWORD (длинный уникальный пароль). При первом успешном входе создаётся репетитор. Далее проверяется хеш в базе; после этого ADMIN_PASSWORD можно удалить из окружения.
 
-Локальные секреты — в неотслеживаемом файле .dev.vars; после изменения перезапустить сервер. Облачные — через защищённые environment variables Sites. Не добавлять значения в исходники или .openai/hosting.json.
+Локальные секреты — в неотслеживаемом файле .dev.vars; после изменения перезапустить сервер. Секреты Cloudflare Worker добавляются через Settings → Variables and Secrets. Не добавлять значения в исходники, build variables, GitHub или .openai/hosting.json.
 
 Аккаунты учеников создаёт репетитор: обязательны имя, возраст и имя родителя; контакты необязательны. Пароли хешируются PBKDF2-SHA256 с солью. Сессии серверные, HttpOnly, SameSite=Strict; проверка роли и Origin на сервере, ограничение попыток входа. Изменение пароля отзывает сессии ученика.
 
@@ -99,6 +139,6 @@ Markdown не исполняет HTML. Jupyter показывает Markdown, к
 
 ## Перед открытием для учеников
 
-Настроить секреты администратора, Google OAuth, рабочие часы и runner, добавить реальные материалы и учётные записи. Новая публикация Sites приватная, доступна владельцу. Публичный доступ и домен отдельно меняются по вашему решению.
+Перед приглашением учеников настрой секреты Worker, Google OAuth, рабочие часы, домен, реальные материалы и учётные записи. Не запускай production deploy до создания D1, применения миграций и проверки переменных окружения.
 
 Локальную сборку Fengari можно воспроизвести командой node scripts/build-lua.mjs. Автоматическая проверка реального Lua worker, включая ввод, — tests/runtime.test.mjs.
