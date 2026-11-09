@@ -94,8 +94,8 @@ export default function CodeRoom({ initial, demo, user, notify, onExit, onDemoUp
        const data = await api<{ room: Room }>(endpoint, 'POST', {}, signal);
        if (mounted.current) merge(data.room);
      } else {
-       const data = await api<{ room: Room }>(endpoint, 'GET', undefined, signal);
-       if (mounted.current) merge(data.room);
+       const data = await api<{ room: Room } | null>(endpoint, 'GET', undefined, signal, { 'If-None-Match': `W/"${current.current.revision}"` });
+       if (mounted.current && data?.room) merge(data.room);
      }
      return true;
    } catch (error) {
