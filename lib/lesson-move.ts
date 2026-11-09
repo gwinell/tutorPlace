@@ -1,4 +1,4 @@
-import { calendar, db, eventPath, HttpError, requireValue, slotKeys } from './server';
+import { calendar, db, eventPath, HttpError, requireValue, slotKeys, type ServerEnv } from './server';
 
 type Interval = { start: string; end: string };
 type Move = { lessonId: string; eventId: string; operationId: string; original: Interval; target: Interval };
@@ -29,7 +29,7 @@ export async function reserveLessonMove(move: Move) {
   requireValue(result.meta.changes, 'Урок уже изменён. Обнови расписание.', 409);
 }
 
-export async function confirmLessonMove(move: Move, environment?: Record<string, any>) {
+export async function confirmLessonMove(move: Move, environment?: ServerEnv) {
   const path = eventPath(move.eventId, environment);
   const pendingMessage = 'Перенос ожидает подтверждения календаря. Оба окна удерживаются. Повтори проверку в расписании.';
   let event: CalendarEvent;

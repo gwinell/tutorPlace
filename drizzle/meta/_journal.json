@@ -64,6 +64,13 @@
       "when": 1794231397795,
       "tag": "0008_elite_doomsday",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1794233452201,
+      "tag": "0009_magenta_millenium_guard",
+      "breakpoints": true
     }
   ]
 }

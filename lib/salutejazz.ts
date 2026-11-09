@@ -140,13 +140,23 @@ export async function createSaluteJazzRoom(roomTitle: string, environment: Envir
 }
 
 export async function disableSaluteJazzRoom(roomId: string, environment: Environment, timeoutMs = 10000): Promise<void> {
-  const token = await accessToken(environment);
-  const response = await fetch(`${API}/room/${encodeURIComponent(roomId)}/disable`, {
-    method: 'POST',
-    headers: { Accept: 'application/json', Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-    body: '{}',
-    signal: AbortSignal.timeout(timeoutMs),
-  });
-  if (response.status === 204 || response.status === 404 || response.status === 410) return;
-  if (!response.ok) throw new Error(`SaluteJazz room shutdown failed (${response.status}).`);
+  let lastError: unknown;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const token = await accessToken(environment);
+      const response = await fetch(`${API}/room/${encodeURIComponent(roomId)}/disable`, {
+        method: 'POST',
+        headers: { Accept: 'application/json', Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: '{}',
+        signal: AbortSignal.timeout(timeoutMs),
+      });
+      if (response.status === 204 || response.status === 404 || response.status === 410) return;
+      if (!response.ok) throw new Error(`SaluteJazz room shutdown failed (${response.status}).`);
+      return;
+    } catch (error) {
+      lastError = error;
+      if (attempt === 0) await new Promise(resolve => setTimeout(resolve, 300));
+    }
+  }
+  throw lastError;
 }

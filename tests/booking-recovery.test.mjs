@@ -105,6 +105,8 @@ function setup(beforeRecovery = () => {}) {
 
   const modules = {
     'cloudflare:workers': { env },
+    '@/lib/runtime-env': { getRuntimeEnvironment: () => env },
+    '@/lib/sqlite-db': { getSqliteDatabase: () => { throw new Error('SQLite fallback is not used by booking fixtures'); } },
     '@/lib/salutejazz': {
       saluteJazzConfigured: () => false,
       createSaluteJazzRoom: async () => { throw new Error('SaluteJazz is disabled in booking tests'); },

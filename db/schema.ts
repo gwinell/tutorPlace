@@ -21,6 +21,7 @@ export const lessons = sqliteTable('lessons', {
   index('lessons_start_idx').on(t.start),
   index('lessons_jazz_room_idx').on(t.jazzRoomId),
   index('lessons_cancellation_month_idx').on(t.studentId, t.cancelledAt),
+  index('lessons_status_operation_started_at_idx').on(t.status, t.operationStartedAt),
 ]);
 export const trialBookingLimits = sqliteTable('trial_booking_limits', {
   client: text('client').primaryKey(),
@@ -54,7 +55,7 @@ export const rooms = sqliteTable('rooms', {
   studentCode: text('student_code').notNull(), teacherCode: text('teacher_code').notNull(), revision: integer('revision').default(0).notNull(),
   studentState: text('student_state'), teacherState: text('teacher_state'),
   lastActive: integer('last_active').notNull(),
-});
+}, t => [index('rooms_last_active_idx').on(t.lastActive)]);
 export const notifications = sqliteTable('notifications', {
   id: text('id').primaryKey(), studentId: text('student_id').notNull(), title: text('title').notNull(), body: text('body').notNull(),
   createdAt: text('created_at').notNull(), read: integer('read').default(0),

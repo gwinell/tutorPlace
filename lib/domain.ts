@@ -22,9 +22,20 @@ export type Schedule = {
 export const DEFAULT_SCHEDULE: Schedule = { days: [], from: '14:00', to: '20:00', timezone: 'Europe/Moscow', meetUrl: '' };
 export const DEFAULT_TIME_ZONE = 'Europe/Moscow';
 export const PRICES = [{count:1,total:1000,each:1000},{count:4,total:3800,each:950},{count:8,total:7200,each:900},{count:12,total:10200,each:850}];
-export const dateLabel = (value: string, options?: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat('ru-RU', { timeZone:'Europe/Moscow', ...options }).format(new Date(value));
-export const monthKey = (value: string | number | Date) => new Intl.DateTimeFormat('en-CA', { timeZone:'Europe/Moscow', year:'numeric',month:'2-digit' }).format(new Date(value));
+const dateLabelFormatters = new Map<string, Intl.DateTimeFormat>();
+export const dateLabel = (value: string | number | Date, options?: Intl.DateTimeFormatOptions) => {
+  const key = JSON.stringify(options ?? {});
+  let formatter = dateLabelFormatters.get(key);
+  if (!formatter) {
+    formatter = new Intl.DateTimeFormat('ru-RU', { timeZone:'Europe/Moscow', ...options });
+    dateLabelFormatters.set(key, formatter);
+  }
+  return formatter.format(new Date(value));
+};
+const monthKeyFormatter = new Intl.DateTimeFormat('en-CA', { timeZone:'Europe/Moscow', year:'numeric',month:'2-digit' });
+export const monthKey = (value: string | number | Date) => monthKeyFormatter.format(new Date(value));
 export function monthBounds(value: string | number | Date) {
+  // Cancellation months are always measured in Moscow time, independent of the server timezone.
   const parts = new Intl.DateTimeFormat('en-US', { timeZone: DEFAULT_TIME_ZONE, year: 'numeric', month: '2-digit' }).formatToParts(new Date(value));
   const year = Number(parts.find(part => part.type === 'year')?.value);
   const month = Number(parts.find(part => part.type === 'month')?.value);

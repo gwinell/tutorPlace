@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {documentFrom,encode,decode,replaceText,Y} from '../lib/collaboration.ts';
+import {documentFrom,encode,replaceText,Y} from '../lib/collaboration.ts';
 test('Одновременные правки двух участников объединяются без потери вставок',()=>{
  const a=documentFrom(undefined,'hello\n'),b=documentFrom(undefined,'hello\n');
  replaceText(a,'hello student\n');replaceText(b,'teacher hello\n');
