@@ -1,5 +1,5 @@
 import {env} from 'cloudflare:workers';
-import {User,Schedule,AvailabilityWindow,DEFAULT_SCHEDULE,createSlots} from './domain';
+import {User,Schedule,AvailabilityWindow,DEFAULT_SCHEDULE,createSlots,dateTimeInTimeZone} from './domain';
 export const secrets=env as unknown as Record<string,string>;
 export const db=(environment:Record<string,any>=env as unknown as Record<string,any>)=>{if(!environment.DB)throw new HttpError('Хранилище ещё не подключено.',503);return environment.DB as D1Database;};
 export class HttpError extends Error{constructor(message:string,public status=400){super(message);}}
@@ -30,7 +30,9 @@ export function normalizeSchedule(value:unknown):Schedule{
    :{};
  const days=Object.keys(weeklyAvailability).map(Number).filter(day=>weeklyAvailability[day]?.length);
  const firstRange=days.flatMap(day=>weeklyAvailability[day])[0];
- return {...DEFAULT_SCHEDULE,...raw,timezone:'Europe/Moscow',days,from:firstRange?.from||raw.from||DEFAULT_SCHEDULE.from,to:firstRange?.to||raw.to||DEFAULT_SCHEDULE.to,weeklyAvailability,dateOverrides,availabilityCalendarIds:Array.isArray(raw.availabilityCalendarIds)?[...new Set(raw.availabilityCalendarIds.filter((id:any)=>typeof id==='string'))].slice(0,10):[]};
+ let timezone=typeof raw.timezone==='string'?raw.timezone:DEFAULT_SCHEDULE.timezone;
+ try{new Intl.DateTimeFormat('en',{timeZone:timezone});}catch{timezone=DEFAULT_SCHEDULE.timezone;}
+ return {...DEFAULT_SCHEDULE,...raw,timezone,days,from:firstRange?.from||raw.from||DEFAULT_SCHEDULE.from,to:firstRange?.to||raw.to||DEFAULT_SCHEDULE.to,weeklyAvailability,dateOverrides,availabilityCalendarIds:Array.isArray(raw.availabilityCalendarIds)?[...new Set(raw.availabilityCalendarIds.filter((id:any)=>typeof id==='string'))].slice(0,10):[]};
 }
 export async function schedule():Promise<Schedule>{const row=await db().prepare("SELECT value FROM settings WHERE key='schedule'").first<{value:string}>();return row?normalizeSchedule(JSON.parse(row.value)):DEFAULT_SCHEDULE;}
 export function calendarConfigured(environment:Record<string,any>=secrets){return !!(environment.GOOGLE_CLIENT_ID&&environment.GOOGLE_CLIENT_SECRET&&environment.GOOGLE_REFRESH_TOKEN&&environment.GOOGLE_CALENDAR_ID);}
@@ -38,7 +40,7 @@ let cachedToken:{value:string;expires:number}|null=null;
 async function calendarToken(environment:Record<string,any>=secrets){if(!calendarConfigured(environment))throw new HttpError('Google Календарь пока не подключён. Запись ещё не открыта.',503);if(cachedToken&&cachedToken.expires>Date.now())return cachedToken.value;const res=await fetch('https://oauth2.googleapis.com/token',{method:'POST',body:new URLSearchParams({client_id:environment.GOOGLE_CLIENT_ID,client_secret:environment.GOOGLE_CLIENT_SECRET,refresh_token:environment.GOOGLE_REFRESH_TOKEN,grant_type:'refresh_token'}),signal:AbortSignal.timeout(12000)});if(!res.ok)throw new HttpError('Не удалось связаться с Google Календарём. Попробуй позже.',503);const d=await res.json() as any;cachedToken={value:d.access_token,expires:Date.now()+Math.max(1,d.expires_in-60)*1000};return d.access_token;}
 export async function calendar(path:string,method='GET',body?:unknown,headers:Record<string,string>={},environment:Record<string,any>=secrets){const token=await calendarToken(environment);const response=await fetch('https://www.googleapis.com/calendar/v3/'+path,{method,headers:{Authorization:'Bearer '+token,'Content-Type':'application/json',...headers},...(body?{body:JSON.stringify(body)}:{}),signal:AbortSignal.timeout(12000)});if(method==='DELETE'&&(response.ok||response.status===404||response.status===410))return {};if(method==='GET'&&(response.status===404||response.status===410))return null;if(!response.ok)throw new HttpError('Календарь не подтвердил изменение. Запись не изменена. Попробуй ещё раз.',503);return response.status===204?{}:await response.json() as any;}
 export const eventPath=(eventId?:string,environment:Record<string,any>=secrets)=>'calendars/'+encodeURIComponent(environment.GOOGLE_CALENDAR_ID||'primary')+'/events'+(eventId?'/'+eventId:'');
-export async function slots(date:string,minutes:number,exclude?:string){requireValue(/^\d{4}-\d{2}-\d{2}$/.test(date),'Некорректная дата.');const s=await schedule();if(!calendarConfigured())return {configured:false,slots:[]};const min=new Date(date+'T00:00:00+03:00').toISOString(),max=new Date(new Date(min).getTime()+86400000).toISOString();const reservations=await db().prepare(
+export async function slots(date:string,minutes:number,exclude?:string){requireValue(/^\d{4}-\d{2}-\d{2}$/.test(date),'Некорректная дата.');const s=await schedule();if(!calendarConfigured())return {configured:false,slots:[]};let min:string,max:string;try{min=new Date(dateTimeInTimeZone(date,'00:00',s.timezone)).toISOString();max=new Date(dateTimeInTimeZone(new Date(Date.parse(date+'T12:00:00Z')+86400000).toISOString().slice(0,10),'00:00',s.timezone)).toISOString();}catch{throw new HttpError('Не удалось обработать дату в часовом поясе расписания.');}const reservations=await db().prepare(
     "SELECT start,end FROM lessons WHERE status IN ('scheduled','pending','updating') AND start<? AND end>? AND id!=? " +
     "UNION ALL SELECT move_start,move_end FROM lessons WHERE status='updating' AND move_start<? AND move_end>? AND id!=?"
   ).bind(max,min,exclude||'',max,min,exclude||'').all<{start:string;end:string}>();const busy=reservations.results.map(l=>({start:l.start,end:l.end}));const ignored=exclude?await db().prepare('SELECT event_id FROM lessons WHERE id=?').bind(exclude).first<{event_id:string}>():null;
@@ -46,15 +48,15 @@ export async function slots(date:string,minutes:number,exclude?:string){requireV
  const availabilityCalendarIds=[...new Set([targetCalendarId,...(s.availabilityCalendarIds||[])])];
  const appendFreeBusy=async(ids:string[])=>{
    if(!ids.length)return;
-   const response=await calendar('freeBusy','POST',{timeMin:min,timeMax:max,timeZone:'Europe/Moscow',items:ids.map(id=>({id}))});
-   for(const calendarId of ids){const item=response.calendars?.[calendarId];if(!item||item.errors?.length)throw new HttpError('Не удалось проверить занятость одного из выбранных Google Календарей.',503);busy.push(...item.busy.map((b:any)=>({start:new Date(b.start).toISOString(),end:new Date(b.end).toISOString()})));}
+   const response=await calendar('freeBusy','POST',{timeMin:min,timeMax:max,timeZone:s.timezone,items:ids.map(id=>({id}))});
+   for(const calendarId of ids){const item=response.calendars?.[calendarId];if(!item||item.errors?.length){console.warn('Skipping unavailable availability calendar:',calendarId,item?.errors||'No calendar response');continue;}busy.push(...item.busy.map((b:any)=>({start:new Date(b.start).toISOString(),end:new Date(b.end).toISOString()})));}
  };
  if(ignored?.event_id){
    await appendFreeBusy(availabilityCalendarIds.filter(calendarId=>calendarId!==targetCalendarId));
-   let page='';do{const r=await calendar(eventPath()+'?'+new URLSearchParams({timeMin:min,timeMax:max,singleEvents:'true',maxResults:'2500',...(page?{pageToken:page}:{})}));for(const e of r.items||[]){if(e.id===ignored.event_id||e.status==='cancelled'||e.transparency==='transparent')continue;const start=e.start?.dateTime||(e.start?.date+'T00:00:00+03:00'),end=e.end?.dateTime||(e.end?.date+'T00:00:00+03:00');busy.push({start:new Date(start).toISOString(),end:new Date(end).toISOString()});}page=r.nextPageToken||'';}while(page);
+   let page='';do{const r=await calendar(eventPath()+'?'+new URLSearchParams({timeMin:min,timeMax:max,singleEvents:'true',maxResults:'2500',...(page?{pageToken:page}:{})}));for(const e of r.items||[]){if(e.id===ignored.event_id||e.status==='cancelled'||e.transparency==='transparent')continue;const start=e.start?.dateTime||(e.start?.date?new Date(dateTimeInTimeZone(e.start.date,'00:00',s.timezone)).toISOString():''),end=e.end?.dateTime||(e.end?.date?new Date(dateTimeInTimeZone(e.end.date,'00:00',s.timezone)).toISOString():'');if(start&&end)busy.push({start:new Date(start).toISOString(),end:new Date(end).toISOString()});}page=r.nextPageToken||'';}while(page);
  }else await appendFreeBusy(availabilityCalendarIds);
  return {configured:true,slots:createSlots(date,minutes,s,busy)};
 }
 export function slotKeys(start:string,end:string){const keys=[];for(let t=new Date(start).getTime();t<new Date(end).getTime();t+=5*60000)keys.push(String(Math.floor(t/300000)));return keys;}
 export function httpsUrl(value:unknown){if(!value)return '';try{const u=new URL(String(value));if(u.protocol==='https:')return u.href;}catch{}throw new HttpError('Нужна корректная ссылка, начинающаяся с https://.');}
-export async function cleanup(environment:Record<string,any>=secrets){const database=db(environment);await database.batch([database.prepare('DELETE FROM rooms WHERE last_active<?').bind(Date.now()-1800000),database.prepare('DELETE FROM sessions WHERE expires_at<?').bind(Date.now())]);}
+export async function cleanup(environment:Record<string,any>=secrets){const database=db(environment);await database.batch([database.prepare('DELETE FROM rooms WHERE last_active<?').bind(Date.now()-1800000),database.prepare('DELETE FROM sessions WHERE expires_at<?').bind(Date.now()),database.prepare("DELETE FROM settings WHERE key GLOB 'login:*:[0-9]*' AND CAST(substr(key,-10) AS INTEGER)<?").bind(Math.floor(Date.now()/60000)-2)]);}

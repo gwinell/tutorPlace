@@ -1,6 +1,6 @@
 export type Role = 'student' | 'teacher';
 export type User = { id: string; name: string; role: Role; login?: string; age?: number; parent_name?: string; phone?: string; parent_phone?: string; balance: number };
-export type Lesson = { id: string; student_id?: string; name: string; start: string; end: string; type: string; status: string; meet_url?: string; jazz_room_id?: string | null; topic?: string; cancelled_at?: string; charged?: number; homework?: string; move_id?: string | null; move_start?: string | null; operation_started_at?: string | null; privacy_consent_at?: string | null; privacy_policy_version?: string | null };
+export type Lesson = { id: string; student_id?: string; name: string; start: string; end: string; type: string; status: string; meet_url?: string; jazz_room_id?: string | null; jazz_room_needs_recreation?: number; topic?: string; cancelled_at?: string; cancelled_by?: Role | null; charged?: number; homework?: string; move_id?: string | null; move_start?: string | null; operation_started_at?: string | null; privacy_consent_at?: string | null; privacy_policy_version?: string | null };
 export type Course = { id: string; title: string; description?: string; position: number };
 export type CourseEnrollment = { course_id: string; student_id: string };
 export type Topic = { id: string; course_id: string; title: string; description: string; content: string; format: string; colab_url?: string; locked?: boolean | number; position?: number };
@@ -20,18 +20,61 @@ export type Schedule = {
   availabilityCalendarIds?: string[];
 };
 export const DEFAULT_SCHEDULE: Schedule = { days: [], from: '14:00', to: '20:00', timezone: 'Europe/Moscow', meetUrl: '' };
+export const DEFAULT_TIME_ZONE = 'Europe/Moscow';
 export const PRICES = [{count:1,total:1000,each:1000},{count:4,total:3800,each:950},{count:8,total:7200,each:900},{count:12,total:10200,each:850}];
 export const dateLabel = (value: string, options?: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat('ru-RU', { timeZone:'Europe/Moscow', ...options }).format(new Date(value));
 export const monthKey = (value: string | number | Date) => new Intl.DateTimeFormat('en-CA', { timeZone:'Europe/Moscow', year:'numeric',month:'2-digit' }).format(new Date(value));
+export function monthBounds(value: string | number | Date) {
+  const parts = new Intl.DateTimeFormat('en-US', { timeZone: DEFAULT_TIME_ZONE, year: 'numeric', month: '2-digit' }).formatToParts(new Date(value));
+  const year = Number(parts.find(part => part.type === 'year')?.value);
+  const month = Number(parts.find(part => part.type === 'month')?.value);
+  const start = new Date(Date.UTC(year, month - 1, 1) - 3 * 60 * 60 * 1000);
+  const end = new Date(Date.UTC(year, month, 1) - 3 * 60 * 60 * 1000);
+  return { start: start.toISOString(), end: end.toISOString() };
+}
+export function dateKeyInTimeZone(value: Date, timeZone = DEFAULT_TIME_ZONE) {
+  const parts = new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(value);
+  return `${parts.find(part => part.type === 'year')?.value}-${parts.find(part => part.type === 'month')?.value}-${parts.find(part => part.type === 'day')?.value}`;
+}
+export function addDaysToDateKey(value: string, days: number) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) throw new Error('Некорректная календарная дата.');
+  const [year, month, day] = value.split('-').map(Number);
+  return new Date(Date.UTC(year, month - 1, day + days)).toISOString().slice(0, 10);
+}
+export function resultStatus(submission: Pick<Submission, 'result'> | string | null | undefined): string {
+  if (!submission) return 'unknown';
+  try {
+    const parsed = JSON.parse(typeof submission === 'string' ? submission : submission.result) as { status?: unknown };
+    return typeof parsed?.status === 'string' ? parsed.status : 'unknown';
+  } catch { return 'unknown'; }
+}
 export function cancellationPolicy(lessons: Lesson[], now = new Date()) {
-  const count = lessons.filter(l => l.type === 'paid' && l.status === 'cancelled' && l.cancelled_at && monthKey(l.cancelled_at) === monthKey(now)).length;
+  const count = lessons.filter(l => l.type === 'paid' && l.status === 'cancelled' && l.cancelled_by !== 'teacher' && l.cancelled_at && monthKey(l.cancelled_at) === monthKey(now)).length;
   return { count, freeLeft: Math.max(0, 3-count), charged: count >= 3 };
 }
 export function canReschedule(lesson: Lesson, now = Date.now()) { return lesson.status === 'scheduled' && new Date(lesson.start).getTime()-now >= 2*60*60*1000; }
 export function overlaps(start: string, end: string, otherStart: string, otherEnd: string) { return start < otherEnd && end > otherStart; }
+export function dateTimeInTimeZone(date: string, time: string, timeZone: string) {
+  const [year, month, day] = date.split('-').map(Number);
+  const [hour, minute] = time.split(':').map(Number);
+  const desired = Date.UTC(year, month - 1, day, hour, minute);
+  let timestamp = desired;
+  const formatter = new Intl.DateTimeFormat('en-GB', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const parts = Object.fromEntries(formatter.formatToParts(new Date(timestamp)).map(part => [part.type, part.value]));
+    const represented = Date.UTC(Number(parts.year), Number(parts.month) - 1, Number(parts.day), Number(parts.hour), Number(parts.minute));
+    timestamp += desired - represented;
+  }
+  return timestamp;
+}
 export function createSlots(date: string, minutes: number, schedule: Schedule, busy: {start:string;end:string}[], now=Date.now()) {
   if(!/^\d{4}-\d{2}-\d{2}$/.test(date)) return [];
-  const weekday = new Date(date+'T12:00:00+03:00').getUTCDay();
+  const timeZone = schedule.timezone || DEFAULT_TIME_ZONE;
+  let weekday: number, dayStart: number;
+  try {
+    dayStart = dateTimeInTimeZone(date, '12:00', timeZone);
+    weekday = new Date(dayStart).getUTCDay();
+  } catch { return []; }
   const overrides=schedule.dateOverrides||{};
   const ranges=Object.prototype.hasOwnProperty.call(overrides,date)
     ?overrides[date]
@@ -41,8 +84,8 @@ export function createSlots(date: string, minutes: number, schedule: Schedule, b
   const slots=new Map<string,{start:string;end:string}>();
   for(const range of ranges){
     if(!/^\d{2}:\d{2}$/.test(range.from)||!/^\d{2}:\d{2}$/.test(range.to)||range.from>=range.to)continue;
-    const start=new Date(date+'T'+range.from+':00+03:00').getTime();
-    const end=new Date(date+'T'+range.to+':00+03:00').getTime();
+    let start: number, end: number;
+    try { start=dateTimeInTimeZone(date,range.from,timeZone); end=dateTimeInTimeZone(date,range.to,timeZone); } catch { continue; }
     for(let n=start;n+minutes*60000<=end;n+=30*60000){
       const slot={start:new Date(n).toISOString(),end:new Date(n+minutes*60000).toISOString()};
       if(n>now&&!busy.some(b=>overlaps(slot.start,slot.end,b.start,b.end)))slots.set(slot.start,slot);
@@ -78,7 +121,7 @@ export function latestSubmissions(submissions: Submission[], studentId: string) 
 }
 export function topicProgress(topics: Topic[], assignments: Assignment[], submissions: Submission[], studentId: string) {
   const latest = latestSubmissions(submissions, studentId);
-  const passedCount = (a: Assignment) => { const s = latest.get(a.id); if (!s) return 0; try { return JSON.parse(s.result).status === 'passed' ? 1 : 0; } catch { return 0; } };
+  const passedCount = (a: Assignment) => resultStatus(latest.get(a.id)) === 'passed' ? 1 : 0;
   const per = topics.map(t => { const tasks = assignments.filter(a => a.topic_id === t.id); return { topic: t, total: tasks.length, passed: tasks.reduce((n, a) => n + passedCount(a), 0) }; });
   const total = per.reduce((n, p) => n + p.total, 0), passed = per.reduce((n, p) => n + p.passed, 0);
   return { per, total, passed, percent: total ? Math.round((passed / total) * 100) : 0 };

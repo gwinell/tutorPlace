@@ -2,7 +2,7 @@ import handler from "vinext/server/fetch-handler";
 import { runWithConnectorBinding } from "../lib/connector-context";
 import { calendar, calendarConfigured, cleanup, db, eventPath } from "../lib/server";
 import { confirmLessonMove } from "../lib/lesson-move";
-import { disableSaluteJazzRoom } from "../lib/salutejazz";
+import { createSaluteJazzRoom, disableSaluteJazzRoom, saluteJazzConfigured } from "../lib/salutejazz";
 import type { ConnectorBinding } from "../lib/connector-contract.mjs";
 
 async function maintain(environment: Cloudflare.Env) {
@@ -13,7 +13,7 @@ async function maintain(environment: Cloudflare.Env) {
     if (!lesson.jazz_room_id) return true;
     try {
       await disableSaluteJazzRoom(lesson.jazz_room_id, serverEnv);
-      await database.prepare("UPDATE lessons SET jazz_room_id=NULL WHERE id=? AND jazz_room_id=?").bind(lesson.id, lesson.jazz_room_id).run();
+      await database.prepare("UPDATE lessons SET jazz_room_id=NULL,jazz_room_needs_recreation=0 WHERE id=? AND jazz_room_id=?").bind(lesson.id, lesson.jazz_room_id).run();
       return true;
     } catch (error) {
       console.error("SaluteJazz room cleanup:", lesson.id, error instanceof Error ? error.message : "Unknown error");
@@ -49,7 +49,23 @@ async function maintain(environment: Cloudflare.Env) {
       if (lesson.status === "pending") {
         const event = await calendar(eventPath(lesson.event_id, serverEnv), 'GET', undefined, {}, serverEnv) as any;
         const matches = event && event.status !== "cancelled" && Date.parse(event.start?.dateTime || "") === Date.parse(lesson.start) && Date.parse(event.end?.dateTime || "") === Date.parse(lesson.end);
-        if (matches) await database.prepare("UPDATE lessons SET status='scheduled',operation_started_at=NULL WHERE id=? AND status='pending'").bind(lesson.id).run();
+        if (matches && Number(lesson.jazz_room_needs_recreation) === 1) {
+          if (!saluteJazzConfigured(serverEnv)) continue;
+          const claim = await database.prepare("UPDATE lessons SET jazz_room_needs_recreation=2 WHERE id=? AND status='pending' AND jazz_room_needs_recreation=1").bind(lesson.id).run();
+          if (!claim.meta.changes) continue;
+          let replacement: { roomId: string; roomUrl: string } | undefined;
+          try {
+            replacement = await createSaluteJazzRoom("codeTogether · " + (lesson.type === "trial" ? "Пробный урок" : "Урок"), serverEnv);
+            await calendar(eventPath(lesson.event_id, serverEnv), "PATCH", { location: replacement.roomUrl }, {}, serverEnv);
+            const changed = await database.prepare("UPDATE lessons SET jazz_room_id=?,meet_url=?,jazz_room_needs_recreation=0,status='scheduled',operation_started_at=NULL WHERE id=? AND status='pending' AND jazz_room_needs_recreation=2").bind(replacement.roomId,replacement.roomUrl,lesson.id).run();
+            if (!changed.meta.changes) await disableSaluteJazzRoom(replacement.roomId, serverEnv);
+            else if (lesson.jazz_room_id) await disableSaluteJazzRoom(lesson.jazz_room_id, serverEnv).catch(error => console.error("SaluteJazz replaced room cleanup:", lesson.id, error instanceof Error ? error.message : "Unknown error"));
+          } catch (error) {
+            if (replacement) await disableSaluteJazzRoom(replacement.roomId, serverEnv).catch(() => undefined);
+            await database.prepare("UPDATE lessons SET jazz_room_needs_recreation=1 WHERE id=? AND status='pending' AND jazz_room_needs_recreation=2").bind(lesson.id).run();
+            throw error;
+          }
+        } else if (matches) await database.prepare("UPDATE lessons SET status='scheduled',operation_started_at=NULL WHERE id=? AND status='pending'").bind(lesson.id).run();
         else if ((!event || event.status === "cancelled") && await closeJazzRoom(lesson)) await database.batch([
           database.prepare("DELETE FROM slot_locks WHERE lesson_id=?").bind(lesson.id),
           database.prepare("DELETE FROM lessons WHERE id=? AND status='pending' AND operation_started_at<?").bind(lesson.id, cutoff),

@@ -6,7 +6,12 @@ type SdkKey = {
 };
 
 const API = 'https://api.salutejazz.ru/v1';
+// Примерный UUID пользователя из официального руководства SaluteJazz по транспортному JWT:
+// https://developers.sber.ru/docs/ru/jazz/api/authorization — поле sub обозначает ID пользователя в приложении.
 const SERVICE_SUBJECT = '15eca6c5-fb2d-48f2-804a-f97e542ebd33';
+const ACCESS_TOKEN_TTL_MS = 5 * 60 * 1000;
+let cachedAccessToken: { value: string; expiresAt: number } | null = null;
+let accessTokenRequest: Promise<string> | null = null;
 
 export function saluteJazzConfigured(environment: Environment): boolean {
   return typeof environment.SALUTEJAZZ_SDK_KEY === 'string' && Boolean(environment.SALUTEJAZZ_SDK_KEY);
@@ -22,7 +27,7 @@ function encodeJson(value: unknown): string {
   return base64Url(new TextEncoder().encode(JSON.stringify(value)));
 }
 
-function parseSdkKey(value: string): SdkKey {
+export function parseSdkKey(value: string): SdkKey {
   try {
     const base64 = value.replace(/-/g, '+').replace(/_/g, '/').replace(/\s/g, '');
     const normalized = base64.padEnd(Math.ceil(base64.length / 4) * 4, '=');
@@ -82,15 +87,26 @@ async function transportToken(environment: Environment): Promise<string> {
 }
 
 async function accessToken(environment: Environment): Promise<string> {
-  const response = await fetch(`${API}/auth/login`, {
-    method: 'POST',
-    headers: { Accept: 'application/json', Authorization: `Bearer ${await transportToken(environment)}` },
-    signal: AbortSignal.timeout(10000),
-  });
-  if (!response.ok) throw new Error(`SaluteJazz authentication failed (${response.status}).`);
-  const data = await response.json() as { token?: unknown };
-  if (typeof data.token !== 'string' || !data.token) throw new Error('SaluteJazz returned no access token.');
-  return data.token;
+  if (cachedAccessToken && cachedAccessToken.expiresAt > Date.now()) return cachedAccessToken.value;
+  if (accessTokenRequest) return accessTokenRequest;
+  accessTokenRequest = (async () => {
+    const response = await fetch(`${API}/auth/login`, {
+      method: 'POST',
+      headers: { Accept: 'application/json', Authorization: `Bearer ${await transportToken(environment)}` },
+      signal: AbortSignal.timeout(10000),
+    });
+    if (!response.ok) throw new Error(`SaluteJazz authentication failed (${response.status}).`);
+    const data = await response.json() as { token?: unknown; expiresIn?: unknown; expires_in?: unknown };
+    if (typeof data.token !== 'string' || !data.token) throw new Error('SaluteJazz returned no access token.');
+    const reportedTtl = Number(data.expiresIn ?? data.expires_in);
+    const ttl = Number.isFinite(reportedTtl) && reportedTtl > 0
+      ? Math.min(reportedTtl * 1000, ACCESS_TOKEN_TTL_MS)
+      : ACCESS_TOKEN_TTL_MS;
+    cachedAccessToken = { value: data.token, expiresAt: Date.now() + ttl - 15_000 };
+    return data.token;
+  })();
+  try { return await accessTokenRequest; }
+  finally { accessTokenRequest = null; }
 }
 
 async function request<T>(path: string, method: string, environment: Environment, body?: unknown): Promise<T | undefined> {
@@ -123,13 +139,13 @@ export async function createSaluteJazzRoom(roomTitle: string, environment: Envir
   return { roomId: room.roomId, roomUrl: url.href };
 }
 
-export async function disableSaluteJazzRoom(roomId: string, environment: Environment): Promise<void> {
+export async function disableSaluteJazzRoom(roomId: string, environment: Environment, timeoutMs = 10000): Promise<void> {
   const token = await accessToken(environment);
   const response = await fetch(`${API}/room/${encodeURIComponent(roomId)}/disable`, {
     method: 'POST',
     headers: { Accept: 'application/json', Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
     body: '{}',
-    signal: AbortSignal.timeout(10000),
+    signal: AbortSignal.timeout(timeoutMs),
   });
   if (response.status === 204 || response.status === 404 || response.status === 410) return;
   if (!response.ok) throw new Error(`SaluteJazz room shutdown failed (${response.status}).`);

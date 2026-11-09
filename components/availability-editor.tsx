@@ -111,7 +111,7 @@ export default function AvailabilityEditor({
       </div>
       {!connected ? <div className="availability-note">Подключи Google Calendar, чтобы выбрать календарь занятости.</div>
         : calendarsLoading ? <div className="availability-note">Загружаю список календарей…</div>
-          : calendarsError ? <div className="form-error" role="alert">{calendarsError}</div>
+          : calendarsError ? <div className="availability-note" role="status">{calendarsError} Рабочие часы и исключения по датам можно сохранить; выбор календарей останется без изменений.</div>
             : <div className="availability-calendar-list">{calendars.map(calendar => {
               const selected = calendar.target || (value.availabilityCalendarIds || []).includes(calendar.id);
               return <label className={'availability-calendar ' + (calendar.target ? 'is-target' : '')} key={calendar.id}>

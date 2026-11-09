@@ -1,5 +1,5 @@
 import {db,secrets,HttpError,requireValue,auth,currentUser,safeUser,passwordHash,verifyPassword,hash,now,id,schedule,normalizeSchedule,calendarConfigured,calendar,eventPath,slots,slotKeys,httpsUrl,cleanup} from '@/lib/server';
-import {Lesson,canReschedule,PYTHON_START,TEACHER_START} from '@/lib/domain';
+import {Lesson,canReschedule,monthBounds,resultStatus,PYTHON_START,TEACHER_START} from '@/lib/domain';
 import {documentFrom,encode,decode,Y} from '@/lib/collaboration';
 import {normalizeTrialPhone,limitTrialBooking} from '@/lib/trial-booking';
 import {reserveLessonMove,confirmLessonMove} from '@/lib/lesson-move';
@@ -13,7 +13,7 @@ const text=(v:unknown,max=200)=>typeof v==='string'?v.trim().slice(0,max):'';
 function validDateKey(value:string){if(!/^\d{4}-\d{2}-\d{2}$/.test(value))return false;const time=Date.parse(value+'T00:00:00Z');return Number.isFinite(time)&&new Date(time).toISOString().slice(0,10)===value;}
 async function retireMeeting(lessonId:string,roomId:string|undefined|null){
  if(!roomId)return;
- try{await disableSaluteJazzRoom(roomId,secrets);await db().prepare('UPDATE lessons SET jazz_room_id=NULL WHERE id=? AND jazz_room_id=?').bind(lessonId,roomId).run();}
+ try{await disableSaluteJazzRoom(roomId,secrets,2500);await db().prepare('UPDATE lessons SET jazz_room_id=NULL,jazz_room_needs_recreation=0 WHERE id=? AND jazz_room_id=?').bind(lessonId,roomId).run();}
  catch(error){console.error('SaluteJazz room cleanup:',lessonId,error instanceof Error?error.message:'Unknown error');}
 }
 async function teacher(request:Request){return auth(request,true);}
@@ -92,7 +92,11 @@ async function route(request:Request){
        :'На этот телефон уже записан пробный урок. Свяжись с репетитором для изменения записи.',409);
    } catch(e) {
      if(e instanceof HttpError)throw e;
-     throw new HttpError('Это время только что заняли. Выбери другое окно.',409);
+     const message=e instanceof Error?e.message:'';
+     if(/UNIQUE constraint failed: lessons\.trial_phone/i.test(message))throw new HttpError('На этот телефон уже записан пробный урок. Свяжись с репетитором для изменения записи.',409);
+     if(/UNIQUE constraint failed: slot_locks\.slot|SQLITE_CONSTRAINT_UNIQUE/i.test(message))throw new HttpError('Это время только что заняли. Выбери другое окно.',409);
+     console.error('Booking reservation failed:',message||'Unknown error');
+     throw new HttpError('Не удалось зарезервировать время. Попробуй ещё раз.',503);
    }
    let jazzRoomId:string|null=null,meetingUrl=s.meetUrl,calendarAttempted=false;
    try{
@@ -107,8 +111,7 @@ async function route(request:Request){
    }catch(e){
      let calendarCleared=!calendarAttempted,roomCleared=!jazzRoomId;
      if(calendarAttempted){try{await calendar(eventPath(eventId),'DELETE');calendarCleared=true;}catch{calendarCleared=false;}}
-     if(jazzRoomId&&calendarCleared){try{await disableSaluteJazzRoom(jazzRoomId,secrets);roomCleared=true;}catch{roomCleared=false;}}
-     if(jazzRoomId&&!roomCleared)try{await db().prepare("UPDATE lessons SET jazz_room_id=? WHERE id=? AND status='pending'").bind(jazzRoomId,lid).run();}catch{}
+     if(jazzRoomId){try{await db().prepare("UPDATE lessons SET jazz_room_id=?,jazz_room_needs_recreation=1 WHERE id=? AND status='pending'").bind(jazzRoomId,lid).run();try{await disableSaluteJazzRoom(jazzRoomId,secrets);roomCleared=true;}catch{roomCleared=false;}}catch{roomCleared=false;}}
      if(calendarCleared&&roomCleared)await db().batch([db().prepare('DELETE FROM slot_locks WHERE lesson_id=?').bind(lid),db().prepare("DELETE FROM lessons WHERE id=? AND status='pending'").bind(lid)]);
      else throw new HttpError('Не удалось безопасно завершить создание встречи. Время оставлено зарезервированным для сверки; свяжись с репетитором.',503);
      throw e;
@@ -135,7 +138,7 @@ async function route(request:Request){
  if(path[0]==='settings'&&method==='POST'){
    await teacher(request);
    const hasWeekly=body.weeklyAvailability&&typeof body.weeklyAvailability==='object'&&!Array.isArray(body.weeklyAvailability);
-   let weeklyAvailability:Record<number,{from:string;to:string}[]>={};
+   const weeklyAvailability:Record<number,{from:string;to:string}[]>={};
    if(hasWeekly){
      for(const [day,value] of Object.entries(body.weeklyAvailability)){
        requireValue(/^[0-6]$/.test(day)&&Array.isArray(value)&&value.length<=10,'Проверь рабочие часы по дням недели.');
@@ -164,11 +167,13 @@ async function route(request:Request){
    }
    const selectedCalendars=Array.isArray(body.availabilityCalendarIds)?[...new Set(body.availabilityCalendarIds.filter((calendarId:any)=>typeof calendarId==='string'&&calendarId.length<=255))]:[];
    requireValue(selectedCalendars.length<=10,'Можно выбрать до 10 календарей для проверки занятости.');
+   const currentCalendars=(await schedule()).availabilityCalendarIds||[];
+   const calendarsChanged=selectedCalendars.length!==currentCalendars.length||selectedCalendars.some(calendarId=>!currentCalendars.includes(calendarId));
    let calendarList:any={items:[]};
-   if(selectedCalendars.length){calendarList=await calendar('users/me/calendarList?maxResults=250');const accessible=new Set((calendarList.items||[]).filter((item:any)=>['owner','writer','writerWithoutPrivateAccess','reader','freeBusyReader'].includes(item.accessRole)).map((item:any)=>item.id));requireValue(selectedCalendars.every(calendarId=>accessible.has(calendarId)),'Один из календарей недоступен. Обнови список и выбери календарь снова.',409);}
+   if(selectedCalendars.length&&calendarsChanged){calendarList=await calendar('users/me/calendarList?maxResults=250');const accessible=new Set((calendarList.items||[]).filter((item:any)=>['owner','writer','writerWithoutPrivateAccess','reader','freeBusyReader'].includes(item.accessRole)).map((item:any)=>item.id));requireValue(selectedCalendars.every(calendarId=>accessible.has(calendarId)),'Один из календарей недоступен. Обнови список и выбери календарь снова.',409);}
    const targetIds=new Set((calendarList.items||[]).filter((item:any)=>item.id===secrets.GOOGLE_CALENDAR_ID||(secrets.GOOGLE_CALENDAR_ID==='primary'&&item.primary)).map((item:any)=>item.id));
-   requireValue(!selectedCalendars.some(calendarId=>targetIds.has(calendarId)),'Календарь для новых уроков уже проверяется автоматически.');
-   const normalized=normalizeSchedule({weeklyAvailability,dateOverrides,availabilityCalendarIds:selectedCalendars,timezone:'Europe/Moscow',meetUrl:httpsUrl(body.meetUrl)});
+   if(calendarsChanged&&selectedCalendars.length)requireValue(!selectedCalendars.some(calendarId=>targetIds.has(calendarId)),'Календарь для новых уроков уже проверяется автоматически.');
+   const normalized=normalizeSchedule({weeklyAvailability,dateOverrides,availabilityCalendarIds:selectedCalendars,timezone:text(body.timezone,64)||'Europe/Moscow',meetUrl:httpsUrl(body.meetUrl)});
    await db().prepare("INSERT INTO settings (key,value) VALUES ('schedule',?) ON CONFLICT(key) DO UPDATE SET value=excluded.value").bind(JSON.stringify(normalized)).run();return json({ok:true});
  }
  if(path[0]==='courses'&&method==='POST'){
@@ -200,7 +205,7 @@ async function route(request:Request){
    await teacher(request);requireValue(await db().prepare("SELECT id FROM users WHERE id=? AND role='student'").bind(body.student_id).first(),'Выбери ученика.');requireValue(text(body.title)&&text(body.body,4000),'Добавь заголовок и сообщение.');await db().prepare('INSERT INTO notifications (id,student_id,title,body,created_at) VALUES (?,?,?,?,?)').bind(id(),body.student_id,text(body.title),text(body.body,4000),now()).run();return json({ok:true});
  }
  if(path[0]==='assignments'&&method==='POST'){
-   await teacher(request);requireValue(text(body.title)&&text(body.prompt,20000)&&['code','quiz','text'].includes(body.kind),'Проверь данные задания.');const topicId=text(body.topic_id,100)||null,studentId=text(body.student_id,100)||null;requireValue(Boolean(topicId)!==Boolean(studentId),'Выбери тему курса или одного ученика.');if(topicId)requireValue(await db().prepare('SELECT id FROM topics WHERE id=?').bind(topicId).first(),'Тема не найдена.');if(studentId)requireValue(await db().prepare("SELECT id FROM users WHERE id=? AND role='student'").bind(studentId).first(),'Ученик не найден.');if(body.kind==='quiz')requireValue(Array.isArray(body.options)&&body.options.length>=2&&body.options.length<=20&&Number(body.answer)>=0&&Number(body.answer)<body.options.length,'Проверь варианты и номер правильного ответа.');let lessonId=text(body.lesson_id,100)||null;if(lessonId){const lesson=await db().prepare('SELECT student_id FROM lessons WHERE id=?').bind(lessonId).first<Row>();requireValue(lesson,'Урок не найден.');if(studentId)requireValue(lesson!.student_id===studentId,'Урок не принадлежит выбранному ученику.');}
+   await teacher(request);requireValue(text(body.title)&&text(body.prompt,20000)&&['code','quiz','text'].includes(body.kind),'Проверь данные задания.');const topicId=text(body.topic_id,100)||null,studentId=text(body.student_id,100)||null;requireValue(Boolean(topicId)!==Boolean(studentId),'Выбери тему курса или одного ученика.');if(topicId)requireValue(await db().prepare('SELECT id FROM topics WHERE id=?').bind(topicId).first(),'Тема не найдена.');if(studentId)requireValue(await db().prepare("SELECT id FROM users WHERE id=? AND role='student'").bind(studentId).first(),'Ученик не найден.');if(body.kind==='quiz')requireValue(Array.isArray(body.options)&&body.options.length>=2&&body.options.length<=20&&Number(body.answer)>=0&&Number(body.answer)<body.options.length,'Проверь варианты и номер правильного ответа.');const lessonId=text(body.lesson_id,100)||null;if(lessonId){const lesson=await db().prepare('SELECT student_id FROM lessons WHERE id=?').bind(lessonId).first<Row>();requireValue(lesson,'Урок не найден.');if(studentId)requireValue(lesson!.student_id===studentId,'Урок не принадлежит выбранному ученику.');}
    await db().prepare('INSERT INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES (?,?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET topic_id=excluded.topic_id,student_id=excluded.student_id,lesson_id=excluded.lesson_id,title=excluded.title,kind=excluded.kind,prompt=excluded.prompt,options=excluded.options,answer=excluded.answer,tests=NULL').bind(body.id||id(),topicId,studentId,lessonId,text(body.title),body.kind,text(body.prompt,20000),body.kind==='quiz'?JSON.stringify(body.options):null,body.kind==='quiz'?String(body.answer):null,null).run();return json({ok:true});
  }
  if(path[0]==='submit'&&method==='POST'){
@@ -209,7 +214,7 @@ async function route(request:Request){
    if(a!.kind==='quiz')result={status:content===a!.answer?'passed':'failed',tests:[{number:1,passed:content===a!.answer}]};
    const submission={id:id(),assignment_id:a!.id,student_id:u.id,content,result:JSON.stringify(result),created_at:now()};await db().prepare('INSERT INTO submissions (id,assignment_id,student_id,content,result,created_at) VALUES (?,?,?,?,?,?)').bind(...Object.values(submission)).run();return json({submission});
  }
- if(path[0]==='submissions'&&path[1]&&method==='POST'){await teacher(request);requireValue(body.status==='passed'||body.status==='needs_work','Некорректный результат.');const submission=await db().prepare('SELECT result FROM submissions WHERE id=?').bind(path[1]).first<Row>();requireValue(submission,'Работа не найдена.',404);requireValue(JSON.parse(submission!.result).status==='pending','Эта работа уже проверена.',409);const feedback=text(body.feedback,2000);await db().prepare('UPDATE submissions SET result=?,feedback=?,feedback_at=? WHERE id=?').bind(JSON.stringify({status:body.status}),feedback||null,feedback?now():null,path[1]).run();return json({ok:true});}
+ if(path[0]==='submissions'&&path[1]&&method==='POST'){await teacher(request);requireValue(body.status==='passed'||body.status==='needs_work','Некорректный результат.');const submission=await db().prepare('SELECT result FROM submissions WHERE id=?').bind(path[1]).first<Row>();requireValue(submission,'Работа не найдена.',404);requireValue(resultStatus(submission!.result)==='pending','Эта работа уже проверена.',409);const feedback=text(body.feedback,2000);await db().prepare('UPDATE submissions SET result=?,feedback=?,feedback_at=? WHERE id=?').bind(JSON.stringify({status:body.status}),feedback||null,feedback?now():null,path[1]).run();return json({ok:true});}
  if(path[0]==='lesson-details'&&method==='POST'){await teacher(request);const l=await db().prepare('SELECT * FROM lessons WHERE id=?').bind(body.id).first<Row>();requireValue(l,'Урок не найден.',404);const meet=httpsUrl(body.meet_url);if(l!.event_id&&l!.status==='scheduled')await calendar(eventPath(l!.event_id),'PATCH',{summary:'codeTogether · '+text(body.topic),location:meet});await db().prepare('UPDATE lessons SET topic=?,meet_url=? WHERE id=?').bind(text(body.topic),meet,body.id).run();return json({ok:true});}
  if(path[0]==='lessons'&&path[1]&&method==='POST'){
    const {u,l}=await lessonAccess(request,path[1]);
@@ -252,11 +257,11 @@ async function route(request:Request){
    let cancelExternalActionStarted=false;
    try{
     if(path[2]==='cancel'){
-      requireValue(Date.parse(l.start)>Date.now(),'Уже начавшийся урок отменяет репетитор.',400);
+      requireValue(Date.parse(l.start)>Date.now()||u.role==='teacher','Уже начавшийся урок может отменить только репетитор.',400);
       // Serialize cancellation count per pupil, so concurrent cancellations cannot both be free.
       const lock='cancel-lock:'+l.student_id;
       try{if(l.student_id)await db().prepare('INSERT INTO settings (key,value) VALUES (?,?)').bind(lock,l.id).run();}catch{throw new HttpError('Другая отмена ещё выполняется. Повтори через несколько секунд.',409);}
-      const month=new Intl.DateTimeFormat('sv-SE',{timeZone:'Europe/Moscow',year:'numeric',month:'2-digit'}).format(new Date());const count=await db().prepare("SELECT COUNT(*) n FROM lessons WHERE student_id=? AND type='paid' AND status='cancelled' AND strftime('%Y-%m',cancelled_at,'+3 hours')=?").bind(l.student_id,month).first<{n:number}>();const charged=l.type==='paid'&&Number(count?.n)>=3;requireValue(u.role==='teacher'||Boolean(body.expectedCharged)===charged,'Условия отмены изменились. Обнови расписание и проверь списание.',409);await db().prepare("UPDATE lessons SET charged=? WHERE id=? AND status='updating'").bind(charged?1:0,l.id).run();cancelExternalActionStarted=true;await calendar(eventPath(l.event_id),'DELETE');await db().batch([db().prepare("UPDATE lessons SET status='cancelled',cancelled_at=?,charged=?,operation_started_at=NULL WHERE id=? AND status='updating'").bind(now(),charged?1:0,l.id),db().prepare('DELETE FROM slot_locks WHERE lesson_id=?').bind(l.id),...(charged?[db().prepare('UPDATE users SET balance=MAX(0,balance-1) WHERE id=?').bind(l.student_id)]:[]),db().prepare('DELETE FROM settings WHERE key=? AND value=?').bind(lock,l.id)]);await retireMeeting(l.id,l.jazz_room_id);return json({ok:true,charged});
+      const bounds=monthBounds(new Date());const count=await db().prepare("SELECT COUNT(*) n FROM lessons WHERE student_id=? AND type='paid' AND status='cancelled' AND (cancelled_by IS NULL OR cancelled_by='student') AND cancelled_at>=? AND cancelled_at<?").bind(l.student_id,bounds.start,bounds.end).first<{n:number}>();const charged=u.role==='student'&&l.type==='paid'&&Number(count?.n)>=3;requireValue(u.role==='teacher'||Boolean(body.expectedCharged)===charged,'Условия отмены изменились. Обнови расписание и проверь списание.',409);await db().prepare("UPDATE lessons SET charged=? WHERE id=? AND status='updating'").bind(charged?1:0,l.id).run();cancelExternalActionStarted=true;await calendar(eventPath(l.event_id),'DELETE');await db().batch([db().prepare("UPDATE lessons SET status='cancelled',cancelled_at=?,cancelled_by=?,charged=?,operation_started_at=NULL WHERE id=? AND status='updating'").bind(now(),u.role,charged?1:0,l.id),db().prepare('DELETE FROM slot_locks WHERE lesson_id=?').bind(l.id),...(charged?[db().prepare('UPDATE users SET balance=MAX(0,balance-1) WHERE id=?').bind(l.student_id)]:[]),db().prepare('DELETE FROM settings WHERE key=? AND value=?').bind(lock,l.id)]);await retireMeeting(l.id,l.jazz_room_id);return json({ok:true,charged});
     }
    }catch(e){if(path[2]==='cancel'&&!cancelExternalActionStarted){await db().prepare("UPDATE lessons SET status='scheduled',charged=0,operation_started_at=NULL WHERE id=? AND status='updating'").bind(l.id).run();if(l.student_id)await db().prepare('DELETE FROM settings WHERE key=? AND value=?').bind('cancel-lock:'+l.student_id,l.id).run();}throw e;}
  }

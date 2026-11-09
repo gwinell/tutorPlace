@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {cancellationPolicy,canReschedule,createSlots,monthKey,overlaps,type Lesson} from '../lib/domain.ts';
+import {addDaysToDateKey,cancellationPolicy,canReschedule,createSlots,dateKeyInTimeZone,monthBounds,monthKey,overlaps,resultStatus,type Lesson} from '../lib/domain.ts';
 const lesson=(extra:Partial<Lesson>={}):Lesson=>({id:'test',name:'test',start:'2026-11-07T13:00:00.000Z',end:'2026-11-07T13:55:00.000Z',type:'paid',status:'scheduled',...extra});
 test('Перенос разрешён ровно за два часа, за миллисекунду позднее запрещён',()=>{
  const l=lesson();const start=Date.parse(l.start);
@@ -17,6 +17,13 @@ test('Счётчик отмен обнуляется по календарном
  const list=[lesson({status:'cancelled',cancelled_at:'2026-10-31T20:59:59Z'}),lesson({status:'cancelled',cancelled_at:'2026-10-31T21:00:00Z'})];
  assert.equal(cancellationPolicy(list,new Date('2026-11-01T00:01:00+03:00')).count,1);
 });
+test('Границы месяца для SQL совпадают с календарным месяцем Москвы',()=>{
+ const bounds=monthBounds('2026-10-31T21:00:00.000Z');
+ assert.equal(bounds.start,'2026-10-31T21:00:00.000Z');
+ assert.equal(bounds.end,'2026-11-30T21:00:00.000Z');
+ assert.equal(monthKey(bounds.start),'2026-11');
+ assert.equal(monthKey(new Date(Date.parse(bounds.end)-1)),'2026-11');
+});
 test('Окна только внутри рабочих дней и часов; 45/55 минут не выходят за границы',()=>{
  const schedule={days:[6],from:'14:00',to:'16:00',timezone:'Europe/Moscow',meetUrl:''};
  const now=Date.parse('2026-11-01T00:00:00Z');
@@ -29,4 +36,25 @@ test('Пересекающиеся события скрывают окно, с�
  const slots=createSlots('2026-11-07',55,schedule,[{start:'2026-11-07T11:30:00.000Z',end:'2026-11-07T12:00:00.000Z'}],0);
  assert.deepEqual(slots.map(s=>s.start),['2026-11-07T12:00:00.000Z']);
  assert.equal(overlaps('2026-11-07T11:00:00Z','2026-11-07T12:00:00Z','2026-11-07T12:00:00Z','2026-11-07T13:00:00Z'),false);
+});
+test('Дата исключения заменяет недельное расписание, включая закрытый день',()=>{
+ const date='2026-11-08';
+ const schedule={days:[0],from:'10:00',to:'12:00',timezone:'Europe/Moscow',meetUrl:'',dateOverrides:{[date]:[{from:'14:00',to:'16:00'}]}};
+ const slots=createSlots(date,55,schedule,[],0);
+ assert.deepEqual(slots.map(slot=>slot.start),['2026-11-08T11:00:00.000Z','2026-11-08T11:30:00.000Z','2026-11-08T12:00:00.000Z']);
+ assert.deepEqual(createSlots(date,55,{...schedule,dateOverrides:{[date]:[]}},[],0),[]);
+});
+test('Расчёт слотов учитывает временную зону расписания',()=>{
+ const schedule={days:[0],from:'10:00',to:'11:00',timezone:'America/New_York',meetUrl:''};
+ const slots=createSlots('2026-11-08',55,schedule,[],0);
+ assert.equal(slots[0]?.start,'2026-11-08T15:00:00.000Z');
+});
+test('Календарные поля формы используют московскую дату и переход через месяц',()=>{
+ assert.equal(dateKeyInTimeZone(new Date('2026-11-08T21:30:00.000Z')),'2026-11-09');
+ assert.equal(addDaysToDateKey('2026-12-31',1),'2027-01-01');
+});
+test('Повреждённый результат отправки не ломает отображение статуса',()=>{
+ assert.equal(resultStatus('{broken'),'unknown');
+ assert.equal(resultStatus('{"status":"passed"}'),'passed');
+ assert.equal(resultStatus('{"status":42}'),'unknown');
 });

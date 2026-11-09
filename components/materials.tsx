@@ -4,12 +4,12 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import {BookOpen,FileCode2,ChevronRight,ChevronDown,LockKeyhole,ArrowUpRight,Plus,Settings,Check,ArrowLeft,Download,Info,ExternalLink,MessageSquare,MoveUp,MoveDown,Users,FolderPlus,ClipboardCheck,Send,MoreHorizontal} from 'lucide-react';
 import {Button,Tag,Empty,api} from './site-ui';
-import {Course,Topic,Assignment,Submission,User,topicProgress,dateLabel} from '@/lib/domain';
+import {Course,Topic,Assignment,Submission,User,topicProgress,dateLabel,resultStatus} from '@/lib/domain';
 import CodeEditor from './code-editor';
 
 export function Markdown({content}:{content:string}){return <div className="markdown"><ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown></div>;}
 function Notebook({content}:{content:string}){try{const notebook=JSON.parse(content);return <div className="notebook">{notebook.cells.map((c:any,i:number)=><div className={'notebook-cell '+c.cell_type} key={i}>{c.cell_type==='markdown'?<Markdown content={Array.isArray(c.source)?c.source.join(''):c.source}/>:<><span className="cell-label">In [{c.execution_count||' '}]:</span><pre>{Array.isArray(c.source)?c.source.join(''):c.source}</pre>{c.outputs?.map((o:any,n:number)=>{const t=o.text||o.data?.['text/plain'];return t?<pre className="cell-output" key={n}>{Array.isArray(t)?t.join(''):t}</pre>:null;})}</>}</div>)}</div>;}catch{return <div className="form-error">Не удалось прочитать блокнот. Проверьте формат .ipynb.</div>;}}
-function statusOf(submission?:Submission){try{return submission?JSON.parse(submission.result).status:null;}catch{return null;}}
+function statusOf(submission?:Submission){return submission?resultStatus(submission):null;}
 function runMenuAction(event:React.MouseEvent<HTMLButtonElement>,action:()=>void){const menu=event.currentTarget.closest('details');if(menu)menu.open=false;action();}
 
 export default function Materials({courses,topics,assignments,submissions,teacher,demo,user,notify,onCourse,onTopic,onAccess,onAssignment,onReorder,onSubmission}:{courses:Course[];topics:Topic[];assignments:Assignment[];submissions:Submission[];teacher:boolean;demo:boolean;user:User;notify:(s:string)=>void;onCourse:(course?:Course)=>void;onTopic:(topic:Topic|undefined,courseId:string)=>void;onAccess:(topic:Topic)=>void;onAssignment:(value?:Partial<Assignment>)=>void;onReorder:(courseId:string,topicIds:string[])=>void;onSubmission:(s:Submission)=>void}){

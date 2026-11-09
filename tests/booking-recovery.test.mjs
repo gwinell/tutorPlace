@@ -16,6 +16,7 @@ const sources = [
   ['@/lib/collaboration', 'lib/collaboration.ts'],
   ['@/lib/trial-booking', 'lib/trial-booking.ts'],
   ['@/lib/lesson-move', 'lib/lesson-move.ts'],
+  ['@/lib/salutejazz', 'lib/salutejazz.ts'],
   ['route', 'app/api/[...path]/route.ts'],
 ].map(([name, file]) => [
   name,
@@ -115,7 +116,7 @@ function setup(beforeRecovery = () => {}) {
     runInNewContext(source, {
       module: loaded, exports: loaded.exports,
       require: path => modules[path.startsWith('./') ? '@/lib/' + path.slice(2) : path] ?? require(path),
-      Response, Request, URL, URLSearchParams, Intl, TextEncoder, AbortSignal, crypto,
+      Response, Request, URL, URLSearchParams, Intl, TextEncoder, TextDecoder, AbortSignal, crypto,
       fetch: calendarFetch, console: { error() {} }, btoa, atob,
     });
     modules[name] = loaded.exports;
@@ -144,8 +145,52 @@ function setup(beforeRecovery = () => {}) {
   }, undefined, ip);
   const lesson = id => sql.prepare('SELECT * FROM lessons WHERE id=?').get(id);
   const locks = id => sql.prepare('SELECT COUNT(*) AS n FROM slot_locks WHERE lesson_id=?').get(id).n;
-  return { sql, request, teacherSession, book, lesson, locks, events, network, at, date };
+  return { sql, request, teacherSession, book, lesson, locks, events, network, at, date, modules };
 }
+
+test('parseSdkKey принимает Base64 SDK key и отклоняет повреждённые данные', () => {
+  const sdkKey = { projectId: 'project-id', key: { kid: 'key-id', crv: 'P-384', d: 'private' } };
+  const encoded = Buffer.from(JSON.stringify(sdkKey)).toString('base64');
+  assert.deepEqual(JSON.parse(JSON.stringify(setup().modules['@/lib/salutejazz'].parseSdkKey(encoded))), sdkKey);
+  assert.throws(() => setup().modules['@/lib/salutejazz'].parseSdkKey('not a key'), /SDK key is invalid/);
+});
+
+test('SaluteJazz кеширует access token и не запрашивает его для каждой комнаты', async () => {
+  const keys = await crypto.subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, true, ['sign', 'verify']);
+  const jwk = { ...await crypto.subtle.exportKey('jwk', keys.privateKey), kid: 'fixture-key' };
+  const sdkKey = Buffer.from(JSON.stringify({ projectId: 'fixture-project', key: jwk })).toString('base64');
+  let logins = 0;
+  let rooms = 0;
+  const saluteFetch = async url => {
+    if (new URL(url).pathname === '/v1/auth/login') {
+      logins++;
+      return Response.json({ token: 'cached-token' });
+    }
+    rooms++;
+    return Response.json({ roomId: 'room-' + rooms, roomUrl: 'https://meeting.salutejazz.ru/room-' + rooms });
+  };
+  const loaded = { exports: {} };
+  runInNewContext(sources.find(([name]) => name === '@/lib/salutejazz')[1], {
+    module: loaded, exports: loaded.exports, fetch: saluteFetch, crypto, URL,
+    TextEncoder, TextDecoder, AbortSignal, btoa, atob,
+  });
+  await loaded.exports.createSaluteJazzRoom('one', { SALUTEJAZZ_SDK_KEY: sdkKey });
+  await loaded.exports.createSaluteJazzRoom('two', { SALUTEJAZZ_SDK_KEY: sdkKey });
+  assert.equal(logins, 1);
+  assert.equal(rooms, 2);
+});
+
+test('normalizeSchedule переводит старый формат дней и часов в недельные интервалы', () => {
+  const normalized = setup().modules['@/lib/server'].normalizeSchedule({
+    days: [1, 4], from: '10:00', to: '16:30', meetUrl: 'https://example.test/call', availabilityCalendarIds: ['work'],
+  });
+  assert.deepEqual(JSON.parse(JSON.stringify(normalized.weeklyAvailability)), {
+    1: [{ from: '10:00', to: '16:30' }], 4: [{ from: '10:00', to: '16:30' }],
+  });
+  assert.deepEqual(JSON.parse(JSON.stringify(normalized.days)), [1, 4]);
+  assert.equal(normalized.timezone, 'Europe/Moscow');
+  assert.equal(normalized.availabilityCalendarIds[0], 'work');
+});
 
 test('Миграция сохраняет старые записи и блокирует новый дубль в другом формате', async () => {
   const qa = setup(sql => {

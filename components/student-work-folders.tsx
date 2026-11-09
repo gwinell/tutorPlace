@@ -3,7 +3,7 @@
 import {useState} from 'react';
 import {ArrowLeft,BarChart3,Check,ChevronDown,FileCode2,FolderOpen,MessageSquare} from 'lucide-react';
 import {Button,Empty,Tag} from './site-ui';
-import {Assignment,Submission,User,dateLabel} from '@/lib/domain';
+import {Assignment,Submission,User,dateLabel,resultStatus} from '@/lib/domain';
 
 type Props={
  submissions:Submission[];
@@ -13,11 +13,6 @@ type Props={
  busy?:boolean;
  onReview?:(submission:Submission,status:'passed'|'needs_work',feedback:string)=>Promise<void>;
 };
-
-function resultStatus(submission:Submission){
- try{return JSON.parse(submission.result).status as string;}
- catch{return 'unknown';}
-}
 
 function statusLabel(status:string){
  if(status==='passed')return {label:'Выполнено',color:'green' as const};
