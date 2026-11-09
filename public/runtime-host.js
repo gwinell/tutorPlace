@@ -2,8 +2,9 @@
 (function(){
 
   let worker=null;
-  const channel=window.CT_CHANNEL||new URL(document.currentScript.src).searchParams.get('channel');
-  const send=(data)=>parent.postMessage(Object.assign({},data,{ctRuntime:true,channel}),'*');
+  const defaultChannel=window.CT_CHANNEL||new URL(document.currentScript.src).searchParams.get('channel');
+  let activeChannel=defaultChannel;
+  const send=(data)=>parent.postMessage(Object.assign({},data,{ctRuntime:true,channel:activeChannel}),'*');
   const origin=window.CT_ORIGIN||'';
   function workerMain(){
     let python=null,luaReady=false;
@@ -38,6 +39,6 @@
     };
   }
   function ensure(){if(worker)return;const source='('+workerMain.toString()+')();';const url=URL.createObjectURL(new Blob([source],{type:'text/javascript'}));worker=new Worker(url);URL.revokeObjectURL(url);worker.onmessage=e=>send(e.data);worker.onerror=e=>send({type:'error',text:e.message||'Среда выполнения недоступна. Проверь подключение к интернету.'});}
-  window.addEventListener('message',e=>{if(e.source!==parent)return;const d=e.data;if(d.command==='init')send({type:'ready'});if(d.command==='stop'){worker?.terminate();worker=null;send({type:'done'});}if(d.command==='run'){ensure();worker.postMessage({code:d.code,language:d.language,inputs:d.inputs||[],origin,luaSource:window.CT_LUA_SOURCE});}});
+  window.addEventListener('message',e=>{if(e.source!==parent)return;const d=e.data;if(d.command==='init')send({type:'ready'});if(d.command==='stop'){activeChannel=d.channel||activeChannel;worker?.terminate();worker=null;send({type:'done'});}if(d.command==='run'){activeChannel=d.channel||defaultChannel;ensure();worker.postMessage({code:d.code,language:d.language,inputs:d.inputs||[],origin,luaSource:window.CT_LUA_SOURCE});}});
   send({type:'ready'});
 })();
