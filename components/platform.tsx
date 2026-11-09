@@ -118,9 +118,10 @@ function Calendar({now,lessons,assignments,submissions,teacher,onCancel,onResche
 const [month,setMonth]=useState(()=>new Date()),[selected,setSelected]=useState<number|null>(null);
 const year=month.getFullYear(),m=month.getMonth(),days=new Date(year,m+1,0).getDate(),offset=(new Date(year,m,1).getDay()+6)%7;
 const visibleMonth=monthKey(new Date(year,m,15));
-const monthLessons=useMemo(()=>lessons.filter(l=>monthKey(l.start)===visibleMonth),[lessons,visibleMonth]);
-const lessonsByDay=useMemo(()=>{const grouped=new Map<number,Lesson[]>();for(const lesson of monthLessons){const day=Number(dateLabel(lesson.start,{day:'numeric'}));const group=grouped.get(day)||[];group.push(lesson);grouped.set(day,group);}return grouped;},[monthLessons]);
-const list=useMemo(()=>monthLessons.filter(l=>selected===null||Number(dateLabel(l.start,{day:'numeric'}))===selected).sort((a,b)=>a.start.localeCompare(b.start)),[monthLessons,selected]);
+const monthLessons=lessons.filter(lesson=>monthKey(lesson.start)===visibleMonth);
+const lessonsByDay=new Map<number,Lesson[]>();
+for(const lesson of monthLessons){const day=Number(dateLabel(lesson.start,{day:'numeric'}));const group=lessonsByDay.get(day)||[];group.push(lesson);lessonsByDay.set(day,group);}
+const list=monthLessons.filter(lesson=>selected===null||Number(dateLabel(lesson.start,{day:'numeric'}))===selected).sort((a,b)=>a.start.localeCompare(b.start));
 const todayKey=dateKeyInTimeZone(new Date(now));
 const homeworkByLesson=useMemo(()=>{
  const assignmentsByLesson=new Map<string,Assignment[]>();
