@@ -2,12 +2,24 @@ import handler from "vinext/server/fetch-handler";
 import { runWithConnectorBinding } from "../lib/connector-context";
 import { calendar, calendarConfigured, cleanup, db, eventPath } from "../lib/server";
 import { confirmLessonMove } from "../lib/lesson-move";
+import { disableSaluteJazzRoom } from "../lib/salutejazz";
 import type { ConnectorBinding } from "../lib/connector-contract.mjs";
 
 async function maintain(environment: Cloudflare.Env) {
   const serverEnv = environment as unknown as Record<string, any>;
   await cleanup(serverEnv);
   const database = db(serverEnv);
+  const closeJazzRoom = async (lesson: Record<string, any>) => {
+    if (!lesson.jazz_room_id) return true;
+    try {
+      await disableSaluteJazzRoom(lesson.jazz_room_id, serverEnv);
+      await database.prepare("UPDATE lessons SET jazz_room_id=NULL WHERE id=? AND jazz_room_id=?").bind(lesson.id, lesson.jazz_room_id).run();
+      return true;
+    } catch (error) {
+      console.error("SaluteJazz room cleanup:", lesson.id, error instanceof Error ? error.message : "Unknown error");
+      return false;
+    }
+  };
   const cutoff = new Date(Date.now() - 5 * 60_000).toISOString();
   const stale = await database.prepare("SELECT * FROM lessons WHERE status IN ('pending','updating','completing') AND operation_started_at IS NOT NULL AND operation_started_at<?").bind(cutoff).all<Record<string, any>>();
   for (const lesson of stale.results) {
@@ -22,7 +34,7 @@ async function maintain(environment: Cloudflare.Env) {
       }
       if (!calendarConfigured(serverEnv)) continue;
       if (!lesson.event_id) {
-        if (lesson.status === "pending") await database.batch([
+        if (lesson.status === "pending" && await closeJazzRoom(lesson)) await database.batch([
           database.prepare("DELETE FROM slot_locks WHERE lesson_id=?").bind(lesson.id),
           database.prepare("DELETE FROM lessons WHERE id=? AND status='pending' AND operation_started_at<?").bind(lesson.id, cutoff),
         ]);
@@ -38,7 +50,7 @@ async function maintain(environment: Cloudflare.Env) {
         const event = await calendar(eventPath(lesson.event_id, serverEnv), 'GET', undefined, {}, serverEnv) as any;
         const matches = event && event.status !== "cancelled" && Date.parse(event.start?.dateTime || "") === Date.parse(lesson.start) && Date.parse(event.end?.dateTime || "") === Date.parse(lesson.end);
         if (matches) await database.prepare("UPDATE lessons SET status='scheduled',operation_started_at=NULL WHERE id=? AND status='pending'").bind(lesson.id).run();
-        else if (!event || event.status === "cancelled") await database.batch([
+        else if ((!event || event.status === "cancelled") && await closeJazzRoom(lesson)) await database.batch([
           database.prepare("DELETE FROM slot_locks WHERE lesson_id=?").bind(lesson.id),
           database.prepare("DELETE FROM lessons WHERE id=? AND status='pending' AND operation_started_at<?").bind(lesson.id, cutoff),
         ]);
@@ -68,6 +80,9 @@ async function maintain(environment: Cloudflare.Env) {
       console.error("codeTogether maintenance recovery:", lesson.id, error instanceof Error ? error.message : "Unknown error");
     }
   }
+  const expiredAt = new Date(Date.now() - 30 * 60_000).toISOString();
+  const roomsToClose = await database.prepare("SELECT id,jazz_room_id FROM lessons WHERE jazz_room_id IS NOT NULL AND (status IN ('cancelled','completed') OR (status='scheduled' AND end<?))").bind(expiredAt).all<Record<string, any>>();
+  for (const lesson of roomsToClose.results) await closeJazzRoom(lesson);
 }
 
 const worker = {

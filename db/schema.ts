@@ -11,7 +11,7 @@ export const settings = sqliteTable('settings', { key: text('key').primaryKey(),
 export const lessons = sqliteTable('lessons', {
   id: text('id').primaryKey(), studentId: text('student_id'), name: text('name').notNull(), phone: text('phone'),
   start: text('start').notNull(), end: text('end').notNull(), type: text('type').notNull(), status: text('status').notNull(),
-  eventId: text('event_id'), meetUrl: text('meet_url'), topic: text('topic'), cancelledAt: text('cancelled_at'), charged: integer('charged').default(0),
+  eventId: text('event_id'), meetUrl: text('meet_url'), jazzRoomId: text('jazz_room_id'), topic: text('topic'), cancelledAt: text('cancelled_at'), charged: integer('charged').default(0),
   trialPhone: text('trial_phone'), operationStartedAt: text('operation_started_at'),
   privacyConsentAt: text('privacy_consent_at'), privacyPolicyVersion: text('privacy_policy_version'),
   moveId: text('move_id'), moveStart: text('move_start'), moveEnd: text('move_end'),

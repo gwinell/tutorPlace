@@ -18,6 +18,7 @@ React 19, TypeScript, Vinext, Cloudflare Worker/D1, Yjs, Pyodide и Fengari.
     node --import ./scripts/sites-env.mjs node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0004_course_and_personal_assignments.sql
     node --import ./scripts/sites-env.mjs node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0005_recover_stale_operations.sql
     node --import ./scripts/sites-env.mjs node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0006_trial_privacy_consent.sql
+    node --import ./scripts/sites-env.mjs node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0007_flimsy_gladiator.sql
     npm run dev -- --port 5173
 
 Адрес: http://127.0.0.1:5173/. Локальная D1 хранится отдельно от production-базы.
@@ -58,6 +59,7 @@ React 19, TypeScript, Vinext, Cloudflare Worker/D1, Yjs, Pyodide и Fengari.
 
 - `ADMIN_LOGIN` и `ADMIN_PASSWORD` — для первого входа репетитора; после первого успешного входа `ADMIN_PASSWORD` можно удалить;
 - `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REFRESH_TOKEN`, `GOOGLE_CALENDAR_ID` — для пробной записи и синхронизации уроков;
+- `SALUTEJAZZ_SDK_KEY` — если нужна отдельная автоматически создаваемая видеокомната для каждого нового урока;
    - Дополнительный сервис запуска кода не требуется: проверку кодовых заданий выполняет репетитор вручную.
 
 Значения для локальной разработки можно скопировать из `.dev.vars.example` в `.dev.vars`. Настоящие `.dev.vars` и `.env` уже исключены из Git.
@@ -81,11 +83,26 @@ React 19, TypeScript, Vinext, Cloudflare Worker/D1, Yjs, Pyodide и Fengari.
 - GOOGLE_REFRESH_TOKEN
 - GOOGLE_CALENDAR_ID (ID календаря или primary).
 
-В Google Cloud включить Calendar API, создать OAuth client, получить согласие своего аккаунта с access_type=offline на scopes https://www.googleapis.com/auth/calendar.events и https://www.googleapis.com/auth/calendar.events.freebusy. Сохранить refresh token только на сервере. Настроить статус и доступ OAuth-приложения, чтобы токен не истёк после тестового периода.
+В Google Cloud включить Calendar API, создать OAuth client, получить согласие своего аккаунта с `access_type=offline` на минимальные scopes `https://www.googleapis.com/auth/calendar.events.owned` (создание и изменение событий в календаре, куда добавляются уроки), `https://www.googleapis.com/auth/calendar.events.freebusy` (проверка занятости выбранных календарей) и `https://www.googleapis.com/auth/calendar.calendarlist.readonly` (показ названий календарей в настройках). Если OAuth уже был подключён, повторно выдай согласие с этими разрешениями и замени серверный `GOOGLE_REFRESH_TOKEN`. Хранить refresh token только в секретах Worker. Для внешнего OAuth-приложения в статусе Testing refresh token истекает через 7 дней; перед постоянной работой проверь правила публикации приложения и срок действия токена.
 
 [Официальный OAuth offline flow](https://developers.google.com/identity/protocols/oauth2/web-server#offline), [Calendar freeBusy](https://developers.google.com/workspace/calendar/api/v3/reference/freebusy/query), [Calendar events](https://developers.google.com/workspace/calendar/api/v3/reference/events).
 
-В кабинете репетитора выбрать рабочие дни и часы по Москве, добавить ссылку на созвоны. Пока календарь или рабочие часы не настроены, реальные окна не показываются. Демонстрационные окна отделены от реальных.
+В кабинете репетитора задаются отдельные интервалы по каждому дню недели и разовые исключения по датам. В настройках выбирается календарь «Работа» (или другой доступный календарь); его занятые интервалы объединяются с календарём, куда сайт записывает уроки. Уроки создаются только при совпадении с расписанием и отсутствии конфликтов во всех выбранных календарях. Часовой пояс — Москва. Демонстрационные окна отделены от реальных.
+
+### SaluteJazz
+
+Чтобы новые бронирования автоматически получали видеокомнату, создай проект SaluteJazz SDK и выпусти SDK key в [SaluteJazz Studio](https://developers.sber.ru/docs/ru/jazz/sdk/sdk-key). Ключ содержит приватный ключ подписи: храни его только в серверных секретах.
+
+- Локально добавь `SALUTEJAZZ_SDK_KEY` в `.dev.vars` и перезапусти Worker.
+- В Cloudflare Workers открой **Settings → Variables and Secrets → Add → Secret** и задай `SALUTEJAZZ_SDK_KEY`. Через Wrangler после `npm run build` можно выполнить `npx wrangler secret put SALUTEJAZZ_SDK_KEY --config dist/server/wrangler.json`.
+
+Worker подписывает краткоживущий транспортный JWT, получает access token и создаёт комнату SaluteJazz. Ссылка записывается в урок и в поле места события Google Calendar. Если секрет не задан, сохраняется прежняя общая ссылка из расписания. Комнаты отключаются при отмене или завершении урока; фоновая задача повторяет очистку после временных ошибок и закрывает комнаты завершившихся уроков.
+
+Доступное число параллельных конференций зависит от лицензии и тарифа SaluteJazz; учитывай его при выборе SDK-проекта.
+
+После добавления секрета проверь статус **SaluteJazz** во вкладке настроек кабинета репетитора и создай тестовую запись. Новая ссылка появится только у новых бронирований. Существующие уроки не меняются.
+
+Официальные инструкции: [выпуск SDK key](https://developers.sber.ru/docs/ru/jazz/sdk/sdk-key), [авторизация API](https://developers.sber.ru/docs/ru/jazz/api/authorization), [создание комнаты](https://developers.sber.ru/docs/ru/jazz/api/reference/create-room), [отключение комнаты](https://developers.sber.ru/docs/ru/jazz/api/reference/disable-room).
 
 Бронирование проверяет рабочие часы, Google freeBusy и внутренние записи; атомарно резервирует в D1 все 5-минутные участки урока; создаёт событие Google с детерминированным ID, затем подтверждает запись. При однозначной ошибке резерв снимается. При неопределённом результате внешнего запроса время удерживается до проверки репетитором, чтобы не допустить двойную запись.
 
@@ -97,7 +114,7 @@ React 19, TypeScript, Vinext, Cloudflare Worker/D1, Yjs, Pyodide и Fengari.
 
 Обычный урок списывается при отметке репетитора «Завершить урок». Будущие уроки резервируют доступный баланс. Онлайн-платежей нет.
 
-Google Calendar и D1 не имеют общей транзакции. После аварийного прерывания между внешним запросом и записью в D1 нужна сверка по ID события; фоновый reconciler пока не настроен. Прямые правки в Google учитываются в занятости новых окон, но не импортируются автоматически в существующие карточки уроков.
+Google Calendar и D1 не имеют общей транзакции. Фоновая задача сверяет незавершённые операции по ID события каждые пять минут. Прямые правки в Google учитываются в занятости новых окон, но не импортируются автоматически в существующие карточки уроков.
 
 Настоящие события при разработке не создавались: доступ к календарю и ваше рабочее расписание не настроены.
 

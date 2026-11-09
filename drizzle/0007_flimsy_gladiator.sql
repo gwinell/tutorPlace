@@ -1,0 +1,1 @@
+ALTER TABLE `lessons` ADD `jazz_room_id` text;

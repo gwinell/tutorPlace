@@ -403,3 +403,118 @@
  .student-work-item-heading h3{font-size:15px}
  .student-work-item-heading>.tag{font-size:11px;padding:4px 6px}
 }
+
+/* Course workspace: a readable roadmap, with management actions kept beside each topic. */
+.materials-toolbar{align-items:center;flex-wrap:wrap}
+.materials-toolbar-actions-wide{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+.materials-action-menus{display:none}
+.materials-layout{grid-template-columns:minmax(300px,320px) minmax(0,1fr);gap:24px}
+.course-outline{position:relative;overflow:visible}
+.course-topic-list{display:grid;grid-template-columns:1fr;gap:4px;padding:12px}
+.course-topic-row{position:relative;display:flex;align-items:center;gap:8px;min-width:0}
+.course-topic-row>.course-topic{flex:1;min-width:0}
+.course-topic{min-height:64px;padding:12px 10px;gap:10px}
+.course-topic strong{line-height:1.5;overflow-wrap:anywhere}
+.topic-index{width:28px;flex-shrink:0;font-variant-numeric:tabular-nums}
+.topic-row-actions{position:relative;display:flex;align-items:center;flex-shrink:0}
+.topic-row-actions>summary{display:flex;align-items:center;justify-content:center;width:40px;height:40px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--muted);cursor:pointer;list-style:none;transition:background-color .15s,border-color .15s,color .15s}
+.topic-row-actions>summary::-webkit-details-marker,.materials-action-menu>summary::-webkit-details-marker{display:none}
+.topic-row-actions>summary:hover,.materials-action-menu>summary:hover{background:var(--surface-2);color:var(--ink)}
+.topic-actions-popover,.materials-action-menu-popover{position:absolute;top:calc(100% + 4px);right:0;z-index:70;display:grid;min-width:220px;padding:4px;border:1px solid var(--border);border-radius:10px;background:var(--surface)}
+.topic-actions-popover>button,.materials-action-menu-popover>button{display:flex;align-items:center;gap:10px;width:100%;min-height:40px;padding:8px 10px;border:0;border-radius:7px;background:transparent;color:var(--ink);text-align:left;font-family:inherit;font-size:14px;font-weight:500;line-height:1.4;cursor:pointer}
+.topic-actions-popover>button:hover,.materials-action-menu-popover>button:hover{background:var(--surface-2)}
+.topic-actions-popover>button:disabled{opacity:.45;cursor:not-allowed}
+.topic-actions-popover>button:focus-visible,.materials-action-menu-popover>button:focus-visible,.topic-row-actions>summary:focus-visible,.materials-action-menu>summary:focus-visible{outline:2px solid var(--purple);outline-offset:2px}
+.course-outline .course-note{margin:4px 12px 12px}
+.materials-toolbar-actions-wide .button{white-space:nowrap}
+
+@media(max-width:1200px){
+ .materials-layout{grid-template-columns:minmax(260px,280px) minmax(0,1fr);gap:20px}
+}
+@media(max-width:1100px){
+ .materials-toolbar{align-items:stretch;flex-direction:column;padding:16px}
+ .course-select{width:100%;min-width:0}
+ .materials-toolbar-actions-wide{display:none}
+ .materials-action-menus{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+ .materials-action-menu{position:relative;min-width:0}
+ .materials-action-menu>summary{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:44px;padding:9px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--ink);font-size:14px;font-weight:550;cursor:pointer;list-style:none;transition:background-color .15s,border-color .15s,color .15s}
+ .materials-action-menu[open]>summary{background:var(--surface-2)}
+ .materials-action-menu-popover{min-width:min(240px,calc(100vw - 32px))}
+ .materials-layout{grid-template-columns:minmax(0,1fr);gap:18px}
+ .course-topic-list{grid-template-columns:1fr;padding:12px}
+ .course-topic-row{align-items:center;flex-wrap:nowrap;padding-bottom:0}
+ .course-topic-row>.course-topic{min-width:0}
+ .topic-row-actions{margin:0}
+ .topic-row-actions>summary{width:44px;height:44px}
+ .course-outline.mobile-collapsed{display:none}
+ .material-back{display:flex;align-items:center;min-height:44px;margin:16px 20px 0}
+}
+@media(max-width:480px){
+ .materials-toolbar{padding:14px}
+ .materials-action-menus{gap:8px}
+ .materials-action-menu>summary{gap:6px;padding:8px 6px;font-size:14px}
+ .course-title{padding:16px}
+ .course-topic-list{padding:9px}
+ .course-topic{min-height:64px;padding:12px 10px;gap:9px}
+ .topic-index{width:25px}
+ .material-back{margin-left:16px;margin-right:16px}
+}
+
+/* Availability editor: a compact weekly planner with explicit one-date exceptions. */
+.availability-editor{display:grid;gap:16px}
+.availability-section{display:grid;gap:14px;padding:18px;border:1px solid var(--border);border-radius:12px;background:var(--surface)}
+.availability-heading{display:flex;align-items:flex-start;gap:12px}
+.availability-icon{display:flex;width:36px;height:36px;flex:0 0 36px;align-items:center;justify-content:center;border-radius:9px;background:var(--lilac);color:var(--purple)}
+.availability-heading h3,.availability-section>h3{margin:1px 0 4px;font-size:16px;font-weight:600;line-height:1.4}
+.availability-heading p{margin:0;color:var(--muted);font-size:13px;line-height:1.55}
+.availability-note{padding:12px;border-radius:8px;background:var(--surface-2);color:var(--muted);font-size:13px;line-height:1.6}
+.availability-calendar-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.availability-calendar{display:flex;min-width:0;align-items:flex-start;gap:10px;padding:11px;border:1px solid var(--border);border-radius:8px;background:var(--bg);cursor:pointer}
+.availability-calendar.is-target{background:var(--surface-2);cursor:default}
+.availability-calendar input,.availability-scope input{width:18px;height:18px;flex:0 0 18px;margin:2px 0 0;accent-color:var(--purple)}
+.availability-calendar>span,.availability-scope label>span{display:grid;min-width:0;gap:3px}
+.availability-calendar strong{overflow-wrap:anywhere;font-size:14px;font-weight:550}
+.availability-calendar small,.availability-scope small{color:var(--muted);font-size:12px;line-height:1.4}
+.availability-week{display:grid;gap:0}
+.availability-day{display:grid;grid-template-columns:minmax(145px,180px) minmax(0,1fr);align-items:start;gap:12px;padding:12px 0;border-top:1px solid var(--border)}
+.availability-day-label{display:grid;gap:3px;padding-top:9px}
+.availability-day-label strong{font-size:14px;font-weight:550}
+.availability-day-label small{color:var(--muted);font-size:12px}
+.availability-day.is-off .availability-day-label strong{color:var(--muted);font-weight:450}
+.availability-ranges{display:grid;gap:7px;min-width:0}
+.availability-range{display:grid;grid-template-columns:minmax(78px,110px) 12px minmax(78px,110px) 44px;align-items:center;gap:8px;max-width:360px}
+.availability-range>span{text-align:center;color:var(--muted)}
+.availability-range input{width:100%;min-width:0;min-height:40px;padding:7px 8px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit;font-size:14px;font-variant-numeric:tabular-nums}
+.availability-remove{display:flex;width:44px;height:44px;align-items:center;justify-content:center;border:1px solid transparent;border-radius:8px;background:transparent;color:var(--muted);cursor:pointer}
+.availability-remove:hover{border-color:var(--border);background:var(--surface-2);color:var(--ink)}
+.availability-add,.availability-text-button,.availability-close-date{display:inline-flex;min-height:40px;align-items:center;justify-content:center;gap:7px;width:max-content;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--ink);font:inherit;font-size:13px;cursor:pointer}
+.availability-add{color:var(--purple)}
+.availability-add:disabled{opacity:.45;cursor:not-allowed}
+.availability-add:hover,.availability-text-button:hover{background:var(--surface-2)}
+.availability-date-field{max-width:280px;margin:0}
+.availability-scope{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.availability-scope label{display:flex;min-width:0;align-items:flex-start;gap:10px;padding:12px;border:1px solid var(--border);border-radius:8px;background:var(--bg);cursor:pointer}
+.availability-scope label:has(input:checked){border-color:var(--purple);background:var(--lilac-2)}
+.availability-scope strong{font-size:14px;font-weight:550}
+.availability-effective{margin:0;color:var(--muted);font-size:13px;line-height:1.5}
+.date-ranges{padding-top:12px;border-top:1px solid var(--border)}
+.availability-date-actions{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.availability-text-button{border-color:transparent;color:var(--muted)}
+.availability-close-date{color:var(--red)}
+.availability-exceptions{display:grid;gap:7px;padding-top:12px;border-top:1px solid var(--border)}
+.availability-exceptions h4{margin:0 0 2px;font-size:14px;font-weight:550}
+.availability-exceptions>button{display:flex;min-height:40px;align-items:center;justify-content:space-between;gap:12px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--ink);text-align:left;cursor:pointer}
+.availability-exceptions>button:hover{background:var(--surface-2)}
+.availability-exceptions>button small{color:var(--muted);font-size:12px;text-align:right}
+.availability-link-setting{margin-top:4px}
+.availability-link-setting .field{margin:8px 0 0}
+@media(max-width:760px){
+ .availability-section{padding:14px}
+ .availability-calendar-list{grid-template-columns:1fr}
+ .availability-day{grid-template-columns:1fr;gap:7px;padding:11px 0}
+ .availability-day-label{padding-top:0}
+ .availability-range{grid-template-columns:minmax(0,1fr) 12px minmax(0,1fr) 44px;max-width:none}
+ .availability-scope{grid-template-columns:1fr}
+ .availability-exceptions>button{align-items:flex-start;flex-direction:column;gap:4px}
+ .availability-exceptions>button small{text-align:left}
+}

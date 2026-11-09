@@ -1,6 +1,6 @@
 export type Role = 'student' | 'teacher';
 export type User = { id: string; name: string; role: Role; login?: string; age?: number; parent_name?: string; phone?: string; parent_phone?: string; balance: number };
-export type Lesson = { id: string; student_id?: string; name: string; start: string; end: string; type: string; status: string; meet_url?: string; topic?: string; cancelled_at?: string; charged?: number; homework?: string; move_id?: string | null; move_start?: string | null; operation_started_at?: string | null; privacy_consent_at?: string | null; privacy_policy_version?: string | null };
+export type Lesson = { id: string; student_id?: string; name: string; start: string; end: string; type: string; status: string; meet_url?: string; jazz_room_id?: string | null; topic?: string; cancelled_at?: string; charged?: number; homework?: string; move_id?: string | null; move_start?: string | null; operation_started_at?: string | null; privacy_consent_at?: string | null; privacy_policy_version?: string | null };
 export type Course = { id: string; title: string; description?: string; position: number };
 export type CourseEnrollment = { course_id: string; student_id: string };
 export type Topic = { id: string; course_id: string; title: string; description: string; content: string; format: string; colab_url?: string; locked?: boolean | number; position?: number };
@@ -8,7 +8,17 @@ export type Assignment = { id: string; topic_id?: string | null; student_id?: st
 export type Submission = { id: string; assignment_id: string; student_id: string; content: string; result: string; created_at: string; feedback?: string; feedback_at?: string };
 export type Room = { id: string; student_id: string; name: string; language: string; student_code: string; teacher_code: string; student_state?:string;teacher_state?:string; revision: number; last_active: number };
 export type Notice = { id: string; title: string; body: string; created_at: string; read?: number };
-export type Schedule = { days: number[]; from: string; to: string; timezone: string; meetUrl: string };
+export type AvailabilityWindow = { from: string; to: string };
+export type Schedule = {
+  days: number[];
+  from: string;
+  to: string;
+  timezone: string;
+  meetUrl: string;
+  weeklyAvailability?: Record<number, AvailabilityWindow[]>;
+  dateOverrides?: Record<string, AvailabilityWindow[]>;
+  availabilityCalendarIds?: string[];
+};
 export const DEFAULT_SCHEDULE: Schedule = { days: [], from: '14:00', to: '20:00', timezone: 'Europe/Moscow', meetUrl: '' };
 export const PRICES = [{count:1,total:1000,each:1000},{count:4,total:3800,each:950},{count:8,total:7200,each:900},{count:12,total:10200,each:850}];
 export const dateLabel = (value: string, options?: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat('ru-RU', { timeZone:'Europe/Moscow', ...options }).format(new Date(value));
@@ -22,15 +32,23 @@ export function overlaps(start: string, end: string, otherStart: string, otherEn
 export function createSlots(date: string, minutes: number, schedule: Schedule, busy: {start:string;end:string}[], now=Date.now()) {
   if(!/^\d{4}-\d{2}-\d{2}$/.test(date)) return [];
   const weekday = new Date(date+'T12:00:00+03:00').getUTCDay();
-  if(!schedule.days.includes(weekday)) return [];
-  const start = new Date(date+'T'+schedule.from+':00+03:00').getTime();
-  const end = new Date(date+'T'+schedule.to+':00+03:00').getTime();
-  const slots: {start:string;end:string}[]=[];
-  for(let n=start;n+minutes*60000<=end;n+=30*60000){
-    const slot={start:new Date(n).toISOString(),end:new Date(n+minutes*60000).toISOString()};
-    if(n>now && !busy.some(b=>overlaps(slot.start,slot.end,b.start,b.end))) slots.push(slot);
+  const overrides=schedule.dateOverrides||{};
+  const ranges=Object.prototype.hasOwnProperty.call(overrides,date)
+    ?overrides[date]
+    :schedule.weeklyAvailability
+      ?schedule.weeklyAvailability[weekday]||[]
+      :schedule.days.includes(weekday)?[{from:schedule.from,to:schedule.to}]:[];
+  const slots=new Map<string,{start:string;end:string}>();
+  for(const range of ranges){
+    if(!/^\d{2}:\d{2}$/.test(range.from)||!/^\d{2}:\d{2}$/.test(range.to)||range.from>=range.to)continue;
+    const start=new Date(date+'T'+range.from+':00+03:00').getTime();
+    const end=new Date(date+'T'+range.to+':00+03:00').getTime();
+    for(let n=start;n+minutes*60000<=end;n+=30*60000){
+      const slot={start:new Date(n).toISOString(),end:new Date(n+minutes*60000).toISOString()};
+      if(n>now&&!busy.some(b=>overlaps(slot.start,slot.end,b.start,b.end)))slots.set(slot.start,slot);
+    }
   }
-  return slots;
+  return [...slots.values()].sort((a,b)=>a.start.localeCompare(b.start));
 }
 export const PYTHON_START = '# Твоя первая программа\nname = input("Как тебя зовут? ")\nprint(f"Привет, {name}! Давай программировать вместе.")\n';
 export const TEACHER_START = '# Разберём решение вместе\ndef greet(name):\n    return f"Привет, {name}!"\n\nprint(greet("мир"))\n';
