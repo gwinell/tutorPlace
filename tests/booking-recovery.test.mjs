@@ -102,7 +102,14 @@ function setup(beforeRecovery = () => {}) {
     return Response.json(event);
   };
 
-  const modules = { 'cloudflare:workers': { env } };
+  const modules = {
+    'cloudflare:workers': { env },
+    '@/lib/salutejazz': {
+      saluteJazzConfigured: () => false,
+      createSaluteJazzRoom: async () => { throw new Error('SaluteJazz is disabled in booking tests'); },
+      disableSaluteJazzRoom: async () => {},
+    },
+  };
   for (const [name, source] of sources) {
     const loaded = { exports: {} };
     runInNewContext(source, {
