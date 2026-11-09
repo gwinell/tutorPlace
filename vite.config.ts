@@ -37,6 +37,7 @@ const localBindingConfig = {
   routes: cloudflareCustomDomain
     ? [{ pattern: cloudflareCustomDomain, custom_domain: true }]
     : [],
+  triggers: { crons: ["*/5 * * * *"] },
   r2_buckets: r2
     ? [
         {

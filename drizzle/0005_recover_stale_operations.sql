@@ -1,0 +1,1 @@
+ALTER TABLE `lessons` ADD `operation_started_at` text;

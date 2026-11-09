@@ -1,0 +1,11 @@
+'use client';
+import {useState} from 'react';
+import {ArrowLeft,Check,ClipboardCheck,FileCode2} from 'lucide-react';
+import {Button,Empty,Tag} from './site-ui';
+import {Assignment,Submission,User,dateLabel} from '@/lib/domain';
+
+export default function ReviewQueue({submissions,assignments,students,busy,onReview}:{submissions:Submission[];assignments:Assignment[];students:User[];busy:boolean;onReview:(submission:Submission,status:'passed'|'needs_work',feedback:string)=>Promise<void>}){
+ const [feedback,setFeedback]=useState<Record<string,string>>({});
+ if(!submissions.length)return <Empty title="Очередь пуста" icon={ClipboardCheck}>Когда ученик отправит текстовый ответ или код, работа появится здесь.</Empty>;
+ return <div className="results-list review-queue">{submissions.slice().sort((a,b)=>b.created_at.localeCompare(a.created_at)).map(s=>{const assignment=assignments.find(a=>a.id===s.assignment_id),student=students.find(u=>u.id===s.student_id);return <article className="result-card" key={s.id}><div className="review-card-heading"><div><span className="eyebrow"><FileCode2 size={13}/>{assignment?.kind==='code'?'Код на проверку':'Ответ на задание'}</span><h3>{assignment?.title||'Задание'}</h3><p>{student?.name||'Ученик'} · {dateLabel(s.created_at,{day:'numeric',month:'long',hour:'2-digit',minute:'2-digit'})}</p></div><Tag color="amber">Ожидает проверки</Tag></div>{assignment?.prompt&&<p className="review-prompt">{assignment.prompt}</p>}<pre className={assignment?.kind==='code'?'submitted-code':''}>{s.content}</pre><div className="review-actions"><textarea placeholder="Комментарий ученику: что получилось, что поправить…" value={feedback[s.id]||''} onChange={e=>setFeedback(f=>({...f,[s.id]:e.target.value}))} maxLength={2000} aria-label="Комментарий к работе"/><div className="review-actions-row"><Button className="button-small button-outline" disabled={busy||!(feedback[s.id]||'').trim()} onClick={async()=>{await onReview(s,'needs_work',feedback[s.id]||'');setFeedback(f=>({...f,[s.id]:''}));}}><ArrowLeft size={15}/>Вернуть на доработку</Button><Button className="button-small" loading={busy} onClick={async()=>{await onReview(s,'passed',feedback[s.id]||'');setFeedback(f=>({...f,[s.id]:''}));}}><Check size={15}/>Принять работу</Button></div></div></article>;})}</div>;
+}

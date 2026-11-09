@@ -29,6 +29,27 @@
       "when": 1794089197235,
       "tag": "0003_booking_recovery",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1794210867128,
+      "tag": "0004_course_and_personal_assignments",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1794213166776,
+      "tag": "0005_recover_stale_operations",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1794215059693,
+      "tag": "0006_trial_privacy_consent",
+      "breakpoints": true
     }
   ]
 }

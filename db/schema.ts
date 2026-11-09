@@ -1,4 +1,5 @@
-import { sqliteTable, text, integer, index, uniqueIndex } from 'drizzle-orm/sqlite-core';
+import { sqliteTable, text, integer, index, uniqueIndex, check } from 'drizzle-orm/sqlite-core';
+import { sql } from 'drizzle-orm';
 
 export const users = sqliteTable('users', {
   id: text('id').primaryKey(), login: text('login').notNull().unique(), password: text('password').notNull(),
@@ -11,7 +12,8 @@ export const lessons = sqliteTable('lessons', {
   id: text('id').primaryKey(), studentId: text('student_id'), name: text('name').notNull(), phone: text('phone'),
   start: text('start').notNull(), end: text('end').notNull(), type: text('type').notNull(), status: text('status').notNull(),
   eventId: text('event_id'), meetUrl: text('meet_url'), topic: text('topic'), cancelledAt: text('cancelled_at'), charged: integer('charged').default(0),
-  trialPhone: text('trial_phone'),
+  trialPhone: text('trial_phone'), operationStartedAt: text('operation_started_at'),
+  privacyConsentAt: text('privacy_consent_at'), privacyPolicyVersion: text('privacy_policy_version'),
   moveId: text('move_id'), moveStart: text('move_start'), moveEnd: text('move_end'),
 }, t => [index('lessons_trial_phone_idx').on(t.trialPhone)]);
 export const trialBookingLimits = sqliteTable('trial_booking_limits', {
@@ -20,15 +22,22 @@ export const trialBookingLimits = sqliteTable('trial_booking_limits', {
   attempts: integer('attempts').notNull(),
 });
 export const slotLocks = sqliteTable('slot_locks', { slot: text('slot').primaryKey(), lessonId: text('lesson_id').notNull() });
+export const courses = sqliteTable('courses', {
+  id: text('id').primaryKey(), title: text('title').notNull(), description: text('description'),
+  position: integer('position').default(0).notNull(),
+});
+export const courseEnrollments = sqliteTable('course_enrollments', {
+  id: text('id').primaryKey(), courseId: text('course_id').notNull(), studentId: text('student_id').notNull(),
+}, t => [uniqueIndex('course_enrollment_unique').on(t.courseId, t.studentId)]);
 export const topics = sqliteTable('topics', {
-  id: text('id').primaryKey(), title: text('title').notNull(), description: text('description'), position: integer('position').default(0),
+  id: text('id').primaryKey(), courseId: text('course_id').notNull(), title: text('title').notNull(), description: text('description'), position: integer('position').default(0),
   content: text('content').notNull(), format: text('format').notNull(), colabUrl: text('colab_url'),
 });
 export const access = sqliteTable('topic_access', { id: text('id').primaryKey(), topicId: text('topic_id').notNull(), studentId: text('student_id').notNull() }, t => [uniqueIndex('access_unique').on(t.topicId, t.studentId)]);
 export const assignments = sqliteTable('assignments', {
-  id: text('id').primaryKey(), topicId: text('topic_id').notNull(), lessonId: text('lesson_id'), title: text('title').notNull(),
+  id: text('id').primaryKey(), topicId: text('topic_id'), studentId: text('student_id'), lessonId: text('lesson_id'), title: text('title').notNull(),
   kind: text('kind').notNull(), prompt: text('prompt').notNull(), options: text('options'), answer: text('answer'), tests: text('tests'),
-});
+}, t => [check('assignment_target_check', sql`(${t.topicId} IS NOT NULL AND ${t.studentId} IS NULL) OR (${t.topicId} IS NULL AND ${t.studentId} IS NOT NULL)`)]);
 export const submissions = sqliteTable('submissions', {
   id: text('id').primaryKey(), assignmentId: text('assignment_id').notNull(), studentId: text('student_id').notNull(),
   content: text('content').notNull(), result: text('result').notNull(), createdAt: text('created_at').notNull(),

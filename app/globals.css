@@ -203,6 +203,8 @@
   .platform-preview .preview-lesson>.preview-join{grid-column:2;margin-left:0;justify-self:start}
   .platform-preview .preview-lesson p{flex-wrap:wrap}
 }
+.privacy-page{min-height:100vh;background:var(--bg);padding:64px 24px}.privacy-content{max-width:780px;margin:0 auto;padding:48px;background:var(--surface);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow)}.privacy-content>.text-link{margin-bottom:34px}.privacy-content h1{font-size:clamp(32px,5vw,48px);line-height:1.16;margin:0 0 12px}.privacy-content .privacy-updated{color:var(--muted);margin-bottom:38px}.privacy-content h2{font-size:22px;letter-spacing:-.5px;margin:31px 0 10px}.privacy-content p{font-size:16px;line-height:1.85;color:var(--muted);margin:12px 0}.privacy-content .eyebrow{margin:25px 0 12px}.privacy-content .privacy-back{margin-top:34px}.checkbox-label a{color:var(--purple);text-decoration:underline;text-underline-offset:3px}.footer-links>a{font-size:14px;color:var(--muted)}.footer-links>a:hover{color:var(--purple)}
+@media(max-width:640px){.privacy-page{padding:20px 14px}.privacy-content{padding:27px 21px;border-radius:14px}.privacy-content h1{font-size:32px}.privacy-content h2{font-size:20px}.privacy-content p{font-size:15px}}
 @media(max-width:360px){
   .site-header .brand{font-size:16px;gap:5px}
   .site-header .brand-mark{width:24px;height:24px}
@@ -316,4 +318,56 @@
   .calendar-controls strong{font-size:11px}
   .calendar-panel>.panel-title{padding-left:9px;padding-right:9px}
   .calendar-day,.calendar-blank{min-height:50px}
+}
+
+/* Course management, direct assignments, and manual code review */
+.materials-page{display:flex;flex-direction:column;gap:18px;min-width:0}
+.materials-toolbar{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;padding:16px 18px;border:1px solid var(--border);border-radius:12px;background:var(--surface)}
+.course-select{display:flex;flex-direction:column;gap:6px;min-width:min(280px,100%);font-size:13px;font-weight:650;color:var(--muted)}
+.course-select select{min-height:42px;padding:8px 38px 8px 12px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit;font-size:15px}
+.materials-toolbar-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+.materials-toolbar-actions .button{white-space:nowrap}
+.materials-layout{align-items:stretch}
+.course-topic-row{display:flex;align-items:center;gap:4px;min-width:0}
+.course-topic-row>.course-topic{flex:1;min-width:0}
+.topic-row-actions{display:flex;align-items:center;gap:0;flex-shrink:0}
+.topic-row-actions .icon-button{width:31px;height:34px;border-radius:7px;color:var(--muted)}
+.topic-row-actions .icon-button:disabled{opacity:.35}
+.personal-assignment-nav{display:flex;align-items:center;gap:10px;width:calc(100% - 24px);margin:12px;padding:14px 10px;border-radius:8px;text-align:left;background:var(--lilac-2);color:var(--ink)}
+.personal-assignment-nav>span:nth-child(2){display:flex;flex:1;flex-direction:column;gap:3px;min-width:0}
+.personal-assignment-nav strong{font-size:14px}
+.personal-assignment-nav small{font-size:12px;color:var(--muted)}
+.personal-assignment-nav.active{outline:2px solid var(--purple)}
+.nav-badge{display:inline-flex;align-items:center;justify-content:center;margin-left:auto!important;min-width:22px;height:22px;padding:0 6px;border-radius:999px;background:var(--purple);color:#fff!important;font-size:12px!important;font-weight:750;line-height:1}
+.app-sidebar nav>button>span:not(.nav-badge){margin-left:auto;font-size:12px}
+.course-student-list{display:grid;gap:4px;margin:18px 0 8px;padding:13px 15px;border:1px solid var(--border);border-radius:9px}
+.course-student-list legend{display:flex;align-items:center;gap:8px;padding:0 6px;font-size:14px;font-weight:700}
+.course-student-list .checkbox-label{margin:0;padding:9px 3px}
+.review-card-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;width:100%}
+.review-card-heading h3{font-size:18px;margin:7px 0 5px}
+.review-card-heading p{font-size:13px;color:var(--muted)}
+.review-card-heading .eyebrow{display:flex;align-items:center;gap:6px;margin:0}
+.review-card-heading>.tag{flex-shrink:0}
+.review-prompt{width:100%;padding:12px 14px;border-radius:8px;background:var(--surface-2);font-size:14px;line-height:1.7;white-space:pre-wrap;overflow-wrap:anywhere}
+.review-queue .result-card{display:grid;grid-template-columns:1fr;gap:14px}
+.review-queue .result-card pre{width:100%;max-height:360px;overflow:auto;padding:16px;border:1px solid var(--border);border-radius:8px;background:var(--bg);font:14px/1.7 ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre-wrap;overflow-wrap:anywhere}
+.review-queue .result-card pre.submitted-code{tab-size:4}
+@media(max-width:760px){
+ .materials-toolbar{align-items:stretch;flex-direction:column;padding:14px}
+ .course-select{min-width:0;width:100%}
+ .materials-toolbar-actions{justify-content:flex-start}
+ .materials-toolbar-actions .button{flex:1 1 auto}
+ .course-topic-row{align-items:stretch;flex-wrap:wrap;padding-bottom:5px}
+ .course-topic-row>.course-topic{min-width:calc(100% - 120px)}
+ .topic-row-actions{justify-content:flex-end;gap:2px;margin:0 4px 4px auto}
+ .review-card-heading{flex-direction:column;gap:8px}
+ .review-queue .result-card{padding:16px}
+}
+@media(max-width:480px){
+ .materials-toolbar-actions .button{font-size:13px;padding:9px 10px}
+ .topic-row-actions .icon-button{width:30px}
+ .review-actions-row{justify-content:stretch}
+ .review-actions-row .button{flex:1 1 100%;min-height:42px}
+ .review-card-heading h3{font-size:17px}
+ .review-queue .result-card pre{font-size:13px;padding:12px}
 }

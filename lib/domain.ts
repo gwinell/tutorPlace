@@ -1,8 +1,10 @@
 export type Role = 'student' | 'teacher';
 export type User = { id: string; name: string; role: Role; login?: string; age?: number; parent_name?: string; phone?: string; parent_phone?: string; balance: number };
-export type Lesson = { id: string; student_id?: string; name: string; start: string; end: string; type: string; status: string; meet_url?: string; topic?: string; cancelled_at?: string; charged?: number; homework?: string; move_id?: string | null; move_start?: string | null };
-export type Topic = { id: string; title: string; description: string; content: string; format: string; colab_url?: string; locked?: boolean; position?: number };
-export type Assignment = { id: string; topic_id: string; lesson_id?: string; title: string; kind: string; prompt: string; options?: string | string[] };
+export type Lesson = { id: string; student_id?: string; name: string; start: string; end: string; type: string; status: string; meet_url?: string; topic?: string; cancelled_at?: string; charged?: number; homework?: string; move_id?: string | null; move_start?: string | null; operation_started_at?: string | null; privacy_consent_at?: string | null; privacy_policy_version?: string | null };
+export type Course = { id: string; title: string; description?: string; position: number };
+export type CourseEnrollment = { course_id: string; student_id: string };
+export type Topic = { id: string; course_id: string; title: string; description: string; content: string; format: string; colab_url?: string; locked?: boolean | number; position?: number };
+export type Assignment = { id: string; topic_id?: string | null; student_id?: string | null; lesson_id?: string; title: string; kind: string; prompt: string; options?: string | string[] };
 export type Submission = { id: string; assignment_id: string; student_id: string; content: string; result: string; created_at: string; feedback?: string; feedback_at?: string };
 export type Room = { id: string; student_id: string; name: string; language: string; student_code: string; teacher_code: string; student_state?:string;teacher_state?:string; revision: number; last_active: number };
 export type Notice = { id: string; title: string; body: string; created_at: string; read?: number };
