@@ -1,7 +1,7 @@
 'use client';
 import {useState,useEffect,useCallback,useRef,useSyncExternalStore,useMemo} from 'react';
 import type {LucideIcon} from 'lucide-react';
-import {CalendarDays,BookOpen,Code2,Users,Settings,LogOut,ArrowUpRight,Plus,ChevronLeft,ChevronRight,Clock3,Video,Bell,Check,FileCode2,LockKeyhole,ArrowRight,RefreshCw,Info,Menu,X,Wallet,GraduationCap,FolderOpen,CircleCheck,Search,ExternalLink,Download,Send,ClipboardCheck,CalendarPlus,BarChart3} from 'lucide-react';
+import {CalendarDays,BookOpen,Code2,Users,Settings,LogOut,ArrowUpRight,Plus,ChevronLeft,ChevronRight,Clock3,Video,Bell,Check,FileCode2,RefreshCw,Info,Menu,Wallet,GraduationCap,Search,ClipboardCheck,CalendarPlus,BarChart3} from 'lucide-react';
 import {Brand,Button,ThemeToggle,Tag,Empty,Modal,api} from './site-ui';
 import {User,Lesson,Topic,Assignment,Submission,Room,Notice,Schedule,Course,CourseEnrollment,DEFAULT_SCHEDULE,dateLabel,monthKey,dateKeyInTimeZone,cancellationPolicy,canReschedule,resultStatus,topicProgress,downloadIcs} from '@/lib/domain';
 import {demoStudent,demoLessons,demoTopics,demoAssignments,demoRoom,demoCourses,demoCourseEnrollments} from '@/lib/demo';

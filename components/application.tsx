@@ -1,5 +1,5 @@
 'use client';
-import {useState,useEffect,useCallback,lazy,Suspense} from 'react';
+import {useState,useEffect,useCallback,lazy,Suspense,useSyncExternalStore} from 'react';
 import { Check } from 'lucide-react';
 import Marketing from './marketing';
 import Login from './login';
@@ -8,20 +8,38 @@ const Platform=lazy(()=>import('./platform'));
 import {api} from './site-ui';
 import {Role,User} from '@/lib/domain';
 import {demoStudent,demoTeacher} from '@/lib/demo';
+
+function subscribeLocation(listener:()=>void){window.addEventListener('popstate',listener);window.addEventListener('codetogether:navigate',listener);return()=>{window.removeEventListener('popstate',listener);window.removeEventListener('codetogether:navigate',listener);};}
+function locationSnapshot(){return window.location.pathname+window.location.search;}
+function serverLocationSnapshot(){return '/';}
+function replaceLocation(path:string){history.replaceState(null,'',path);window.dispatchEvent(new Event('codetogether:navigate'));}
+function subscribeTheme(listener:()=>void){window.addEventListener('storage',listener);window.addEventListener('codetogether:theme',listener);return()=>{window.removeEventListener('storage',listener);window.removeEventListener('codetogether:theme',listener);};}
+function themeSnapshot(){return localStorage.getItem('ct-theme')==='dark';}
+function serverThemeSnapshot(){return false;}
+
 export default function Application(){
-const [dark,setDark]=useState(false),[user,setUser]=useState<User|null>(null),[demo,setDemo]=useState(false),[view,setView]=useState('home'),[login,setLogin]=useState(false),[booking,setBooking]=useState(false),[toast,setToast]=useState(''),[refresh,setRefresh]=useState(0);
-useEffect(()=>{setDark(localStorage.getItem('ct-theme')==='dark');const q=new URLSearchParams(window.location.search);const d=q.get('demo');if(d==='student'||d==='teacher'){setDemo(true);setUser(d==='student'?demoStudent:demoTeacher);setView('platform');}else api('me').then(d=>{if(d.user){setUser(d.user);if(q.get('view')==='cabinet')setView('platform');}}).catch(()=>{});},[]);
-useEffect(()=>{document.documentElement.dataset.theme=dark?'dark':'light';},[dark]);
-useEffect(()=>{if(!toast)return;const id=setTimeout(()=>setToast(''),4500);return()=>clearTimeout(id);},[toast]);
-const toggle=()=>setDark(d=>{localStorage.setItem('ct-theme',d?'light':'dark');return !d;});
-const openDemo=(role:Role)=>{setDemo(true);setUser(role==='student'?demoStudent:demoTeacher);setView('platform');setLogin(false);history.replaceState(null,'','?demo='+role);window.scrollTo(0,0);};
-const home=()=>{setView('home');history.replaceState(null,'','/');window.scrollTo(0,0);};
-const closeBooking=useCallback(()=>setBooking(false),[]);
-const closeLogin=useCallback(()=>setLogin(false),[]);
-async function logout(){if(!demo)await api('logout','POST');setUser(null);setDemo(false);home();}
-return <>{view==='home'?<Marketing book={()=>setBooking(true)} login={()=>user?setView('platform'):setLogin(true)} dark={dark} toggle={toggle} openDemo={()=>openDemo('student')}/>:user&&<Suspense fallback={<div className="empty-state">Открываем твоё пространство…</div>}><Platform key={demo?'demo-'+user.role:user.id} user={user} demo={demo} dark={dark} toggle={toggle} home={home} logout={logout} notify={setToast} onUser={setUser} refresh={refresh}/></Suspense>}
-{login&&<Login onClose={closeLogin} onLogin={u=>{setUser(u);setDemo(false);setView('platform');setLogin(false);history.replaceState(null,'','?view=cabinet');}} onDemo={openDemo}/>}
-{booking&&<Booking onClose={closeBooking} onBooked={()=>{setRefresh(n=>n+1);}}/>}
-{toast&&<div className="toast" role="status"><Check size={16}/>{toast}</div>}
-</>;
+ const location=useSyncExternalStore(subscribeLocation,locationSnapshot,serverLocationSnapshot);
+ const dark=useSyncExternalStore(subscribeTheme,themeSnapshot,serverThemeSnapshot);
+ const params=new URLSearchParams(location.split('?')[1]||'');
+ const requestedDemo=params.get('demo');
+ const demoRole:Role|null=requestedDemo==='student'||requestedDemo==='teacher'?requestedDemo:null;
+ const demo=demoRole!==null;
+ const cabinetView=params.get('view')==='cabinet';
+ const [user,setUser]=useState<User|null>(null),[view,setView]=useState('home'),[login,setLogin]=useState(false),[booking,setBooking]=useState(false),[toast,setToast]=useState(''),[refresh,setRefresh]=useState(0);
+ const activeUser=demoRole==='student'?demoStudent:demoRole==='teacher'?demoTeacher:user;
+ const platformVisible=demo||view==='platform';
+ useEffect(()=>{if(demo)return;let active=true;void api<{user?:User}>('me').then(result=>{if(active&&result.user){setUser(result.user);if(cabinetView)setView('platform');}}).catch(()=>{});return()=>{active=false;};},[demo,cabinetView,location]);
+ useEffect(()=>{document.documentElement.dataset.theme=dark?'dark':'light';},[dark]);
+ useEffect(()=>{if(!toast)return;const id=setTimeout(()=>setToast(''),4500);return()=>clearTimeout(id);},[toast]);
+ const toggle=()=>{localStorage.setItem('ct-theme',dark?'light':'dark');window.dispatchEvent(new Event('codetogether:theme'));};
+ const openDemo=(role:Role)=>{setView('platform');setLogin(false);replaceLocation('?demo='+role);window.scrollTo(0,0);};
+ const home=()=>{setView('home');replaceLocation('/');window.scrollTo(0,0);};
+ const closeBooking=useCallback(()=>setBooking(false),[]);
+ const closeLogin=useCallback(()=>setLogin(false),[]);
+ async function logout(){if(!demo)await api('logout','POST');setUser(null);home();}
+ return <>{!platformVisible?<Marketing book={()=>setBooking(true)} login={()=>activeUser?setView('platform'):setLogin(true)} dark={dark} toggle={toggle} openDemo={()=>openDemo('student')}/>:activeUser&&<Suspense fallback={<div className="empty-state">Открываем твоё пространство…</div>}><Platform key={demo?'demo-'+activeUser.role:activeUser.id} user={activeUser} demo={demo} dark={dark} toggle={toggle} home={home} logout={logout} notify={setToast} onUser={setUser} refresh={refresh}/></Suspense>}
+ {login&&<Login onClose={closeLogin} onLogin={loggedIn=>{setUser(loggedIn);setView('platform');setLogin(false);replaceLocation('?view=cabinet');}} onDemo={openDemo}/>}
+ {booking&&<Booking onClose={closeBooking} onBooked={()=>setRefresh(n=>n+1)}/>}
+ {toast&&<div className="toast" role="status"><Check size={16}/>{toast}</div>}
+ </>;
 }
