@@ -1,0 +1,61 @@
+name: Deploy to NixOS VPS
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: codetogether-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check for the VPS release build
+        id: release
+        shell: bash
+        run: |
+          if [ -f scripts/build.mjs ] && node -e "process.exit(require('./package.json').scripts?.build === 'node scripts/build.mjs' ? 0 : 1)"; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::VPS deployment is enabled after the Node standalone build is merged to main."
+          fi
+      - uses: actions/setup-node@v4
+        if: steps.release.outputs.ready == 'true'
+        with:
+          node-version: 22
+          cache: npm
+      - if: steps.release.outputs.ready == 'true'
+        run: npm ci
+      - if: steps.release.outputs.ready == 'true'
+        run: npm run build
+      - name: Package standalone release
+        if: steps.release.outputs.ready == 'true'
+        run: tar -czf "codetogether-${GITHUB_SHA}.tar.gz" -C dist/standalone .
+      - name: Install deployment key
+        if: steps.release.outputs.ready == 'true'
+        env:
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VPS_KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/codetogether_deploy
+          printf '%s\n' "$VPS_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/codetogether_deploy ~/.ssh/known_hosts
+      - name: Upload and activate release
+        if: steps.release.outputs.ready == 'true'
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+        run: |
+          archive="codetogether-${GITHUB_SHA}.tar.gz"
+          scp -i ~/.ssh/codetogether_deploy -o BatchMode=yes -o StrictHostKeyChecking=yes "$archive" "$VPS_USER@$VPS_HOST:/tmp/$archive"
+          ssh -i ~/.ssh/codetogether_deploy -o BatchMode=yes -o StrictHostKeyChecking=yes "$VPS_USER@$VPS_HOST" "sudo -n /run/current-system/sw/bin/codetogether-deploy ${GITHUB_SHA}"
