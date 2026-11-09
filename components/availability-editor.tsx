@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { CalendarDays, Clock3, Plus, Trash2 } from 'lucide-react';
+import { CalendarDays, ChevronLeft, ChevronRight, Clock3, Plus, Trash2 } from 'lucide-react';
 import type { AvailabilityWindow, Schedule } from '@/lib/domain';
 
 export type CalendarChoice = { id: string; summary: string; primary: boolean; target: boolean; accessRole: string };
@@ -49,7 +49,9 @@ export default function AvailabilityEditor({
   connected: boolean;
 }) {
   const today = useMemo(() => dateAtMoscow(new Date()), []);
+  const lastDate = useMemo(() => plusDays(today, 365), [today]);
   const [date, setDate] = useState(today);
+  const [calendarMonth, setCalendarMonth] = useState(() => new Date(`${today}T12:00:00+03:00`));
   const [scope, setScope] = useState<'date' | 'weekly'>('date');
   const weekly = value.weeklyAvailability || Object.fromEntries((value.days || []).map(day => [day, [{ from: value.from, to: value.to }]]));
   const overrides = value.dateOverrides || {};
@@ -60,6 +62,20 @@ export default function AvailabilityEditor({
     : dateHasOverride ? overrides[date] : weekly[day] || [];
   const dayName = week.find(item => item.day === day)?.name || 'день';
   const exceptionEntries = Object.entries(overrides).filter(([key]) => key >= today).sort(([a], [b]) => a.localeCompare(b));
+  const monthYear = calendarMonth.getFullYear();
+  const monthIndex = calendarMonth.getMonth();
+  const monthDays = new Date(monthYear, monthIndex + 1, 0).getDate();
+  const monthOffset = (new Date(monthYear, monthIndex, 1).getDay() + 6) % 7;
+
+  function selectDate(nextDate: string) {
+    setDate(nextDate);
+    setScope('date');
+    setCalendarMonth(new Date(`${nextDate}T12:00:00+03:00`));
+  }
+
+  function moveMonth(amount: number) {
+    setCalendarMonth(new Date(monthYear, monthIndex + amount, 1, 12));
+  }
 
   function publish(nextWeekly: Record<number, AvailabilityWindow[]>, nextOverrides: Record<string, AvailabilityWindow[]>, nextCalendars = value.availabilityCalendarIds || []) {
     const days = week.map(item => item.day).filter(item => (nextWeekly[item] || []).length);
@@ -104,6 +120,35 @@ export default function AvailabilityEditor({
   }
 
   return <div className="availability-editor">
+    <section className="availability-section availability-month-section">
+      <div className="availability-heading">
+        <span className="availability-icon"><CalendarDays size={18} /></span>
+        <div><h3>Доступность по датам</h3><p>Выбери день, чтобы посмотреть или изменить часы работы.</p></div>
+      </div>
+      <div className="availability-month-header">
+        <strong>{new Intl.DateTimeFormat('ru-RU', { month: 'long', year: 'numeric' }).format(calendarMonth)}</strong>
+        <div className="availability-month-controls">
+          <button type="button" aria-label="Предыдущий месяц" disabled={`${monthYear}-${String(monthIndex + 1).padStart(2, '0')}` <= today.slice(0, 7)} onClick={() => moveMonth(-1)}><ChevronLeft size={17} /></button>
+          <button type="button" aria-label="Следующий месяц" disabled={`${monthYear}-${String(monthIndex + 1).padStart(2, '0')}` >= lastDate.slice(0, 7)} onClick={() => moveMonth(1)}><ChevronRight size={17} /></button>
+        </div>
+      </div>
+      <div className="availability-month-weekdays">{['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'].map(item => <span key={item}>{item}</span>)}</div>
+      <div className="availability-month-grid">
+        {Array.from({ length: monthOffset }, (_, index) => <span className="availability-month-blank" key={'blank-' + index} />)}
+        {Array.from({ length: monthDays }, (_, index) => {
+          const dayNumber = index + 1;
+          const dayDate = `${monthYear}-${String(monthIndex + 1).padStart(2, '0')}-${String(dayNumber).padStart(2, '0')}`;
+          const dayRanges = own(overrides, dayDate) ? overrides[dayDate] : weekly[weekDay(dayDate)] || [];
+          const isSelected = date === dayDate;
+          const isToday = today === dayDate;
+          return <button type="button" key={dayDate} disabled={dayDate < today || dayDate > lastDate} className={'availability-month-day ' + (isSelected ? 'selected ' : '') + (isToday ? 'today ' : '') + (dayRanges.length ? 'available' : 'closed')} onClick={() => selectDate(dayDate)} aria-pressed={isSelected} aria-label={`${dayNumber} ${new Intl.DateTimeFormat('ru-RU', { month: 'long' }).format(calendarMonth)}, ${dayRanges.length ? rangeSummary(dayRanges) : 'нет доступных часов'}`}>
+            <span>{dayNumber}</span><i />
+          </button>;
+        })}
+      </div>
+      <div className="availability-month-legend"><span><i className="open" />Есть часы</span><span><i className="closed" />Выходной</span><span className="availability-selected-label">Выбрано: <strong>{new Intl.DateTimeFormat('ru-RU', { timeZone: 'Europe/Moscow', day: 'numeric', month: 'long' }).format(new Date(date + 'T12:00:00+03:00'))}</strong></span></div>
+    </section>
+
     <section className="availability-section">
       <div className="availability-heading">
         <span className="availability-icon"><CalendarDays size={18} /></span>
@@ -148,7 +193,7 @@ export default function AvailabilityEditor({
         <span className="availability-icon"><CalendarDays size={18} /></span>
         <div><h3>Изменить отдельную дату</h3><p>Можно закрыть день или задать другие часы, не меняя остальную неделю.</p></div>
       </div>
-      <label className="field availability-date-field"><span>Дата</span><input type="date" min={today} max={plusDays(today, 365)} value={date} onChange={event => { setDate(event.target.value); setScope('date'); }} /></label>
+      <label className="field availability-date-field"><span>Выбранная дата</span><input type="date" min={today} max={lastDate} value={date} onChange={event => selectDate(event.target.value)} /></label>
       <div className="availability-scope" role="radiogroup" aria-label="Область изменения доступности">
         <label><input type="radio" name="availability-scope" checked={scope === 'date'} onChange={() => setScope('date')} /><span><strong>Только {date}</strong><small>Изменить или закрыть эту дату</small></span></label>
         <label><input type="radio" name="availability-scope" checked={scope === 'weekly'} onChange={() => setScope('weekly')} /><span><strong>Каждую неделю</strong><small>Изменить {dayName.toLocaleLowerCase()} во всех неделях</small></span></label>
@@ -166,7 +211,7 @@ export default function AvailabilityEditor({
         {scope === 'date' && dateHasOverride && <button type="button" className="availability-text-button" onClick={removeOverride}>Вернуть недельное расписание</button>}
         <button type="button" className="availability-close-date" onClick={() => updateRanges([])}>{scope === 'date' ? `Закрыть ${date}` : `Убрать ${dayName.toLocaleLowerCase()} каждую неделю`}</button>
       </div>
-      {exceptionEntries.length > 0 && <div className="availability-exceptions"><h4>Даты с отдельными правилами</h4>{exceptionEntries.map(([key, items]) => <button type="button" key={key} onClick={() => { setDate(key); setScope('date'); }}><span>{new Intl.DateTimeFormat('ru-RU', { timeZone: 'Europe/Moscow', day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(key + 'T12:00:00+03:00'))}</span><small>{rangeSummary(items)}</small></button>)}</div>}
+      {exceptionEntries.length > 0 && <div className="availability-exceptions"><h4>Даты с отдельными правилами</h4>{exceptionEntries.map(([key, items]) => <button type="button" key={key} onClick={() => selectDate(key)}><span>{new Intl.DateTimeFormat('ru-RU', { timeZone: 'Europe/Moscow', day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(key + 'T12:00:00+03:00'))}</span><small>{rangeSummary(items)}</small></button>)}</div>}
     </section>
   </div>;
 }

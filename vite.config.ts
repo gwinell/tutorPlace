@@ -51,8 +51,11 @@ const localBindingConfig = {
 export default defineConfig(async ({ command }) => {
   configureToolEnvironment(process.cwd());
 
-  // Wrangler snapshots its log path while the Cloudflare plugin is imported.
-  const { cloudflare } = await import("@cloudflare/vite-plugin");
+  // Keep the Workers adapter for local preview only. Production is a standalone
+  // Node.js server and has no Cloudflare bindings.
+  const cloudflare = command === "serve"
+    ? (await import("@cloudflare/vite-plugin")).cloudflare
+    : undefined;
 
   return {
     server: {
@@ -66,8 +69,8 @@ export default defineConfig(async ({ command }) => {
     plugins: [
       vinext(),
       sites({ mockAuth: !managedLinux }),
-      connectorPreview(),
-      cloudflare({
+      ...(command === "serve" ? [connectorPreview()] : []),
+      ...(cloudflare ? [cloudflare({
         viteEnvironment: { name: "rsc", childEnvironments: ["ssr"] },
         inspectorPort: false,
         config: {
@@ -97,7 +100,7 @@ export default defineConfig(async ({ command }) => {
               ],
             }
           : {}),
-      }),
+      })] : []),
     ],
   };
 });

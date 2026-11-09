@@ -33,7 +33,14 @@ async function teacher(request:Request){return auth(request,true);}
 async function lessonAccess(request:Request,lessonId:string){const u=await auth(request);const l=await db().prepare('SELECT * FROM lessons WHERE id=?').bind(lessonId).first<Row>();requireValue(l&&(u.role==='teacher'||l.student_id===u.id),'Урок не найден.',404);return {u,l:l!};}
 async function route(request:Request){
  const url=new URL(request.url),path=url.pathname.replace(/^\/api\//,'').split('/').filter(Boolean),method=request.method;
- if(method!=='GET'){const origin=request.headers.get('origin');requireValue(origin===url.origin,'Запрос с другого сайта запрещён.',403);const length=Number(request.headers.get('content-length')||0);requireValue(length<2200000,'Размер запроса слишком большой.',413);}
+ if(method!=='GET'){
+   const origin=request.headers.get('origin');
+   const proxyProto=request.headers.get('x-forwarded-proto')?.split(',')[0]?.trim();
+   const proxyHost=(request.headers.get('x-forwarded-host')||request.headers.get('host'))?.split(',')[0]?.trim();
+   const proxyOrigin=proxyProto&&proxyHost?`${proxyProto}://${proxyHost}`:null;
+   requireValue(origin===url.origin||origin===proxyOrigin,'Запрос с другого сайта запрещён.',403);
+   const length=Number(request.headers.get('content-length')||0);requireValue(length<2200000,'Размер запроса слишком большой.',413);
+ }
  const body:ApiBody=method==='GET'?{}:await request.json().catch(()=>({})) as ApiBody;
  if(path[0]==='reviews'&&method==='GET')return json({reviews:await all('SELECT id,name,body,rating FROM reviews WHERE published=1')});
  if(path[0]==='reviews'&&method==='POST'){await teacher(request);requireValue(text(body.name)&&text(body.body,5000)&&Number.isInteger(body.rating)&&body.rating!>=1&&body.rating!<=5,'Проверь имя, текст и оценку.');await db().prepare('INSERT INTO reviews (id,name,body,rating,published) VALUES (?,?,?,?,?)').bind(id(),text(body.name),text(body.body,5000),body.rating,body.published?1:0).run();return json({ok:true});}
@@ -62,7 +69,7 @@ async function route(request:Request){
    await teacher(request);requireValue(calendarConfigured(),'Сначала подключи Google Календарь.',503);
    try{
      const result=await calendar('users/me/calendarList?maxResults=250');
-     const items=(result.items||[]) as CalendarItem[];const calendars=items.filter(item=>item.id&&['owner','writer','writerWithoutPrivateAccess','reader','freeBusyReader'].includes(item.accessRole||'')).map(item=>({id:item.id!,summary:item.summaryOverride||item.summary||item.id!,primary:!!item.primary,accessRole:item.accessRole,target:item.id===secrets.GOOGLE_CALENDAR_ID||(secrets.GOOGLE_CALENDAR_ID==='primary'&&item.primary)}));
+     const items=(result?.items||[]) as CalendarItem[];const calendars=items.filter(item=>item.id&&['owner','writer','writerWithoutPrivateAccess','reader','freeBusyReader'].includes(item.accessRole||'')).map(item=>({id:item.id!,summary:item.summaryOverride||item.summary||item.id!,primary:!!item.primary,accessRole:item.accessRole,target:item.id===secrets.GOOGLE_CALENDAR_ID||(secrets.GOOGLE_CALENDAR_ID==='primary'&&item.primary)}));
      return json({calendars});
    }catch(error){
      if(error instanceof HttpError)throw new HttpError('Google не разрешил показать список календарей. Обнови разрешения Calendar List в настройках OAuth и подключи Google Календарь снова.',503);

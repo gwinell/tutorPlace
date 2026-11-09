@@ -1,76 +1,34 @@
 # codeTogether — запуск и подключение
 
-React 19, TypeScript, Vinext, Cloudflare Worker/D1, Yjs, Pyodide и Fengari.
+React 19, TypeScript, Vinext standalone on Node.js, SQLite, Yjs, Pyodide и Fengari.
 
 ## Локальный запуск
 
 Из каталога codetogether:
 
     npm install
-    npm run build
-
-Применить локальные миграции один раз:
-
-    node --import ./scripts/sites-env.mjs node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0000_simple_sleepwalker.sql
-    node --import ./scripts/sites-env.mjs node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0001_outgoing_quentin_quire.sql
-    node --import ./scripts/sites-env.mjs node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0002_yummy_lockheed.sql
-    node --import ./scripts/sites-env.mjs node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0003_booking_recovery.sql
-    node --import ./scripts/sites-env.mjs node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0004_course_and_personal_assignments.sql
-    node --import ./scripts/sites-env.mjs node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0005_recover_stale_operations.sql
-    node --import ./scripts/sites-env.mjs node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0006_trial_privacy_consent.sql
-    node --import ./scripts/sites-env.mjs node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0007_flimsy_gladiator.sql
+    npm run db:migrate:sqlite
     npm run dev -- --port 5173
 
-Адрес: http://127.0.0.1:5173/. Локальная D1 хранится отдельно от production-базы.
+Адрес: http://127.0.0.1:5173/. Локальная база хранится в `.data/codetogether.sqlite`; Cloudflare Workers адаптер используется только для локального preview.
 
-## Публикация в Cloudflare
+## Production на VPS
 
-Приложение публикуется как **Cloudflare Worker**. Ему нужны серверные API и D1, поэтому Cloudflare Pages для статических файлов не подходит. Репозиторий подготовлен к [Cloudflare Workers Builds](https://developers.cloudflare.com/workers/ci-cd/builds/) с GitHub.
+Production работает как standalone Node.js приложение на NixOS за Caddy. Настройки systemd и Caddy находятся в [infra/nixos/codetogether.nix](../infra/nixos/codetogether.nix); инструкции по серверу, секретам и GitHub Actions — в [infra/nixos/README.md](../infra/nixos/README.md).
 
-### Подключить GitHub и домен
+На сервере файл `/etc/codetogether/secrets.env` должен быть доступен только root (`0600`). Поддерживаемые переменные:
 
-1. В Cloudflare добавь `code-together.ru` как активную зону. Если домен ещё не использует Cloudflare DNS, у регистратора укажи nameservers из панели Cloudflare. Перед подключением проверь записи домена: [Workers Custom Domain](https://developers.cloudflare.com/workers/configuration/routing/custom-domains/) не подключается поверх существующего CNAME на этом имени.
-2. Создай в Cloudflare D1 базу данных с именем `codetogether` и скопируй её ID. База должна быть в том же аккаунте и активной зоне Cloudflare; для ученических данных выбери регион ЕС. До подключения автодеплоя войди локально через `npx wrangler login`, собери приложение с этими значениями и примени миграции:
+- `ADMIN_LOGIN`, `ADMIN_PASSWORD`
+- `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REFRESH_TOKEN`, `GOOGLE_CALENDAR_ID`
+- `SALUTEJAZZ_SDK_KEY`
 
-       CLOUDFLARE_D1_DATABASE_ID=<ID-базы> CLOUDFLARE_D1_DATABASE_NAME=codetogether CLOUDFLARE_CUSTOM_DOMAIN=code-together.ru npm run build
-       npm run db:migrate:remote
-       npm run deploy:cloudflare
-
-   [D1 migrations](https://developers.cloudflare.com/d1/reference/migrations/) создадут схему приложения и историю миграций в новой пустой базе. Повторно применять те же миграции вручную не нужно.
-
-3. В Workers & Pages подключи приватный GitHub-репозиторий `gwinell/codeTogether`, ветка `main`, корневой каталог `/`. Разреши Cloudflare GitHub App читать репозиторий. Имя Worker должно быть `codetogether`. Custom Domain `code-together.ru` сначала создаётся единственным ручным Wrangler deploy из шага 2.
-4. В настройках сборки укажи:
-
-   - Build command: `npm run build`
-   - Deploy command: `npm run deploy:cloudflare`
-   - Node.js: 22 (`.nvmrc` уже закрепляет эту основную версию);
-   - Build variable `CLOUDFLARE_D1_DATABASE_ID` — ID созданной D1 базы;
-   - Build variable `CLOUDFLARE_D1_DATABASE_NAME` — `codetogether`;
-
-   Эти значения нужны во время сборки, не добавляй их в GitHub. Не добавляй `CLOUDFLARE_CUSTOM_DOMAIN` в настройки Workers Builds: домен уже связан с Worker и управляется в его разделе **Settings → Domains & Routes**. Тогда автоматический deploy сможет обновлять код без повторного изменения привязки домена и прав на зону. ID D1 не является паролем, но задавай его в панели Cloudflare, чтобы конфигурация Worker всегда ссылалась на нужную базу.
-
-5. До первого production deployment в настройках Worker открой **Settings → Variables and Secrets** и добавь серверные секреты из списка ниже. Затем запусти Cloudflare Build или выполни `npm run deploy:cloudflare` локально. Для локальной публикации сначала задай build variables и выполни `npm run build`.
-
-Для публикации из GitHub Cloudflare Builds использует тот же Wrangler, что закреплён в `package.json`. Не включай Preview deployments с production D1. Для previews создай отдельную D1 базу и задай preview build variables отдельно.
-
-### Секреты Worker
-
-Добавь значения как **Secrets**, не как build variables и не в GitHub:
-
-- `ADMIN_LOGIN` и `ADMIN_PASSWORD` — для первого входа репетитора; после первого успешного входа `ADMIN_PASSWORD` можно удалить;
-- `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REFRESH_TOKEN`, `GOOGLE_CALENDAR_ID` — для пробной записи и синхронизации уроков;
-- `SALUTEJAZZ_SDK_KEY` — если нужна отдельная автоматически создаваемая видеокомната для каждого нового урока;
-   - Дополнительный сервис запуска кода не требуется: проверку кодовых заданий выполняет репетитор вручную.
-
-Значения для локальной разработки можно скопировать из `.dev.vars.example` в `.dev.vars`. Настоящие `.dev.vars` и `.env` уже исключены из Git.
-
-Демонстрации: /?demo=student и /?demo=teacher. Примеры явно помечены, сохраняются только в браузере, не создают настоящие аккаунты или события календаря. Две роли в двух вкладках одного браузера могут проверить общий код. Кнопка «Сбросить» восстанавливает примеры.
+GitHub Actions собирает релиз после push в `main`. Секреты деплоя репозитория: `VPS_HOST`, `VPS_USER`, `VPS_SSH_KEY`, `VPS_KNOWN_HOSTS`.
 
 ## Настоящие учётные записи
 
 В исходниках нет встроенного пароля администратора. Задать серверные секреты ADMIN_LOGIN и ADMIN_PASSWORD (длинный уникальный пароль). При первом успешном входе создаётся репетитор. Далее проверяется хеш в базе; после этого ADMIN_PASSWORD можно удалить из окружения.
 
-Локальные секреты — в неотслеживаемом файле .dev.vars; после изменения перезапустить сервер. Секреты Cloudflare Worker добавляются через Settings → Variables and Secrets. Не добавлять значения в исходники, build variables, GitHub или .openai/hosting.json.
+Локальные секреты — в неотслеживаемом файле `.dev.vars`; после изменения перезапустить сервер. На VPS секреты находятся в `/etc/codetogether/secrets.env` и не добавляются в исходники, Nix expressions или GitHub.
 
 Аккаунты учеников создаёт репетитор: обязательны имя, возраст и имя родителя; контакты необязательны. Пароли хешируются PBKDF2-SHA256 с солью. Сессии серверные, HttpOnly, SameSite=Strict; проверка роли и Origin на сервере, ограничение попыток входа. Изменение пароля отзывает сессии ученика.
 
@@ -83,7 +41,7 @@ React 19, TypeScript, Vinext, Cloudflare Worker/D1, Yjs, Pyodide и Fengari.
 - GOOGLE_REFRESH_TOKEN
 - GOOGLE_CALENDAR_ID (ID календаря или primary).
 
-В Google Cloud включить Calendar API, создать OAuth client, получить согласие своего аккаунта с `access_type=offline` на минимальные scopes `https://www.googleapis.com/auth/calendar.events.owned` (создание и изменение событий в календаре, куда добавляются уроки), `https://www.googleapis.com/auth/calendar.events.freebusy` (проверка занятости выбранных календарей) и `https://www.googleapis.com/auth/calendar.calendarlist.readonly` (показ названий календарей в настройках). Если OAuth уже был подключён, повторно выдай согласие с этими разрешениями и замени серверный `GOOGLE_REFRESH_TOKEN`. Хранить refresh token только в секретах Worker. Для внешнего OAuth-приложения в статусе Testing refresh token истекает через 7 дней; перед постоянной работой проверь правила публикации приложения и срок действия токена.
+В Google Cloud включить Calendar API, создать OAuth client, получить согласие своего аккаунта с `access_type=offline` на минимальные scopes `https://www.googleapis.com/auth/calendar.events.owned` (создание и изменение событий в календаре, куда добавляются уроки), `https://www.googleapis.com/auth/calendar.events.freebusy` (проверка занятости выбранных календарей) и `https://www.googleapis.com/auth/calendar.calendarlist.readonly` (показ названий календарей в настройках). Если OAuth уже был подключён, повторно выдай согласие с этими разрешениями и замени серверный `GOOGLE_REFRESH_TOKEN`. Хранить refresh token только в `/etc/codetogether/secrets.env`. Для внешнего OAuth-приложения в статусе Testing refresh token истекает через 7 дней; перед постоянной работой проверь правила публикации приложения и срок действия токена.
 
 [Официальный OAuth offline flow](https://developers.google.com/identity/protocols/oauth2/web-server#offline), [Calendar freeBusy](https://developers.google.com/workspace/calendar/api/v3/reference/freebusy/query), [Calendar events](https://developers.google.com/workspace/calendar/api/v3/reference/events).
 
@@ -93,8 +51,8 @@ React 19, TypeScript, Vinext, Cloudflare Worker/D1, Yjs, Pyodide и Fengari.
 
 Чтобы новые бронирования автоматически получали видеокомнату, создай проект SaluteJazz SDK и выпусти SDK key в [SaluteJazz Studio](https://developers.sber.ru/docs/ru/jazz/sdk/sdk-key). Ключ содержит приватный ключ подписи: храни его только в серверных секретах.
 
-- Локально добавь `SALUTEJAZZ_SDK_KEY` в `.dev.vars` и перезапусти Worker.
-- В Cloudflare Workers открой **Settings → Variables and Secrets → Add → Secret** и задай `SALUTEJAZZ_SDK_KEY`. Через Wrangler после `npm run build` можно выполнить `npx wrangler secret put SALUTEJAZZ_SDK_KEY --config dist/server/wrangler.json`.
+- Локально добавь `SALUTEJAZZ_SDK_KEY` в `.dev.vars` и перезапусти сервер.
+- На VPS добавь `SALUTEJAZZ_SDK_KEY` в `/etc/codetogether/secrets.env` и перезапусти `codetogether.service`.
 
 Worker подписывает краткоживущий транспортный JWT, получает access token и создаёт комнату SaluteJazz. Ссылка записывается в урок и в поле места события Google Calendar. Если секрет не задан, сохраняется прежняя общая ссылка из расписания. Комнаты отключаются при отмене или завершении урока; фоновая задача повторяет очистку после временных ошибок и закрывает комнаты завершившихся уроков.
 

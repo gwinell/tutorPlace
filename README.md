@@ -4,6 +4,6 @@
 
 Полная инструкция по запуску и настройке Google Календаря, аккаунтов и проверки кода — [docs/SETUP.md](docs/SETUP.md).
 
-Публикация GitHub → Cloudflare Workers и подключение `code-together.ru` — [раздел в инструкции](docs/SETUP.md#публикация-в-cloudflare).
+Production-развёртывание на NixOS VPS и подключение `code-together.ru` — [инструкция](infra/nixos/README.md).
 
 Демо кабинетов: `/?demo=student` и `/?demo=teacher`. Реальная запись на пробный урок доступна после подключения Google Календаря и настройки рабочего расписания.
