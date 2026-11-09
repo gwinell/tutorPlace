@@ -34,7 +34,8 @@ export function normalizeSchedule(value:unknown):Schedule{
  try{new Intl.DateTimeFormat('en',{timeZone:timezone});}catch{timezone=DEFAULT_SCHEDULE.timezone;}
  return {...DEFAULT_SCHEDULE,...raw,timezone,days,from:firstRange?.from||raw.from||DEFAULT_SCHEDULE.from,to:firstRange?.to||raw.to||DEFAULT_SCHEDULE.to,weeklyAvailability,dateOverrides,availabilityCalendarIds:Array.isArray(raw.availabilityCalendarIds)?[...new Set(raw.availabilityCalendarIds.filter((id:any)=>typeof id==='string'))].slice(0,10):[]};
 }
-export async function schedule():Promise<Schedule>{const row=await db().prepare("SELECT value FROM settings WHERE key='schedule'").first<{value:string}>();return row?normalizeSchedule(JSON.parse(row.value)):DEFAULT_SCHEDULE;}
+let cachedSchedule:{value:Schedule;expires:number}|null=null;
+export async function schedule():Promise<Schedule>{if(cachedSchedule&&cachedSchedule.expires>Date.now())return cachedSchedule.value;const row=await db().prepare("SELECT value FROM settings WHERE key='schedule'").first<{value:string}>();const value=row?normalizeSchedule(JSON.parse(row.value)):DEFAULT_SCHEDULE;cachedSchedule={value,expires:Date.now()+45000};return value;}
 export function calendarConfigured(environment:Record<string,any>=secrets){return !!(environment.GOOGLE_CLIENT_ID&&environment.GOOGLE_CLIENT_SECRET&&environment.GOOGLE_REFRESH_TOKEN&&environment.GOOGLE_CALENDAR_ID);}
 let cachedToken:{value:string;expires:number}|null=null;
 async function calendarToken(environment:Record<string,any>=secrets){if(!calendarConfigured(environment))throw new HttpError('Google Календарь пока не подключён. Запись ещё не открыта.',503);if(cachedToken&&cachedToken.expires>Date.now())return cachedToken.value;const res=await fetch('https://oauth2.googleapis.com/token',{method:'POST',body:new URLSearchParams({client_id:environment.GOOGLE_CLIENT_ID,client_secret:environment.GOOGLE_CLIENT_SECRET,refresh_token:environment.GOOGLE_REFRESH_TOKEN,grant_type:'refresh_token'}),signal:AbortSignal.timeout(12000)});if(!res.ok)throw new HttpError('Не удалось связаться с Google Календарём. Попробуй позже.',503);const d=await res.json() as any;cachedToken={value:d.access_token,expires:Date.now()+Math.max(1,d.expires_in-60)*1000};return d.access_token;}
@@ -46,17 +47,17 @@ export async function slots(date:string,minutes:number,exclude?:string){requireV
   ).bind(max,min,exclude||'',max,min,exclude||'').all<{start:string;end:string}>();const busy=reservations.results.map(l=>({start:l.start,end:l.end}));const ignored=exclude?await db().prepare('SELECT event_id FROM lessons WHERE id=?').bind(exclude).first<{event_id:string}>():null;
  const targetCalendarId=secrets.GOOGLE_CALENDAR_ID;
  const availabilityCalendarIds=[...new Set([targetCalendarId,...(s.availabilityCalendarIds||[])])];
- const appendFreeBusy=async(ids:string[])=>{
+ const appendFreeBusy=async(ids:string[],subtract?:{start:string;end:string})=>{
    if(!ids.length)return;
    const response=await calendar('freeBusy','POST',{timeMin:min,timeMax:max,timeZone:s.timezone,items:ids.map(id=>({id}))});
-   for(const calendarId of ids){const item=response.calendars?.[calendarId];if(!item||item.errors?.length){console.warn('Skipping unavailable availability calendar:',calendarId,item?.errors||'No calendar response');continue;}busy.push(...item.busy.map((b:any)=>({start:new Date(b.start).toISOString(),end:new Date(b.end).toISOString()})));}
+   for(const calendarId of ids){const item=response.calendars?.[calendarId];if(!item||item.errors?.length){console.warn('Skipping unavailable availability calendar:',calendarId,item?.errors||'No calendar response');continue;}for(const interval of item.busy){let pieces=[{start:new Date(interval.start).toISOString(),end:new Date(interval.end).toISOString()}];if(subtract&&calendarId===targetCalendarId)pieces=pieces.flatMap(piece=>{if(subtract.end<=piece.start||subtract.start>=piece.end)return[piece];const remaining:{start:string;end:string}[]=[];if(subtract.start>piece.start)remaining.push({start:piece.start,end:subtract.start});if(subtract.end<piece.end)remaining.push({start:subtract.end,end:piece.end});return remaining;});busy.push(...pieces);}}
  };
  if(ignored?.event_id){
-   await appendFreeBusy(availabilityCalendarIds.filter(calendarId=>calendarId!==targetCalendarId));
-   let page='';do{const r=await calendar(eventPath()+'?'+new URLSearchParams({timeMin:min,timeMax:max,singleEvents:'true',maxResults:'2500',...(page?{pageToken:page}:{})}));for(const e of r.items||[]){if(e.id===ignored.event_id||e.status==='cancelled'||e.transparency==='transparent')continue;const start=e.start?.dateTime||(e.start?.date?new Date(dateTimeInTimeZone(e.start.date,'00:00',s.timezone)).toISOString():''),end=e.end?.dateTime||(e.end?.date?new Date(dateTimeInTimeZone(e.end.date,'00:00',s.timezone)).toISOString():'');if(start&&end)busy.push({start:new Date(start).toISOString(),end:new Date(end).toISOString()});}page=r.nextPageToken||'';}while(page);
+   const ownWindow=await db().prepare('SELECT start,end FROM lessons WHERE id=?').bind(exclude).first<{start:string;end:string}>();
+   await appendFreeBusy(availabilityCalendarIds,ownWindow||undefined);
  }else await appendFreeBusy(availabilityCalendarIds);
  return {configured:true,slots:createSlots(date,minutes,s,busy)};
 }
 export function slotKeys(start:string,end:string){const keys=[];for(let t=new Date(start).getTime();t<new Date(end).getTime();t+=5*60000)keys.push(String(Math.floor(t/300000)));return keys;}
 export function httpsUrl(value:unknown){if(!value)return '';try{const u=new URL(String(value));if(u.protocol==='https:')return u.href;}catch{}throw new HttpError('Нужна корректная ссылка, начинающаяся с https://.');}
-export async function cleanup(environment:Record<string,any>=secrets){const database=db(environment);await database.batch([database.prepare('DELETE FROM rooms WHERE last_active<?').bind(Date.now()-1800000),database.prepare('DELETE FROM sessions WHERE expires_at<?').bind(Date.now()),database.prepare("DELETE FROM settings WHERE key GLOB 'login:*:[0-9]*' AND CAST(substr(key,-10) AS INTEGER)<?").bind(Math.floor(Date.now()/60000)-2)]);}
+export async function cleanup(environment:Record<string,any>=secrets){const database=db(environment);await database.batch([database.prepare('DELETE FROM rooms WHERE last_active<?').bind(Date.now()-1800000),database.prepare('DELETE FROM sessions WHERE expires_at<?').bind(Date.now()),database.prepare("DELETE FROM settings WHERE key LIKE 'login:%' AND CAST(substr(key,72) AS INTEGER)<?").bind(Math.floor(Date.now()/60000)-2)]);}

@@ -35,6 +35,7 @@ export const dateLabel = (value: string | number | Date, options?: Intl.DateTime
 const monthKeyFormatter = new Intl.DateTimeFormat('en-CA', { timeZone:'Europe/Moscow', year:'numeric',month:'2-digit' });
 export const monthKey = (value: string | number | Date) => monthKeyFormatter.format(new Date(value));
 export function monthBounds(value: string | number | Date) {
+  // Cancellation months are always measured in Moscow time, independent of the server timezone.
   const parts = new Intl.DateTimeFormat('en-US', { timeZone: DEFAULT_TIME_ZONE, year: 'numeric', month: '2-digit' }).formatToParts(new Date(value));
   const year = Number(parts.find(part => part.type === 'year')?.value);
   const month = Number(parts.find(part => part.type === 'month')?.value);
