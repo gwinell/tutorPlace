@@ -9,7 +9,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 MODE="${1:-local}"
-DB_NAME="${DB_NAME:-site-creator-d1}"
+DB_NAME="${DB_NAME:-codetogether}"
 mkdir -p backups
 WRANGLER=(node --import ./scripts/sites-env.mjs node_modules/wrangler/bin/wrangler.js)
 
