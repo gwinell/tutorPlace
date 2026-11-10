@@ -11,6 +11,7 @@ const sourceLimit = 100_000;
 const wasmLimit = 4 * 1024 * 1024;
 const compileTimeout = 6_000;
 let active = false;
+let compilerReady = false;
 
 function respond(response, status, message, type = 'application/json; charset=utf-8') {
   const body = type.startsWith('application/json') ? Buffer.from(JSON.stringify({ error: message })) : Buffer.from(message);
@@ -61,8 +62,40 @@ function compile(source, outputFile, sourceFile, directory) {
   });
 }
 
+async function verifyCompiler() {
+  const directory = await mkdtemp(path.join(tmpdir(), 'codetogether-qumir-health-'));
+  try {
+    const sourceFile = path.join(directory, 'health.kum');
+    const outputFile = path.join(directory, 'health.wasm');
+    await writeFile(sourceFile, 'алг main\nнач\nкон\n', { encoding: 'utf8', mode: 0o600 });
+    await compile('алг main\nнач\nкон\n', outputFile, sourceFile, directory);
+    const wasm = await readFile(outputFile);
+    if (wasm.length < 8 || wasm.length > wasmLimit || !WebAssembly.validate(wasm)) {
+      throw new Error('Компилятор не собрал проверочную WASM-программу.');
+    }
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+}
+
 const server = createServer(async (request, response) => {
-  if (request.method === 'GET' && request.url === '/health') return respond(response, 200, 'ok', 'text/plain; charset=utf-8');
+  if (request.method === 'GET' && request.url === '/health') {
+    if (!compilerReady) {
+      if (active) return respond(response, 503, 'Компилятор занят проверкой другой программы.');
+      active = true;
+      try {
+        await verifyCompiler();
+        compilerReady = true;
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Проверка компилятора не прошла.';
+        console.error('Qumir compiler health check failed:', message);
+        return respond(response, 503, message);
+      } finally {
+        active = false;
+      }
+    }
+    return respond(response, 200, 'ok', 'text/plain; charset=utf-8');
+  }
   if (request.method !== 'POST' || request.url !== '/compile') return respond(response, 404, 'Неизвестный адрес компилятора.');
   if (active) return respond(response, 429, 'Компилятор занят другой программой. Попробуй ещё раз через несколько секунд.');
   active = true;

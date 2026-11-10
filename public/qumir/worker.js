@@ -9,6 +9,7 @@ let canvasContext = null;
 let canvasFrames = 0;
 let outputSize = 0;
 let activeChannel = null;
+let activeExecutor = 'text';
 
 const frameHandlers = new Map();
 const windowHandlers = new Map();
@@ -57,7 +58,7 @@ function installWorkerBrowserShims() {
   self.removeEventListener = (type, callback) => windowHandlers.get(type)?.delete(callback);
   self.requestAnimationFrame = callback => setTimeout(() => {
     callback(performance.now());
-    sendCanvas();
+    sendCanvas(activeExecutor);
   }, 0);
   self.cancelAnimationFrame = clearTimeout;
   self.document = {
@@ -72,7 +73,7 @@ function installWorkerBrowserShims() {
   };
 }
 
-function sendCanvas(executor = 'canvas') {
+function sendCanvas(executor = activeExecutor) {
   if (!canvas || canvasFrames >= 500) return;
   canvasFrames += 1;
   const bitmap = canvas.transferToImageBitmap();
@@ -109,7 +110,11 @@ function drawRobot(robot) {
 
 function emitCanvas(runtime, executor) {
   if (executor === 'robot') drawRobot(runtime.robotModule);
-  else sendCanvas(executor);
+  else {
+    if (executor === 'turtle') runtime.turtleModule?.__onCanvasShown?.();
+    if (executor === 'drawer') runtime.drawerModule?.__onCanvasShown?.();
+    sendCanvas(executor);
+  }
 }
 
 function dispatchInput(input) {
@@ -175,9 +180,14 @@ async function run(message) {
     throw new Error(body.error || 'Не удалось скомпилировать программу Кумир.');
   }
   const bytes = await response.arrayBuffer();
-  const runtime = await loadRuntime(bytes, { render: () => emitCanvas(runtime, executor), delay: () => 0 });
-  const imports = WebAssembly.Module.imports(runtime.module);
-  const executor = ['robot', 'turtle', 'drawer', 'painter'].find(name => imports.some(item => item.module === 'env' && item.name.startsWith(`${name}_`))) || 'text';
+  const module = await WebAssembly.compile(bytes);
+  const imports = WebAssembly.Module.imports(module);
+  if (imports.some(item => item.module === 'env' && item.name.startsWith('painter_'))) {
+    throw new Error('В комнате доступны исполнители Черепаха, Робот и Чертёжник.');
+  }
+  const executor = ['turtle', 'robot', 'drawer'].find(name => imports.some(item => item.module === 'env' && item.name.startsWith(`${name}_`))) || 'text';
+  activeExecutor = executor;
+  const runtime = await loadRuntime(module, { render: () => emitCanvas(runtime, executor), delay: () => 0 });
   executionSession = runtime.session;
   setupIO(runtime, message.input);
   bindRuntime(runtime, executor);

@@ -1059,3 +1059,17 @@
   .kumir-file-tabs{flex-direction:column}
   .kumir-file-tabs>button{width:100%}
 }
+
+.editor-area.has-syntax-highlighting{position:relative}
+.syntax-highlight{position:absolute;z-index:0;top:18px;right:0;bottom:18px;left:43px;overflow:hidden;margin:0;padding:0 14px 0 0;color:#d7c7e9;font-family:'SFMono-Regular',Consolas,monospace;font-size:14px;line-height:1.9;white-space:pre;pointer-events:none;tab-size:4}
+.editor-area>textarea.syntax-source{position:relative;z-index:1;background:transparent;color:transparent;-webkit-text-fill-color:transparent;caret-color:#eee5f7}
+.editor-area>textarea.syntax-source::selection{background:#8960bb70;color:transparent;-webkit-text-fill-color:transparent}
+.code-editor.kumir-workspace-editor>.syntax-highlight{top:18px;bottom:18px;font-size:16px;line-height:1.75}
+.syntax-keyword{color:#c69df1}
+.syntax-string{color:#a7d5ae}
+.syntax-number{color:#e5bf76}
+.syntax-comment{color:#928a9c}
+.syntax-function{color:#83c0db}
+.syntax-module{color:#f0c879}
+.syntax-operator{color:#d6c7e9}
+@media(max-width:680px){.code-editor.kumir-workspace-editor>.syntax-highlight{font-size:14px}}

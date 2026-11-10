@@ -21,7 +21,7 @@ async function optionalImport(path, enabled) {
 }
 
 export async function loadRuntime(bytes, options = {}) {
-  const module = await WebAssembly.compile(bytes);
+  const module = bytes instanceof WebAssembly.Module ? bytes : await WebAssembly.compile(bytes);
   const imports = WebAssembly.Module.imports(module);
   const readSection = name => {
     const data = WebAssembly.Module.customSections(module, name)[0];
