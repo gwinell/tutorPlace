@@ -1,4 +1,4 @@
-import { loadRuntime } from './runtime/loader.js?v=5';
+import { loadRuntime } from './runtime/loader.js?v=6';
 
 const outputLimit = 100_000;
 const canvasWidth = 720;
@@ -10,6 +10,7 @@ let canvasFrames = 0;
 let outputSize = 0;
 let activeChannel = null;
 let activeExecutor = 'text';
+let activeRuntime = null;
 
 const frameHandlers = new Map();
 const windowHandlers = new Map();
@@ -83,6 +84,7 @@ function sendCanvas(executor = activeExecutor) {
 function drawRobot(robot) {
   const state = robot?.__getRobotState?.();
   if (!state || !canvasContext) return;
+  post('robot-state', { state });
   const { width, height } = canvas;
   const cell = Math.max(16, Math.min((width - 48) / state.width, (height - 48) / state.height));
   const left = (width - cell * state.width) / 2;
@@ -156,11 +158,44 @@ function bindRuntime(runtime, executor) {
   runtime.turtleModule?.__bindTurtleCanvas?.(canvasAdapter());
   runtime.drawerModule?.__bindDrawerCanvas?.(canvasAdapter());
   runtime.painterModule?.__bindPainterCanvas?.(canvasAdapter());
-  if (executor === 'robot') runtime.robotModule?.__initRobotField?.();
+  if (executor === 'robot') {
+    runtime.robotModule?.__initRobotField?.();
+    runtime.robotModule?.__previewField?.();
+    if (messageRobotField) runtime.robotModule?.__setRobotState?.(messageRobotField);
+  }
   runtime.turtleModule?.__resetTurtle?.(true);
   runtime.drawerModule?.__resetDrawer?.(true);
   runtime.painterModule?.__resetPainter?.();
   runtime.keyboardModule?.__resetKeyboard?.();
+}
+
+let messageRobotField = null;
+
+function editRobot(event) {
+  const robot = activeRuntime?.robotModule;
+  const state = robot?.__getRobotState?.();
+  if (!state) return;
+  const cell = Math.max(16, Math.min((canvas.width - 48) / state.width, (canvas.height - 48) / state.height));
+  const left = (canvas.width - cell * state.width) / 2;
+  const top = (canvas.height - cell * state.height) / 2;
+  const localX = Number(event.clientX) - left;
+  const localY = Number(event.clientY) - top;
+  if (localX < 0 || localY < 0 || localX >= cell * state.width || localY >= cell * state.height) return;
+  const x = Math.floor(localX / cell);
+  const y = Math.floor(localY / cell);
+  if (event.action === 'robot') robot.__setRobotPosition?.(x, y);
+  else if (event.action === 'paint') robot.__togglePainted?.(x, y);
+  else if (event.action === 'wall') {
+    const inCellX = localX - x * cell;
+    const inCellY = localY - y * cell;
+    const edge = cell * 0.22;
+    const distances = [
+      ['west', inCellX], ['east', cell - inCellX],
+      ['north', inCellY], ['south', cell - inCellY],
+    ].sort((a, b) => a[1] - b[1]);
+    if (distances[0][1] <= edge) robot.__toggleWall?.(x, y, distances[0][0]);
+  }
+  drawRobot(robot);
 }
 
 async function run(message) {
@@ -188,10 +223,13 @@ async function run(message) {
   const executor = ['turtle', 'robot', 'drawer'].find(name => imports.some(item => item.module === 'env' && item.name.startsWith(`${name}_`))) || 'text';
   activeExecutor = executor;
   const runtime = await loadRuntime(module, { render: () => emitCanvas(runtime, executor), delay: () => 0 });
+  activeRuntime = runtime;
   executionSession = runtime.session;
   setupIO(runtime, message.input);
+  messageRobotField = message.robotField || null;
   bindRuntime(runtime, executor);
   post('executing', { executor });
+  emitCanvas(runtime, executor);
   const { instance, runtimeInfo, session } = runtime;
   if (runtimeInfo?.constructorFunction && instance.exports[runtimeInfo.constructorFunction]) await session.call(instance.exports[runtimeInfo.constructorFunction]);
   else instance.exports.__wasm_call_ctors?.();
@@ -208,6 +246,22 @@ async function run(message) {
 }
 
 self.onmessage = event => {
+  if (event.data?.type === 'robot-edit') {
+    if (event.data.channel === activeChannel && activeExecutor === 'robot') {
+      if (event.data.event?.type === 'robot-resize') {
+        activeRuntime?.robotModule?.__setRobotState?.(event.data.event.state);
+        drawRobot(activeRuntime?.robotModule);
+      } else editRobot(event.data.event || {});
+    }
+    return;
+  }
+  if (event.data?.type === 'drawer-control') {
+    if (event.data.channel !== activeChannel || activeExecutor !== 'drawer') return;
+    if (event.data.command === 'zoom-in') activeRuntime?.drawerModule?.__zoomDrawerView?.(1.25);
+    else if (event.data.command === 'zoom-out') activeRuntime?.drawerModule?.__zoomDrawerView?.(0.8);
+    else if (event.data.command === 'fit') activeRuntime?.drawerModule?.__fitDrawerView?.();
+    return;
+  }
   if (event.data?.type === 'input-event') {
     dispatchInput(event.data.event);
     return;
@@ -215,7 +269,6 @@ self.onmessage = event => {
   if (event.data?.type === 'stop') {
     executionSession?.stop();
     post('done');
-    close();
     return;
   }
   if (event.data?.type !== 'run') return;

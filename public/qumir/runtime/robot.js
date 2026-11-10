@@ -404,6 +404,31 @@ export function __getRobotState() {
   };
 }
 
+export function __setRobotState(state) {
+  ensureFieldLoaded();
+  const width = Math.max(1, Math.min(200, Number(state?.width) | 0));
+  const height = Math.max(1, Math.min(200, Number(state?.height) | 0));
+  field.resize(width, height);
+  field.robotX = Math.max(0, Math.min(width - 1, Number(state?.x) | 0));
+  field.robotY = Math.max(0, Math.min(height - 1, Number(state?.y) | 0));
+  field.painted = new Set((Array.isArray(state?.painted) ? state.painted : []).filter(key => {
+    const [x, y] = String(key).split(',').map(Number);
+    return x >= 0 && y >= 0 && x < width && y < height;
+  }));
+  field.hWalls = new Set((Array.isArray(state?.hWalls) ? state.hWalls : []).filter(key => {
+    const [x, y] = String(key).split(',').map(Number);
+    return x >= 0 && y >= 0 && x < width && y < height - 1;
+  }));
+  field.vWalls = new Set((Array.isArray(state?.vWalls) ? state.vWalls : []).filter(key => {
+    const [x, y] = String(key).split(',').map(Number);
+    return x >= 0 && y >= 0 && x < width - 1 && y < height;
+  }));
+  field.colors.clear();
+  for (const key of field.painted) field.colors.set(key, 1);
+  field.crash = null;
+  return __getRobotState();
+}
+
 export function __writeFieldToFil() {
   return writeFieldToFile();
 }
