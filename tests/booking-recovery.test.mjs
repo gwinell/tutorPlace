@@ -46,6 +46,11 @@ function setup(beforeRecovery = () => {}) {
             network.beforeManualInsert = null;
             callback?.();
           }
+          if (query.startsWith('INSERT INTO rooms (id,student_id,name,language,student_code,teacher_code,revision,last_active) SELECT ?,id')) {
+            const callback = network.beforeRoomInsert;
+            network.beforeRoomInsert = null;
+            callback?.();
+          }
           return { meta: { changes: statement.run(...args).changes } };
         },
       };
@@ -81,7 +86,7 @@ function setup(beforeRecovery = () => {}) {
   }));
   const events = new Map();
   let etag = 0;
-  const network = { lostResponse: false, unavailableAfterPatch: false, unavailable: false, skipPatch: false, failDelete: false, afterFreeBusy: null, beforeManualInsert: null, jazzEnabled: false, jazzRoom: null, disabledRooms: [], busy: [] };
+  const network = { lostResponse: false, unavailableAfterPatch: false, unavailable: false, skipPatch: false, failDelete: false, failJazzDisable: false, afterFreeBusy: null, beforeManualInsert: null, beforeRoomInsert: null, jazzEnabled: false, jazzRoom: null, disabledRooms: [], busy: [] };
   const calendarFetch = async (url, options) => {
     const path = new URL(url).pathname;
     if (path === '/token') return Response.json({ access_token: 'fixture', expires_in: 3600 });
@@ -126,7 +131,7 @@ function setup(beforeRecovery = () => {}) {
     '@/lib/salutejazz': {
       saluteJazzConfigured: () => network.jazzEnabled,
       createSaluteJazzRoom: async () => network.jazzRoom || { roomId: 'fixture-room', roomUrl: 'https://meeting.example/fixture-room' },
-      disableSaluteJazzRoom: async roomId => { network.disabledRooms.push(roomId); },
+      disableSaluteJazzRoom: async roomId => { if (network.failJazzDisable) throw new Error('SaluteJazz disable failed'); network.disabledRooms.push(roomId); },
     },
   };
   for (const [name, source] of sources) {
@@ -332,6 +337,18 @@ test('Обычная запись повторно проверяет занят
   assert.equal(qa.events.size, 0);
 });
 
+test('Платная запись повторно проверяет занятость после ответа FreeBusy', async () => {
+  const qa = setup();
+  const teacher = await qa.teacherSession();
+  const { student, cookie } = await qa.createStudent(teacher, { balance: 1 });
+  qa.network.afterFreeBusy = () => qa.sql.prepare("INSERT INTO lessons(id,name,start,end,type,status) VALUES ('racing-event','Racing event',?,?, 'trial','scheduled')").run(qa.at(12), new Date(Date.parse(qa.at(12)) + 45 * 60000).toISOString());
+
+  const result = await qa.request('book', { minutes: 55, start: qa.at(12) }, cookie);
+  assert.equal(result.status, 409);
+  assert.equal(qa.sql.prepare("SELECT COUNT(*) AS count FROM lessons WHERE student_id=? AND type='paid'").get(student.id).count, 0);
+  assert.equal(qa.events.size, 0);
+});
+
 test('Списание при завершении удерживает баланс для параллельной записи', async () => {
   const qa = setup();
   const teacher = await qa.teacherSession();
@@ -360,6 +377,17 @@ test('Удаление ученика перед вставкой не созд�
   assert.equal(qa.events.size, 0);
 });
 
+test('Удаление ученика перед созданием комнаты не оставляет осиротевшую комнату', async () => {
+  const qa = setup();
+  const teacher = await qa.teacherSession();
+  const { student, cookie } = await qa.createStudent(teacher);
+  qa.network.beforeRoomInsert = () => qa.sql.prepare('DELETE FROM users WHERE id=?').run(student.id);
+
+  const result = await qa.request('rooms', {}, cookie);
+  assert.equal(result.status, 404);
+  assert.equal(qa.sql.prepare('SELECT COUNT(*) AS count FROM rooms WHERE student_id=?').get(student.id).count, 0);
+});
+
 test('Не отключает SaluteJazz, если событие урока не удалось удалить', async () => {
   const qa = setup();
   const teacher = await qa.teacherSession();
@@ -376,6 +404,21 @@ test('Не отключает SaluteJazz, если событие урока н�
   assert.equal(pending.meet_url, 'https://meet.example/qa-room');
   assert.deepEqual(qa.network.disabledRooms, []);
   assert.equal(qa.events.size, 1);
+});
+
+test('SaluteJazz cleanup is queued when room persistence and shutdown both fail', async () => {
+  const qa = setup();
+  const teacher = await qa.teacherSession();
+  const { student } = await qa.createStudent(teacher);
+  qa.network.jazzEnabled = true;
+  qa.network.jazzRoom = { roomId: 'qa-room', roomUrl: 'https://meet.example/qa-room' };
+  qa.network.failJazzDisable = true;
+  qa.sql.exec("CREATE TRIGGER fail_manual_room_persist BEFORE UPDATE OF jazz_room_id ON lessons WHEN NEW.jazz_room_id IS NOT NULL BEGIN SELECT RAISE(ABORT, 'injected room persistence failure'); END");
+
+  const result = await qa.request('lessons', { studentId: student.id, start: qa.at(12) }, teacher);
+  assert.equal(result.status, 503);
+  assert.ok(qa.sql.prepare("SELECT value FROM settings WHERE key='salutejazz-close:qa-room'").get());
+  assert.deepEqual(qa.network.disabledRooms, []);
 });
 
 test('Цена ученика по умолчанию, изменение цены и заявка с ручным начислением', async () => {

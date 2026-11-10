@@ -27,3 +27,75 @@ BEGIN SELECT RAISE(ABORT, 'payment request student does not exist'); END;
 CREATE TRIGGER `payment_requests_student_update_guard` BEFORE UPDATE OF `student_id` ON `payment_requests`
 WHEN NOT EXISTS (SELECT 1 FROM `users` WHERE `id`=NEW.`student_id` AND `role`='student')
 BEGIN SELECT RAISE(ABORT, 'payment request student does not exist'); END;
+--> statement-breakpoint
+CREATE TRIGGER `lessons_student_insert_guard` BEFORE INSERT ON `lessons`
+WHEN NEW.`student_id` IS NOT NULL AND NOT EXISTS (SELECT 1 FROM `users` WHERE `id`=NEW.`student_id` AND `role`='student')
+BEGIN SELECT RAISE(ABORT, 'lesson student does not exist'); END;
+--> statement-breakpoint
+CREATE TRIGGER `lessons_student_update_guard` BEFORE UPDATE OF `student_id` ON `lessons`
+WHEN NEW.`student_id` IS NOT NULL AND NOT EXISTS (SELECT 1 FROM `users` WHERE `id`=NEW.`student_id` AND `role`='student')
+BEGIN SELECT RAISE(ABORT, 'lesson student does not exist'); END;
+--> statement-breakpoint
+CREATE TRIGGER `sessions_user_insert_guard` BEFORE INSERT ON `sessions`
+WHEN NOT EXISTS (SELECT 1 FROM `users` WHERE `id`=NEW.`user_id`)
+BEGIN SELECT RAISE(ABORT, 'session user does not exist'); END;
+--> statement-breakpoint
+CREATE TRIGGER `sessions_user_update_guard` BEFORE UPDATE OF `user_id` ON `sessions`
+WHEN NOT EXISTS (SELECT 1 FROM `users` WHERE `id`=NEW.`user_id`)
+BEGIN SELECT RAISE(ABORT, 'session user does not exist'); END;
+--> statement-breakpoint
+CREATE TRIGGER `rooms_student_insert_guard` BEFORE INSERT ON `rooms`
+WHEN NOT EXISTS (SELECT 1 FROM `users` WHERE `id`=NEW.`student_id` AND `role`='student')
+BEGIN SELECT RAISE(ABORT, 'room student does not exist'); END;
+--> statement-breakpoint
+CREATE TRIGGER `rooms_student_update_guard` BEFORE UPDATE OF `student_id` ON `rooms`
+WHEN NOT EXISTS (SELECT 1 FROM `users` WHERE `id`=NEW.`student_id` AND `role`='student')
+BEGIN SELECT RAISE(ABORT, 'room student does not exist'); END;
+--> statement-breakpoint
+CREATE TRIGGER `typing_results_student_insert_guard` BEFORE INSERT ON `typing_results`
+WHEN NOT EXISTS (SELECT 1 FROM `users` WHERE `id`=NEW.`student_id` AND `role`='student')
+BEGIN SELECT RAISE(ABORT, 'typing result student does not exist'); END;
+--> statement-breakpoint
+CREATE TRIGGER `typing_results_student_update_guard` BEFORE UPDATE OF `student_id` ON `typing_results`
+WHEN NOT EXISTS (SELECT 1 FROM `users` WHERE `id`=NEW.`student_id` AND `role`='student')
+BEGIN SELECT RAISE(ABORT, 'typing result student does not exist'); END;
+--> statement-breakpoint
+CREATE TRIGGER `course_enrollments_student_insert_guard` BEFORE INSERT ON `course_enrollments`
+WHEN NOT EXISTS (SELECT 1 FROM `users` WHERE `id`=NEW.`student_id` AND `role`='student')
+BEGIN SELECT RAISE(ABORT, 'course enrollment student does not exist'); END;
+--> statement-breakpoint
+CREATE TRIGGER `course_enrollments_student_update_guard` BEFORE UPDATE OF `student_id` ON `course_enrollments`
+WHEN NOT EXISTS (SELECT 1 FROM `users` WHERE `id`=NEW.`student_id` AND `role`='student')
+BEGIN SELECT RAISE(ABORT, 'course enrollment student does not exist'); END;
+--> statement-breakpoint
+CREATE TRIGGER `topic_access_student_insert_guard` BEFORE INSERT ON `topic_access`
+WHEN NOT EXISTS (SELECT 1 FROM `users` WHERE `id`=NEW.`student_id` AND `role`='student')
+BEGIN SELECT RAISE(ABORT, 'topic access student does not exist'); END;
+--> statement-breakpoint
+CREATE TRIGGER `topic_access_student_update_guard` BEFORE UPDATE OF `student_id` ON `topic_access`
+WHEN NOT EXISTS (SELECT 1 FROM `users` WHERE `id`=NEW.`student_id` AND `role`='student')
+BEGIN SELECT RAISE(ABORT, 'topic access student does not exist'); END;
+--> statement-breakpoint
+CREATE TRIGGER `assignments_student_insert_guard` BEFORE INSERT ON `assignments`
+WHEN NEW.`student_id` IS NOT NULL AND NOT EXISTS (SELECT 1 FROM `users` WHERE `id`=NEW.`student_id` AND `role`='student')
+BEGIN SELECT RAISE(ABORT, 'assignment student does not exist'); END;
+--> statement-breakpoint
+CREATE TRIGGER `assignments_student_update_guard` BEFORE UPDATE OF `student_id` ON `assignments`
+WHEN NEW.`student_id` IS NOT NULL AND NOT EXISTS (SELECT 1 FROM `users` WHERE `id`=NEW.`student_id` AND `role`='student')
+BEGIN SELECT RAISE(ABORT, 'assignment student does not exist'); END;
+--> statement-breakpoint
+CREATE TRIGGER `submissions_student_insert_guard` BEFORE INSERT ON `submissions`
+WHEN NOT EXISTS (SELECT 1 FROM `users` WHERE `id`=NEW.`student_id` AND `role`='student')
+BEGIN SELECT RAISE(ABORT, 'submission student does not exist'); END;
+--> statement-breakpoint
+CREATE TRIGGER `submissions_student_update_guard` BEFORE UPDATE OF `student_id` ON `submissions`
+WHEN NOT EXISTS (SELECT 1 FROM `users` WHERE `id`=NEW.`student_id` AND `role`='student')
+BEGIN SELECT RAISE(ABORT, 'submission student does not exist'); END;
+--> statement-breakpoint
+CREATE TRIGGER `notifications_student_insert_guard` BEFORE INSERT ON `notifications`
+WHEN NOT EXISTS (SELECT 1 FROM `users` WHERE `id`=NEW.`student_id` AND `role`='student')
+BEGIN SELECT RAISE(ABORT, 'notification student does not exist'); END;
+--> statement-breakpoint
+CREATE TRIGGER `notifications_student_update_guard` BEFORE UPDATE OF `student_id` ON `notifications`
+WHEN NOT EXISTS (SELECT 1 FROM `users` WHERE `id`=NEW.`student_id` AND `role`='student')
+BEGIN SELECT RAISE(ABORT, 'notification student does not exist'); END;

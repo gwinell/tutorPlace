@@ -31,6 +31,7 @@ test('миграции создают таблицу результатов пе
       assert.equal(database.prepare('SELECT price_per_lesson FROM users WHERE id=?').get('student').price_per_lesson, 1000);
       assert.equal(database.prepare('SELECT status FROM payment_requests WHERE id=?').get('request').status, 'pending');
       assert.throws(() => database.prepare("INSERT INTO payment_requests(id,student_id,amount_rub,price_per_lesson,created_at) VALUES ('bad','missing',2500,1000,'now')").run(), /payment request student does not exist/);
+      assert.throws(() => database.prepare("INSERT INTO rooms(id,student_id,name,language,student_code,teacher_code,revision,last_active) VALUES ('orphan','missing','Room','python','','',0,0)").run(), /room student does not exist/);
       assert.throws(() => database.prepare("INSERT INTO payment_requests(id,student_id,amount_rub,price_per_lesson,created_at) VALUES ('invalid-amount','student',0,1000,'now')").run());
     } finally {
       database.close();

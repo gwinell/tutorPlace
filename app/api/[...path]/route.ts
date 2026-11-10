@@ -32,6 +32,15 @@ async function retireMeeting(lessonId:string,roomId:string|undefined|null){
  try{await disableSaluteJazzRoom(roomId,secrets,2500);await db().prepare('UPDATE lessons SET jazz_room_id=NULL,jazz_room_needs_recreation=0 WHERE id=? AND jazz_room_id=?').bind(lessonId,roomId).run();}
  catch(error){console.error('SaluteJazz room cleanup:',lessonId,error instanceof Error?error.message:'Unknown error');}
 }
+async function deferSaluteJazzRoomClose(roomId:string,error:unknown){
+ const database=db(),key='salutejazz-close:'+roomId;
+ try{
+   const existing=await database.prepare('SELECT value FROM settings WHERE key=?').bind(key).first<{value:string}>();
+   let attempts=0;try{attempts=Number(JSON.parse(existing?.value||'{}').attempts)||0;}catch{}
+   await database.prepare('INSERT INTO settings (key,value) VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value').bind(key,JSON.stringify({attempts:attempts+1,nextAttemptAt:Date.now()+Math.min(60,2**Math.min(attempts,5))*60_000})).run();
+   console.error('SaluteJazz room cleanup deferred:',roomId,error instanceof Error?error.message:'Unknown error');
+ }catch(queueError){console.error('SaluteJazz room cleanup could not be queued:',roomId,queueError instanceof Error?queueError.message:'Unknown error');}
+}
 async function teacher(request:Request){return auth(request,true);}
 async function lessonAccess(request:Request,lessonId:string){const u=await auth(request);const l=await db().prepare('SELECT * FROM lessons WHERE id=?').bind(lessonId).first<Row>();requireValue(l&&(u.role==='teacher'||l.student_id===u.id),'Урок не найден.',404);return {u,l:l!};}
 async function route(request:Request){
@@ -147,7 +156,7 @@ async function route(request:Request){
      if(calendarAttempted){try{await calendar(eventPath(eventId),'DELETE');calendarCleared=true;}catch{calendarCleared=false;}}
      // If Calendar deletion failed, recovery may keep this pending lesson and its
      // event. Leave its meeting room active so the recovered lesson link still works.
-     if(jazzRoomId&&calendarCleared){try{await disableSaluteJazzRoom(jazzRoomId,secrets);roomCleared=true;}catch{roomCleared=false;}}
+     if(jazzRoomId&&calendarCleared){try{await disableSaluteJazzRoom(jazzRoomId,secrets);roomCleared=true;}catch(error){roomCleared=false;await deferSaluteJazzRoomClose(jazzRoomId,error);}}
      if(calendarCleared&&roomCleared)await db().prepare("DELETE FROM lessons WHERE id=? AND status='pending'").bind(lessonId).run();
      else throw new HttpError('Не удалось безопасно завершить назначение. Урок оставлен для сверки.',503);
      throw error;
@@ -408,7 +417,7 @@ async function route(request:Request){
      if(request.headers.get('if-none-match')?.split(',').map(value=>value.trim()).includes(etag))return new Response(null,{status:304,headers});
      return json({rooms},200,headers);
    }
-   if(!path[1]&&method==='POST'){requireValue(u.role==='student','Комнату создаёт ученик.',403);const count=await db().prepare('SELECT COUNT(*) n FROM rooms WHERE student_id=?').bind(u.id).first<{n:number}>();requireValue(Number(count?.n)<3,'Можно открыть до трёх комнат одновременно.');const r={id:id(),student_id:u.id,name:'Комната · '+u.name,language:'python',student_code:PYTHON_START,teacher_code:TEACHER_START,revision:0,last_active:Date.now()};await db().prepare('INSERT INTO rooms (id,student_id,name,language,student_code,teacher_code,revision,last_active) VALUES (?,?,?,?,?,?,?,?)').bind(...Object.values(r)).run();return json({room:r},201);}
+   if(!path[1]&&method==='POST'){requireValue(u.role==='student','Комнату создаёт ученик.',403);const count=await db().prepare('SELECT COUNT(*) n FROM rooms WHERE student_id=?').bind(u.id).first<{n:number}>();requireValue(Number(count?.n)<3,'Можно открыть до трёх комнат одновременно.');const r={id:id(),student_id:u.id,name:'Комната · '+u.name,language:'python',student_code:PYTHON_START,teacher_code:TEACHER_START,revision:0,last_active:Date.now()};const created=await db().prepare("INSERT INTO rooms (id,student_id,name,language,student_code,teacher_code,revision,last_active) SELECT ?,id,?,?,?,?,?,? FROM users WHERE id=? AND role='student'").bind(r.id,r.name,r.language,r.student_code,r.teacher_code,r.revision,r.last_active,u.id).run();requireValue(created.meta.changes===1,'Ученик не найден.',404);return json({room:r},201);}
    const r=await db().prepare('SELECT * FROM rooms WHERE id=?').bind(path[1]).first<Row>();requireValue(r&&(u.role==='teacher'||r.student_id===u.id),'Комната удалена или недоступна.',404);
    if(path[2]==='compile-kumir'){
     requireValue(method==='POST','Компиляция принимает только POST.',404);
