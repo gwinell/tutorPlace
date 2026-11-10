@@ -64,14 +64,27 @@ function compile(source, outputFile, sourceFile, directory) {
 
 async function verifyCompiler() {
   const directory = await mkdtemp(path.join(tmpdir(), 'codetogether-qumir-health-'));
+  const probes = [
+    { name: 'текст', source: 'алг main\nнач\nкон\n' },
+    { name: 'Черепаха', source: 'использовать Черепаха\nалг\nнач\n    вперед(10)\nкон\n', importPrefix: 'turtle_' },
+    { name: 'Робот', source: 'использовать Робот\nалг\nнач\n    закрасить\nкон\n', importPrefix: 'robot_' },
+    { name: 'Чертёжник', source: 'использовать Чертежник\nалг\nнач\n    опустить перо\n    сместиться в точку(1.0, 1.0)\nкон\n', importPrefix: 'drawer_' },
+  ];
   try {
-    const sourceFile = path.join(directory, 'health.kum');
-    const outputFile = path.join(directory, 'health.wasm');
-    await writeFile(sourceFile, 'алг main\nнач\nкон\n', { encoding: 'utf8', mode: 0o600 });
-    await compile('алг main\nнач\nкон\n', outputFile, sourceFile, directory);
-    const wasm = await readFile(outputFile);
-    if (wasm.length < 8 || wasm.length > wasmLimit || !WebAssembly.validate(wasm)) {
-      throw new Error('Компилятор не собрал проверочную WASM-программу.');
+    for (const [index, probe] of probes.entries()) {
+      const sourceFile = path.join(directory, `health-${index}.kum`);
+      const outputFile = path.join(directory, `health-${index}.wasm`);
+      await writeFile(sourceFile, probe.source, { encoding: 'utf8', mode: 0o600 });
+      await compile(probe.source, outputFile, sourceFile, directory);
+      const wasm = await readFile(outputFile);
+      if (wasm.length < 8 || wasm.length > wasmLimit || !WebAssembly.validate(wasm)) {
+        throw new Error(`Компилятор не собрал проверочную WASM-программу: ${probe.name}.`);
+      }
+      if (probe.importPrefix) {
+        const wasmModule = await WebAssembly.compile(wasm);
+        const hasExecutor = WebAssembly.Module.imports(wasmModule).some(item => item.module === 'env' && item.name.startsWith(probe.importPrefix));
+        if (!hasExecutor) throw new Error(`Компилятор не создал модуль исполнителя «${probe.name}».`);
+      }
     }
   } finally {
     await rm(directory, { recursive: true, force: true });
