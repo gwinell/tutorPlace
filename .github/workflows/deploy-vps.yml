@@ -74,6 +74,23 @@ jobs:
           printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/codetogether_deploy
           printf '%s\n' "$VPS_KNOWN_HOSTS" > ~/.ssh/known_hosts
           chmod 600 ~/.ssh/codetogether_deploy ~/.ssh/known_hosts
+      - name: Package signed NixOS configuration
+        if: steps.release.outputs.ready == 'true'
+        env:
+          NIXOS_CONFIG_SIGNING_KEY: ${{ secrets.NIXOS_CONFIG_SIGNING_KEY }}
+        run: |
+          set -euo pipefail
+          signing_key="$RUNNER_TEMP/codetogether_nixos_signing_key"
+          trap 'rm -f "$signing_key"' EXIT
+          printf '%s\n' "$NIXOS_CONFIG_SIGNING_KEY" > "$signing_key"
+          chmod 600 "$signing_key"
+          bundle="$RUNNER_TEMP/codetogether-nixos"
+          mkdir -p "$bundle/infra/nixos"
+          cp infra/nixos/codetogether.nix infra/nixos/qumir.nix "$bundle/infra/nixos/"
+          printf '%s\n' "$GITHUB_SHA" > "$bundle/RELEASE_SHA"
+          nixos_archive="codetogether-nixos-${GITHUB_SHA}.tar.gz"
+          tar -czf "$nixos_archive" -C "$bundle" RELEASE_SHA infra/nixos/codetogether.nix infra/nixos/qumir.nix
+          ssh-keygen -Y sign -n codetogether-nixos -f "$signing_key" "$nixos_archive"
       - name: Upload and activate release
         if: steps.release.outputs.ready == 'true'
         env:
@@ -81,5 +98,6 @@ jobs:
           VPS_USER: ${{ secrets.VPS_USER }}
         run: |
           archive="codetogether-${GITHUB_SHA}.tar.gz"
-          scp -i ~/.ssh/codetogether_deploy -o BatchMode=yes -o StrictHostKeyChecking=yes "$archive" "$VPS_USER@$VPS_HOST:/tmp/$archive"
-          ssh -i ~/.ssh/codetogether_deploy -o BatchMode=yes -o StrictHostKeyChecking=yes "$VPS_USER@$VPS_HOST" "sudo -n \$(readlink -f /run/current-system/sw/bin/codetogether-deploy) ${GITHUB_SHA}"
+          nixos_archive="codetogether-nixos-${GITHUB_SHA}.tar.gz"
+          scp -i ~/.ssh/codetogether_deploy -o BatchMode=yes -o StrictHostKeyChecking=yes "$archive" "$nixos_archive" "$nixos_archive.sig" "$VPS_USER@$VPS_HOST:/tmp/"
+          ssh -i ~/.ssh/codetogether_deploy -o BatchMode=yes -o StrictHostKeyChecking=yes "$VPS_USER@$VPS_HOST" "sudo -n \$(readlink -f /run/current-system/sw/bin/codetogether-config-deploy) ${GITHUB_SHA} && sudo -n \$(readlink -f /run/current-system/sw/bin/codetogether-deploy) ${GITHUB_SHA} && curl --fail --silent http://127.0.0.1:3101/health"

@@ -3,6 +3,7 @@
 let
   appRoot = "/var/lib/codetogether";
   deployUser = "codetogether-deploy";
+  nixosSigningPublicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINTLLVS6qw75xySwdVgnNinUbt5Dg7TGd/OjsNyj2ZuH codetogether-nixos-config-signing";
   qumirCompiler = pkgs.callPackage ./qumir.nix { };
   deployScript = pkgs.writeShellScriptBin "codetogether-deploy" ''
     set -euo pipefail
@@ -38,6 +39,66 @@ let
     echo "health check failed; rolling back" >&2
     if [ -n "$old" ]; then ln -sfn "$old" "$root/current.next"; mv -Tf "$root/current.next" "$root/current"; systemctl restart codetogether.service; fi
     exit 1
+  '';
+  configDeployScript = pkgs.writeShellScriptBin "codetogether-config-deploy" ''
+    set -euo pipefail
+    if [ "$#" -ne 1 ] || ! [[ "$1" =~ ^[0-9a-f]{40}$ ]]; then
+      echo "usage: codetogether-config-deploy <40-character-git-sha>" >&2
+      exit 64
+    fi
+    release="$1"
+    archive="/tmp/codetogether-nixos-$release.tar.gz"
+    signature="$archive.sig"
+    [ -f "$archive" ] && [ -f "$signature" ] || { echo "signed NixOS config bundle missing" >&2; exit 66; }
+    root="${appRoot}/nixos-backups"
+    install -d -m 0700 "$root"
+    backup="$root/$release"
+    stage="$(${pkgs.coreutils}/bin/mktemp -d /tmp/codetogether-nixos.XXXXXX)"
+    install -d -m 0700 "$backup"
+    cleanup() {
+      rm -rf "$stage"
+      rmdir "$backup" 2>/dev/null || true
+    }
+    trap cleanup EXIT
+    printf 'codetogether-nixos %s\n' "${nixosSigningPublicKey}" > "$stage/allowed_signers"
+    ${pkgs.openssh}/bin/ssh-keygen -Y verify -f "$stage/allowed_signers" -I codetogether-nixos -n codetogether-nixos -s "$signature" < "$archive"
+    tar --no-same-owner --no-same-permissions -xzf "$archive" -C "$stage"
+    [ "$(cat "$stage/RELEASE_SHA")" = "$release" ] || { echo "release SHA does not match signed config bundle" >&2; exit 65; }
+    for name in codetogether.nix qumir.nix; do
+      candidate="$stage/infra/nixos/$name"
+      [ -f "$candidate" ] && [ ! -L "$candidate" ] || { echo "missing or invalid $name in signed config bundle" >&2; exit 65; }
+      cp "$candidate" "$stage/$name"
+    done
+    if cmp -s "$stage/codetogether.nix" /etc/nixos/codetogether.nix && cmp -s "$stage/qumir.nix" /etc/nixos/qumir.nix; then
+      echo "NixOS configuration unchanged"
+      exit 0
+    fi
+    cp -a /etc/nixos/codetogether.nix "$backup/codetogether.nix"
+    cp -a /etc/nixos/qumir.nix "$backup/qumir.nix"
+    installed=0
+    rollback() {
+      status="$?"
+      trap - EXIT
+      if [ "$status" -ne 0 ] && [ "$installed" -eq 1 ]; then
+        install -m 0644 -o root -g root "$backup/codetogether.nix" /etc/nixos/codetogether.nix
+        install -m 0644 -o root -g root "$backup/qumir.nix" /etc/nixos/qumir.nix
+        nixos-rebuild switch || echo "NixOS config rollback needs manual recovery" >&2
+      fi
+      rm -rf "$stage"
+      rmdir "$backup" 2>/dev/null || true
+      exit "$status"
+    }
+    trap rollback EXIT
+    install -m 0644 -o root -g root "$stage/codetogether.nix" /etc/nixos/codetogether.nix.next
+    install -m 0644 -o root -g root "$stage/qumir.nix" /etc/nixos/qumir.nix.next
+    installed=1
+    mv -f /etc/nixos/codetogether.nix.next /etc/nixos/codetogether.nix
+    mv -f /etc/nixos/qumir.nix.next /etc/nixos/qumir.nix
+    nixos-rebuild switch
+    systemctl is-active --quiet codetogether-qumir-compiler.service
+    ${pkgs.curl}/bin/curl --fail --silent http://127.0.0.1:3101/health >/dev/null
+    rm -f "$archive" "$signature"
+    echo "activated NixOS configuration for $release"
   '';
   backupExport = pkgs.writeShellScriptBin "codetogether-backup-export" ''
     set -euo pipefail
@@ -132,6 +193,7 @@ in
         "QUMIR_COMPILER_PORT=3101"
         "QUMIRC_PATH=${qumirCompiler}/bin/qumirc"
         "PRLIMIT_PATH=${pkgs.util-linux}/bin/prlimit"
+        "PATH=${pkgs.llvmPackages_20.lld}/bin"
       ];
       ExecStart = "${pkgs.nodejs_22}/bin/node ${appRoot}/current/qumir-compiler-service.mjs";
       Restart = "always";
@@ -196,8 +258,9 @@ in
   };
 
   security.sudo.extraRules = [
+    { users = [ deployUser ]; commands = [ { command = "${configDeployScript}/bin/codetogether-config-deploy"; options = [ "NOPASSWD" ]; } ]; }
     { users = [ deployUser ]; commands = [ { command = "${deployScript}/bin/codetogether-deploy"; options = [ "NOPASSWD" ]; } ]; }
     { users = [ deployUser ]; commands = [ { command = "${backupExport}/bin/codetogether-backup-export"; options = [ "NOPASSWD" ]; } ]; }
   ];
-  environment.systemPackages = [ deployScript backupExport pkgs.nodejs_22 pkgs.curl pkgs.sqlite ];
+  environment.systemPackages = [ configDeployScript deployScript backupExport pkgs.nodejs_22 pkgs.curl pkgs.sqlite ];
 }
