@@ -17,7 +17,7 @@ const sources = [
   ['@/lib/collaboration', 'lib/collaboration.ts'],
   ['@/lib/trial-booking', 'lib/trial-booking.ts'],
   ['@/lib/lesson-move', 'lib/lesson-move.ts'],
-  ['@/lib/salutejazz', 'lib/salutejazz.ts'],
+  ['@/lib/salutejazz-real', 'lib/salutejazz.ts'],
   ['route', 'app/api/[...path]/route.ts'],
 ].map(([name, file]) => [
   name,
@@ -40,7 +40,14 @@ function setup(beforeRecovery = () => {}) {
         bind: (...bound) => command(bound),
         first: async () => statement.get(...args) ?? null,
         all: async () => ({ results: statement.all(...args) }),
-        run: () => ({ meta: { changes: statement.run(...args).changes } }),
+        run: () => {
+          if (query.startsWith("INSERT INTO lessons (id,student_id,name,start,end,type,status,event_id,operation_started_at,meet_url,topic) SELECT ?,id,?,?,?")) {
+            const callback = network.beforeManualInsert;
+            network.beforeManualInsert = null;
+            callback?.();
+          }
+          return { meta: { changes: statement.run(...args).changes } };
+        },
       };
     }
     return command([]);
@@ -74,11 +81,14 @@ function setup(beforeRecovery = () => {}) {
   }));
   const events = new Map();
   let etag = 0;
-  const network = { lostResponse: false, unavailableAfterPatch: false, unavailable: false, skipPatch: false, busy: [] };
+  const network = { lostResponse: false, unavailableAfterPatch: false, unavailable: false, skipPatch: false, failDelete: false, afterFreeBusy: null, beforeManualInsert: null, jazzEnabled: false, jazzRoom: null, disabledRooms: [], busy: [] };
   const calendarFetch = async (url, options) => {
     const path = new URL(url).pathname;
     if (path === '/token') return Response.json({ access_token: 'fixture', expires_in: 3600 });
     if (path.endsWith('/freeBusy')) {
+      const callback = network.afterFreeBusy;
+      network.afterFreeBusy = null;
+      callback?.();
       return Response.json({ calendars: { 'fixture-calendar': { busy: network.busy } } });
     }
     if (path.endsWith('/events') && options.method === 'GET') return Response.json({ items: [...events.values()] });
@@ -89,6 +99,11 @@ function setup(beforeRecovery = () => {}) {
     }
 
     const eventId = path.split('/').at(-1);
+    if (options.method === 'DELETE') {
+      if (network.failDelete) throw new Error('Calendar delete failed');
+      events.delete(eventId);
+      return new Response(null, { status: 204 });
+    }
     const previous = events.get(eventId);
     if (!previous) return new Response(null, { status: 404 });
     if (options.method === 'GET') {
@@ -109,9 +124,9 @@ function setup(beforeRecovery = () => {}) {
     '@/lib/runtime-env': { getRuntimeEnvironment: () => env },
     '@/lib/sqlite-db': { getSqliteDatabase: () => { throw new Error('SQLite fallback is not used by booking fixtures'); } },
     '@/lib/salutejazz': {
-      saluteJazzConfigured: () => false,
-      createSaluteJazzRoom: async () => { throw new Error('SaluteJazz is disabled in booking tests'); },
-      disableSaluteJazzRoom: async () => {},
+      saluteJazzConfigured: () => network.jazzEnabled,
+      createSaluteJazzRoom: async () => network.jazzRoom || { roomId: 'fixture-room', roomUrl: 'https://meeting.example/fixture-room' },
+      disableSaluteJazzRoom: async roomId => { network.disabledRooms.push(roomId); },
     },
   };
   for (const [name, source] of sources) {
@@ -174,8 +189,8 @@ function setup(beforeRecovery = () => {}) {
 test('parseSdkKey принимает Base64 SDK key и отклоняет повреждённые данные', () => {
   const sdkKey = { projectId: 'project-id', key: { kid: 'key-id', crv: 'P-384', d: 'private' } };
   const encoded = Buffer.from(JSON.stringify(sdkKey)).toString('base64');
-  assert.deepEqual(JSON.parse(JSON.stringify(setup().modules['@/lib/salutejazz'].parseSdkKey(encoded))), sdkKey);
-  assert.throws(() => setup().modules['@/lib/salutejazz'].parseSdkKey('not a key'), /SDK key is invalid/);
+  assert.deepEqual(JSON.parse(JSON.stringify(setup().modules['@/lib/salutejazz-real'].parseSdkKey(encoded))), sdkKey);
+  assert.throws(() => setup().modules['@/lib/salutejazz-real'].parseSdkKey('not a key'), /SDK key is invalid/);
 });
 
 test('SaluteJazz кеширует access token и не запрашивает его для каждой комнаты', async () => {
@@ -193,7 +208,7 @@ test('SaluteJazz кеширует access token и не запрашивает е
     return Response.json({ roomId: 'room-' + rooms, roomUrl: 'https://meeting.salutejazz.ru/room-' + rooms });
   };
   const loaded = { exports: {} };
-  runInNewContext(sources.find(([name]) => name === '@/lib/salutejazz')[1], {
+  runInNewContext(sources.find(([name]) => name === '@/lib/salutejazz-real')[1], {
     module: loaded, exports: loaded.exports, fetch: saluteFetch, crypto, URL,
     TextEncoder, TextDecoder, AbortSignal, btoa, atob,
   });
@@ -305,6 +320,62 @@ test('Репетитор вручную назначает уроки вне д�
   const completed = await qa.request('lessons/' + outsideHours.data.lesson.id + '/complete', {}, teacher);
   assert.equal(completed.status, 200);
   assert.equal(qa.sql.prepare('SELECT balance FROM users WHERE id=?').get(student.id).balance, -2);
+});
+
+test('Обычная запись повторно проверяет занятость после ответа FreeBusy', async () => {
+  const qa = setup();
+  qa.network.afterFreeBusy = () => qa.sql.prepare("INSERT INTO lessons(id,name,start,end,type,status) VALUES ('racing-event','Racing event',?,?, 'trial','scheduled')").run(qa.at(12), new Date(Date.parse(qa.at(12)) + 45 * 60000).toISOString());
+  const result = await qa.book('+79161234567', 12);
+  assert.equal(result.status, 409);
+  assert.equal(qa.sql.prepare("SELECT COUNT(*) AS count FROM lessons WHERE id='racing-event'").get().count, 1);
+  assert.equal(qa.sql.prepare("SELECT COUNT(*) AS count FROM lessons WHERE trial_phone='+79161234567'").get().count, 0);
+  assert.equal(qa.events.size, 0);
+});
+
+test('Списание при завершении удерживает баланс для параллельной записи', async () => {
+  const qa = setup();
+  const teacher = await qa.teacherSession();
+  const { student, cookie } = await qa.createStudent(teacher, { balance: 1 });
+  const manual = await qa.request('lessons', { studentId: student.id, start: qa.at(12) }, teacher);
+  assert.equal(manual.status, 201);
+  qa.sql.prepare("UPDATE lessons SET status='completing',operation_started_at=? WHERE id=?").run(new Date().toISOString(), manual.data.lesson.id);
+
+  const booking = await qa.request('book', { minutes: 55, start: qa.at(15) }, cookie);
+  assert.equal(booking.status, 409);
+  assert.equal(qa.sql.prepare('SELECT balance FROM users WHERE id=?').get(student.id).balance, 1);
+  assert.equal(qa.sql.prepare("SELECT COUNT(*) AS count FROM lessons WHERE student_id=? AND status='completing'").get(student.id).count, 1);
+});
+
+test('Удаление ученика перед вставкой не создаёт урок без профиля', async () => {
+  const qa = setup();
+  const teacher = await qa.teacherSession();
+  const { student } = await qa.createStudent(teacher);
+  qa.network.beforeManualInsert = () => {
+    qa.sql.prepare('DELETE FROM users WHERE id=?').run(student.id);
+  };
+
+  const result = await qa.request('lessons', { studentId: student.id, start: qa.at(12) }, teacher);
+  assert.equal(result.status, 404);
+  assert.equal(qa.sql.prepare('SELECT COUNT(*) AS count FROM lessons WHERE student_id=?').get(student.id).count, 0);
+  assert.equal(qa.events.size, 0);
+});
+
+test('Не отключает SaluteJazz, если событие урока не удалось удалить', async () => {
+  const qa = setup();
+  const teacher = await qa.teacherSession();
+  const { student } = await qa.createStudent(teacher);
+  qa.network.jazzEnabled = true;
+  qa.network.jazzRoom = { roomId: 'qa-room', roomUrl: 'https://meet.example/qa-room' };
+  qa.sql.exec("CREATE TRIGGER fail_manual_schedule BEFORE UPDATE OF status ON lessons WHEN OLD.status='pending' AND NEW.status='scheduled' BEGIN SELECT RAISE(ABORT, 'injected schedule failure'); END");
+  qa.network.failDelete = true;
+
+  const result = await qa.request('lessons', { studentId: student.id, start: qa.at(12) }, teacher);
+  assert.equal(result.status, 503);
+  const pending = qa.sql.prepare("SELECT * FROM lessons WHERE student_id=? AND status='pending'").get(student.id);
+  assert.ok(pending);
+  assert.equal(pending.meet_url, 'https://meet.example/qa-room');
+  assert.deepEqual(qa.network.disabledRooms, []);
+  assert.equal(qa.events.size, 1);
 });
 
 test('Цена ученика по умолчанию, изменение цены и заявка с ручным начислением', async () => {

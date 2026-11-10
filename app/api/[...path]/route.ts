@@ -128,8 +128,9 @@ async function route(request:Request){
    const lessonStart=new Date(startMs).toISOString(),lessonEnd=new Date(startMs+55*60000).toISOString();
    const lessonId=id(),eventId=lessonId.replaceAll('-',''),scheduleValue=await schedule();
    const topic=text(body.topic,200)||'Индивидуальное занятие';
-   await db().prepare("INSERT INTO lessons (id,student_id,name,start,end,type,status,event_id,operation_started_at,meet_url,topic) VALUES (?,?,?,?,?,'paid','pending',?,?,?,?)")
-     .bind(lessonId,student!.id,student!.name,lessonStart,lessonEnd,eventId,now(),scheduleValue.meetUrl,topic).run();
+   const inserted=await db().prepare("INSERT INTO lessons (id,student_id,name,start,end,type,status,event_id,operation_started_at,meet_url,topic) SELECT ?,id,?,?,?,'paid','pending',?,?,?,? FROM users WHERE id=? AND role='student'")
+     .bind(lessonId,student!.name,lessonStart,lessonEnd,eventId,now(),scheduleValue.meetUrl,topic,student!.id).run();
+   requireValue(inserted.meta.changes===1,'Ученик не найден.',404);
    let jazzRoomId:string|null=null,meetingUrl=scheduleValue.meetUrl,calendarAttempted=false;
    try{
      if(saluteJazzConfigured(secrets)){
@@ -144,7 +145,9 @@ async function route(request:Request){
    }catch(error){
      let calendarCleared=!calendarAttempted,roomCleared=!jazzRoomId;
      if(calendarAttempted){try{await calendar(eventPath(eventId),'DELETE');calendarCleared=true;}catch{calendarCleared=false;}}
-     if(jazzRoomId){try{await disableSaluteJazzRoom(jazzRoomId,secrets);roomCleared=true;}catch{roomCleared=false;}}
+     // If Calendar deletion failed, recovery may keep this pending lesson and its
+     // event. Leave its meeting room active so the recovered lesson link still works.
+     if(jazzRoomId&&calendarCleared){try{await disableSaluteJazzRoom(jazzRoomId,secrets);roomCleared=true;}catch{roomCleared=false;}}
      if(calendarCleared&&roomCleared)await db().prepare("DELETE FROM lessons WHERE id=? AND status='pending'").bind(lessonId).run();
      else throw new HttpError('Не удалось безопасно завершить назначение. Урок оставлен для сверки.',503);
      throw error;
@@ -167,7 +170,7 @@ async function route(request:Request){
    const lid=id(),eventId=lid.replaceAll('-',''),s=await schedule();
    const database=db();
    const insert=paid
-     ? database.prepare("INSERT INTO lessons (id,student_id,name,start,end,type,status,event_id,operation_started_at,meet_url,topic) SELECT ?,?,?,?,?,?,'pending',?,?,?,? WHERE (SELECT balance FROM users WHERE id=?)>(SELECT COUNT(*) FROM lessons WHERE student_id=? AND type='paid' AND status IN ('scheduled','pending','updating')) AND NOT EXISTS (SELECT 1 FROM lessons WHERE status IN ('scheduled','pending','updating') AND start<? AND end>?) AND NOT EXISTS (SELECT 1 FROM lessons WHERE status='updating' AND move_start<? AND move_end>?)")
+     ? database.prepare("INSERT INTO lessons (id,student_id,name,start,end,type,status,event_id,operation_started_at,meet_url,topic) SELECT ?,?,?,?,?,?,'pending',?,?,?,? WHERE (SELECT balance FROM users WHERE id=?)>(SELECT COUNT(*) FROM lessons WHERE student_id=? AND type='paid' AND status IN ('scheduled','pending','updating','completing')) AND NOT EXISTS (SELECT 1 FROM lessons WHERE status IN ('scheduled','pending','updating') AND start<? AND end>?) AND NOT EXISTS (SELECT 1 FROM lessons WHERE status='updating' AND move_start<? AND move_end>?)")
          .bind(lid,u!.id,name,slot.start,slot.end,'paid',eventId,now(),s.meetUrl,'Индивидуальное занятие',u!.id,u!.id,slot.end,slot.start,slot.end,slot.start)
      : database.prepare(`
          INSERT INTO lessons (id,name,phone,trial_phone,start,end,type,status,event_id,operation_started_at,privacy_consent_at,privacy_policy_version,meet_url,topic)
