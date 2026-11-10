@@ -1,4 +1,4 @@
-import { loadRuntime } from './runtime/loader.js';
+import { loadRuntime } from './runtime/loader.js?v=5';
 
 const outputLimit = 100_000;
 const canvasWidth = 720;

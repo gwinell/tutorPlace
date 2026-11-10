@@ -77,7 +77,7 @@ export function RuntimeProvider({children}:{children:ReactNode}){
    if(program.language==='kumir'){
      activeEngine.current='kumir';
      if(!kumirWorker.current){
-       kumirWorker.current=new Worker('/qumir/worker.js?v=4',{type:'module',name:'codeTogether Kumir'});
+       kumirWorker.current=new Worker('/qumir/worker.js?v=5',{type:'module',name:'codeTogether Kumir'});
        kumirWorker.current.onmessage=event=>{
          const message=event.data as RuntimeMessage;
          if(message.channel)listeners.current.get(message.channel)?.(message);
