@@ -3,8 +3,8 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://code-together.ru"),
-  title: "codeTogether — программируем вместе с Русланом",
-  description: "Индивидуальные занятия по информатике и Python с Русланом Гильметдиновым. От первой программы до собственного проекта. Бесплатный пробный урок — 45 минут.",
+  title: "codeTogether — репетитор по информатике и Python",
+  description: "Индивидуальные онлайн-занятия по информатике и Python с Русланом Гильметдиновым. Подготовка к школьным темам и экзаменам, основы программирования и проекты. Пробный урок — 45 минут.",
   alternates: {
     canonical: "/",
   },
@@ -13,8 +13,8 @@ export const metadata: Metadata = {
     locale: "ru_RU",
     url: "/",
     siteName: "codeTogether",
-    title: "codeTogether — программируем вместе с Русланом",
-    description: "Индивидуальные занятия по информатике и Python с Русланом Гильметдиновым.",
+    title: "codeTogether — репетитор по информатике и Python",
+    description: "Онлайн-занятия по информатике и Python с Русланом Гильметдиновым.",
   },
   icons: {
     icon: "/favicon.svg",

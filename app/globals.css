@@ -567,3 +567,129 @@
 .marketing .step-card h3{font-size:19px;line-height:1.35;letter-spacing:-.02em}
 .marketing .step-card p{color:var(--muted);font-size:15px;line-height:1.8}
 @media(max-width:760px){.marketing .teacher-quote{padding:20px 22px;margin-top:4px}.marketing .step-card{padding:23px}}
+
+/* Homepage readability and spacing pass. */
+.marketing .site-header{height:76px}
+.marketing .header-nav{gap:24px}
+.marketing .header-nav button,.marketing .login-button{font-size:15px}
+.marketing .hero{min-height:620px;padding-top:56px;padding-bottom:40px;gap:32px}
+.marketing .hero h1{font-size:clamp(48px,4.7vw,68px);line-height:1.1;letter-spacing:-.035em}
+.marketing .hero-eyebrow{font-size:15px;margin-bottom:20px}
+.marketing .hero-description{font-size:18px;line-height:1.7;margin-top:24px}
+.marketing .hero-cta{font-size:16px;margin-top:22px}
+.marketing .hero-note{font-size:14px;margin-top:10px}
+.marketing .hero-topics{gap:8px;margin-top:20px}
+.marketing .hero-topics>span{font-size:14px;padding:8px 12px}
+.marketing .benefit-strip{padding:20px 0;gap:24px}
+.marketing .benefit-strip strong{font-size:15px}
+.marketing .benefit-strip small{font-size:14px;line-height:1.45;margin-top:3px}
+.marketing .section{padding-top:72px;padding-bottom:72px}
+.marketing .about-section{padding-top:72px;padding-bottom:72px;gap:56px}
+.marketing .section-heading{margin-bottom:28px;gap:20px}
+.marketing .section-heading p{font-size:16px;line-height:1.65;margin-top:12px}
+.marketing .eyebrow{font-size:13px}
+.marketing .about-text p{font-size:16px;line-height:1.75}
+.marketing .about-tags{margin-top:20px}
+.marketing .tutor-story-heading{margin-bottom:24px}
+.marketing .tutor-story-heading>p{font-size:16px;line-height:1.65}
+.marketing .tutor-story-card .eyebrow{font-size:13px}
+.marketing .tutor-story-card h3{font-size:18px;margin:8px 0}
+.marketing .tutor-personal-note{margin-top:16px;padding:16px 20px}
+.marketing .tutor-personal-note p{font-size:15px;line-height:1.65}
+.marketing .steps-grid{gap:16px}
+.marketing .step-card{padding:24px}
+.marketing .step-top{margin-bottom:20px}
+.marketing .project-info{padding:20px 22px}
+.marketing .project-info h3{font-size:18px}
+.marketing .project-info p{font-size:14px;line-height:1.6}
+.marketing .project-info .tag,.marketing .projects-note{font-size:13px}
+.marketing .platform-showcase{gap:32px}
+.marketing .feature-tab{padding:16px}
+.marketing .feature-tab strong{font-size:15px}
+.marketing .feature-tab small{font-size:14px;line-height:1.55}
+.marketing .platform-access,.marketing .platform-footnote{font-size:13px}
+.marketing .price-card{padding:24px}
+.marketing .price-card .button,.marketing .check-item,.marketing .price-each{font-size:14px}
+.marketing .pricing-grid{gap:20px}
+.marketing .pricing-note{font-size:14px;line-height:1.6}
+.marketing .reviews-section>div>p,.marketing .faq-item>button,.marketing .faq-body p{font-size:16px}
+.marketing .faq-item>button{padding:20px 0}
+.marketing .final-cta{padding:40px 44px;margin-bottom:48px}
+.marketing .final-cta p,.marketing .final-cta .button{font-size:15px}
+.marketing .footer{gap:28px}
+.marketing .footer-bottom{font-size:13px}
+
+@media(max-width:1100px){
+  .marketing .hero{min-height:590px;padding-top:48px;padding-bottom:36px}
+  .marketing .hero h1{font-size:clamp(46px,5vw,58px)}
+  .marketing .section{padding-top:64px;padding-bottom:64px}
+  .marketing .about-section{padding-top:64px;padding-bottom:64px;gap:40px}
+  .marketing .project-info{padding:18px}
+}
+@media(max-width:760px){
+  .marketing .site-header{height:68px}
+  .marketing .login-button{font-size:0;min-width:36px;padding:7px 5px;white-space:nowrap}
+  .marketing .login-button:before{font-size:14px}
+  .marketing .hero{padding-top:32px;padding-bottom:28px;gap:24px}
+  .marketing .hero-eyebrow{font-size:14px;margin-bottom:16px}
+  .marketing .hero h1{font-size:clamp(38px,9.5vw,58px);line-height:1.08}
+  .marketing .hero-description{font-size:17px;line-height:1.65;margin-top:20px}
+  .marketing .hero-cta{font-size:15px;margin-top:18px}
+  .marketing .hero-note{font-size:14px;line-height:1.5}
+  .marketing .hero-topics{margin-top:16px}
+  .marketing .hero-topics>span{font-size:13px;padding:7px 10px}
+  .marketing .hero-visual{margin-bottom:0}
+  .marketing .benefit-strip{padding:8px 0}
+  .marketing .benefit-strip>div{min-height:64px;padding:12px 5px!important}
+  .marketing .benefit-strip strong{font-size:15px}
+  .marketing .benefit-strip small{font-size:14px}
+  .marketing .section{padding-top:48px;padding-bottom:48px}
+  .marketing .about-section{padding-top:48px;padding-bottom:48px;gap:24px}
+  .marketing .section-heading{margin-bottom:22px;gap:10px}
+  .marketing .section-heading p{font-size:15px;margin-top:10px}
+  .marketing .eyebrow{font-size:13px;margin-bottom:10px}
+  .marketing .about-heading h2,.marketing .tutor-story-heading h2{font-size:29px}
+  .marketing .about-text p{font-size:15px;line-height:1.7}
+  .marketing .about-tags{margin-top:16px}
+  .marketing .tutor-story-heading{margin-bottom:20px}
+  .marketing .tutor-story-heading>p{font-size:15px;line-height:1.6}
+  .marketing .tutor-story-grid{gap:12px}
+  .marketing .tutor-story-card{padding:18px}
+  .marketing .tutor-story-card .eyebrow{font-size:12px}
+  .marketing .tutor-story-card h3{font-size:17px}
+  .marketing .tutor-story-card p{font-size:14px}
+  .marketing .tutor-personal-note{margin-top:12px;padding:14px 16px}
+  .marketing .tutor-personal-note p{font-size:14px}
+  .marketing .steps-grid,.marketing .projects-grid{gap:12px}
+  .marketing .project-info{padding:18px}
+  .marketing .project-info h3{font-size:17px}
+  .marketing .project-info p{font-size:14px}
+  .marketing .projects-note{font-size:13px;line-height:1.6}
+  .marketing .platform-showcase{gap:18px}
+  .marketing .platform-heading>.button{margin:0 0 18px}
+  .marketing .feature-tab{padding:14px;gap:10px}
+  .marketing .feature-tab strong{font-size:15px}
+  .marketing .feature-tab small{font-size:14px;line-height:1.5}
+  .marketing .pricing-grid{gap:24px 12px}
+  .marketing .price-card{padding:18px 14px}
+  .marketing .price-card .button,.marketing .check-item,.marketing .price-each{font-size:13px}
+  .marketing .pricing-note{font-size:13px}
+  .marketing .reviews-section{padding-top:40px;padding-bottom:40px;gap:20px}
+  .marketing .reviews-section>div>p,.marketing .faq-item>button,.marketing .faq-body p{font-size:15px}
+  .marketing .faq-section{padding-top:32px}
+  .marketing .faq-item>button{padding:16px 0}
+  .marketing .faq-body p{padding-bottom:18px}
+  .marketing .final-cta{padding:24px 20px;margin-bottom:36px;min-height:0}
+  .marketing .final-cta p,.marketing .final-cta .button{font-size:14px}
+  .marketing .footer{gap:20px}
+  .marketing .footer-bottom{font-size:13px;gap:8px}
+}
+@media(min-width:761px) and (max-width:850px){
+  .marketing .hero{grid-template-columns:minmax(0,1fr);min-height:0;padding-top:48px;padding-bottom:36px;gap:28px}
+  .marketing .hero-copy{max-width:640px}
+  .marketing .hero h1{font-size:56px}
+  .marketing .hero-visual{width:min(100%,440px);height:420px;justify-self:center;align-self:auto;margin:0 auto}
+  .marketing .benefit-strip{grid-template-columns:1fr;gap:0}
+  .marketing .benefit-strip>div{min-height:64px;padding:12px 8px}
+  .marketing .benefit-strip>div:not(:first-child){border-left:0;border-top:1px solid var(--border);padding-left:8px}
+}
