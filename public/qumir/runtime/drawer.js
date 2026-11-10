@@ -420,6 +420,21 @@ export function __fitDrawerView() {
   scheduleAutoFit();
 }
 
+export function __zoomDrawerView(factor) {
+  if (!canvas || !Number.isFinite(Number(factor)) || Number(factor) <= 0) return;
+  const rect = canvas.getBoundingClientRect();
+  const sx = rect.width / 2;
+  const sy = rect.height / 2;
+  const anchor = toWorld(sx, sy);
+  view.scale = Math.max(0.15, Math.min(800, view.scale * Number(factor)));
+  const screen = toScreen(anchor.x, anchor.y);
+  view.ox += sx - screen.x;
+  view.oy += sy - screen.y;
+  userInteracted = true;
+  autoFitPending = false;
+  scheduleDraw();
+}
+
 function updateBounds(x, y) {
   const b = state.bounds;
   b.minX = Math.min(b.minX, x);

@@ -1073,3 +1073,49 @@
 .syntax-module{color:#f0c879}
 .syntax-operator{color:#d6c7e9}
 @media(max-width:680px){.code-editor.kumir-workspace-editor>.syntax-highlight{font-size:14px}}
+
+.qumir-executor>header{flex-wrap:wrap}
+.qumir-stage-heading{display:flex;min-width:0;flex-direction:column;gap:2px}
+.qumir-stage-heading>span{font-size:12px;color:var(--muted);line-height:1.3}
+.qumir-stage-heading>strong{font-size:15px;line-height:1.3}
+.qumir-stage-controls,.qumir-zoom-controls{display:flex;align-items:center;gap:6px}
+.qumir-executor-picker{position:relative}
+.qumir-control-button{display:inline-flex;min-height:34px;align-items:center;justify-content:center;gap:7px;padding:0 10px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--ink);font:inherit;font-size:13px;line-height:1;white-space:nowrap;cursor:pointer;transition:background-color .15s ease,border-color .15s ease,color .15s ease}
+.qumir-control-button:hover{background:var(--surface-2);border-color:var(--muted)}
+.qumir-control-button.active,.qumir-executor-menu>button.selected,.robot-field-tools>button.selected{border-color:var(--purple);background:color-mix(in srgb,var(--purple) 10%,var(--surface));color:var(--purple)}
+.qumir-control-button:disabled{opacity:.5;cursor:not-allowed}
+.qumir-control-button.icon-only{width:34px;padding:0}
+.qumir-executor-menu{position:absolute;z-index:4;top:calc(100% + 6px);right:0;display:grid;min-width:180px;gap:3px;padding:5px;border:1px solid var(--border);border-radius:10px;background:var(--surface);box-shadow:0 8px 24px #211a2b20}
+.qumir-executor-menu>button{display:flex;min-height:38px;align-items:center;justify-content:space-between;gap:10px;padding:0 10px;border:0;border-radius:6px;background:transparent;color:var(--ink);font:inherit;font-size:14px;text-align:left;cursor:pointer}
+.qumir-executor-menu>button:hover{background:var(--surface-2)}
+.qumir-executor-menu>button:disabled{opacity:.5;cursor:not-allowed}
+.robot-field-tools{position:relative;z-index:1;display:flex;min-height:46px;flex-wrap:wrap;align-items:center;gap:6px;padding:7px 12px;border-bottom:1px solid var(--border);background:var(--surface)}
+.robot-field-tools>span{margin-right:3px;color:var(--muted);font-size:12px}
+.robot-field-tools>button{display:inline-flex;min-height:30px;align-items:center;gap:5px;padding:0 9px;border:1px solid var(--border);border-radius:7px;background:var(--surface);color:var(--ink);font:inherit;font-size:12px;cursor:pointer}
+.robot-field-tools>small{margin-left:auto;color:var(--muted);font-size:12px}
+.robot-field-resize{display:flex;align-items:center;gap:9px;margin-left:auto}
+.robot-field-resize>span,.robot-field-resize>div>small{color:var(--muted);font-size:11px}
+.robot-field-resize>div{display:flex;align-items:center;gap:4px}
+.robot-field-resize>div>button{display:grid;width:26px;height:26px;place-items:center;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--ink);cursor:pointer}
+.robot-field-resize>div>button:disabled{opacity:.45;cursor:not-allowed}
+.robot-field-resize>div>strong{min-width:20px;color:var(--ink);font-size:12px;text-align:center}
+.qumir-executor>canvas.robot-field-editing{cursor:crosshair;touch-action:none}
+.code-editor.kumir-workspace-editor>.qumir-executor>header{flex-wrap:wrap}
+@media(max-width:680px){
+ .code-editor.kumir-workspace-editor>.qumir-executor>header{align-items:center;gap:8px}
+ .qumir-stage-heading>span{font-size:11px}
+ .qumir-stage-heading>strong{font-size:14px}
+ .qumir-stage-controls,.qumir-zoom-controls{gap:4px}
+ .qumir-control-button{min-height:32px;gap:5px;padding:0 8px;font-size:12px}
+ .qumir-control-button.icon-only{width:32px;padding:0}
+ .robot-field-tools{gap:5px;padding:7px 9px}
+ .robot-field-resize{margin-left:0}
+ .robot-field-tools>small{flex-basis:100%;margin:1px 0 0}
+}
+@media(max-width:380px){
+ .code-editor.kumir-workspace-editor>.qumir-executor>header{align-items:flex-start}
+ .qumir-stage-controls{flex-wrap:wrap;justify-content:flex-end;margin-left:auto}
+ .executor-picker-button>span{display:none}
+ .robot-field-tools>span{flex-basis:100%}
+ .robot-field-resize{flex-wrap:wrap;gap:6px}
+}
