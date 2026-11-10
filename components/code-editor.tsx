@@ -6,10 +6,44 @@ import luaSource from '../public/fengari.js?raw';
 import turtleSource from '../public/turtle-shim.py?raw';
 
 type TurtleEvent = { op: string; [key: string]: unknown };
-type KumirExecutor = 'robot'|'turtle'|'drawer'|'painter'|'text';
+type KumirExecutor = 'robot'|'turtle'|'drawer'|'text';
 function findKumirExecutor(code:string):KumirExecutor{
- const match=code.match(/^\s*использовать\s+(Робот|Черепаха|Чертежник|Чертёжник|Рисователь)(?=\s|$)/m)?.[1];
- return match==='Робот'?'robot':match==='Черепаха'?'turtle':match==='Чертежник'||match==='Чертёжник'?'drawer':match==='Рисователь'?'painter':'text';
+ const match=code.match(/^\s*использовать\s+(Робот|Черепаха|Чертежник|Чертёжник)(?=\s|$)/im)?.[1]?.toLocaleLowerCase('ru-RU');
+ return match==='робот'?'robot':match==='черепаха'?'turtle':match==='чертежник'||match==='чертёжник'?'drawer':'text';
+}
+type SyntaxToken = {type:'plain'|'keyword'|'string'|'number'|'comment'|'function'|'module'|'operator';text:string};
+const pythonKeywords=new Set('False None True and as assert async await break class continue def del elif else except finally for from global if import in is lambda nonlocal not or pass raise return try while with yield'.split(' '));
+const pythonBuiltins=new Set('abs all any bool dict enumerate float int len list max min print range round set str sum tuple type zip'.split(' '));
+const kumirKeywords=new Set('алг арг аргрез все выход дано для до иначе если исп использовать нц нач кон конец_если конец_цикла конец_пока конец_алг конец_данных пока при рез результат шаг таб то утв цикл цел вещ лог лит сим файл ввод вывод и или не да нет истина ложь нс'.split(' '));
+const kumirCommands=new Set('вперед назад влево вправо вверх вниз закрасить опустить_перо поднять_перо перо_вниз перо_вверх очистить_поле'.split(' '));
+function tokenizeSource(source:string,language:string):SyntaxToken[]{
+ const tokens:SyntaxToken[]=[];
+ const push=(type:SyntaxToken['type'],text:string)=>{if(!text)return;const previous=tokens.at(-1);if(previous?.type===type)previous.text+=text;else tokens.push({type,text});};
+ let index=0;
+ while(index<source.length){
+  const current=source[index];
+  if((language==='python'&&current==='#')||(language==='kumir'&&current==='|')){const end=source.indexOf('\n',index);const next=end<0?source.length:end;push('comment',source.slice(index,next));index=next;continue;}
+  if(current==='\''||current==='"'){
+   const quote=current,triple=language==='python'&&source.slice(index,index+3)===quote.repeat(3),delimiter=triple?quote.repeat(3):quote;let end=index+delimiter.length;
+   while(end<source.length){if(source[end]==='\\'){end+=2;continue;}if(source.slice(end,end+delimiter.length)===delimiter){end+=delimiter.length;break;}end++;}
+   push('string',source.slice(index,Math.min(end,source.length)));index=end;continue;
+  }
+  const word=source.slice(index).match(/^[\p{L}_][\p{L}\p{N}_]*/u)?.[0];
+  if(word){
+   const normalized=word.toLocaleLowerCase('ru-RU'),rest=source.slice(index+word.length),nextNonSpace=rest.match(/^\s*([\s\S])/)?.[1];
+   let type:SyntaxToken['type']='plain';
+   if(language==='python')type=pythonKeywords.has(word)?'keyword':pythonBuiltins.has(word)?'function':nextNonSpace==='('? 'function':'plain';
+   else if(kumirKeywords.has(normalized))type='keyword';
+   else if(/^(робот|черепаха|чертёжник|чертежник)$/i.test(word)&&/использовать\s+$/i.test(source.slice(0,index)))type='module';
+   else type=kumirCommands.has(normalized)||nextNonSpace==='('? 'function':'plain';
+   push(type,word);index+=word.length;continue;
+  }
+  const number=source.slice(index).match(/^(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?/)?.[0];
+  if(number){push('number',number);index+=number.length;continue;}
+  if(/[+\-*/%=<>!:.]/.test(current)){push('operator',current);index++;continue;}
+  push('plain',current);index++;
+ }
+ return tokens;
 }
 type RuntimeMessage = { ctRuntime?: boolean; channel?: string; type?: string; text?: string; event?: TurtleEvent; bitmap?: ImageBitmap; executor?: string };
 type RuntimeProgram = { code: string; language: string; inputs: string[]; outputLimit: number; turtleSource: string; roomId?: string; kumirInput?: string };
@@ -105,17 +139,18 @@ function CodeEditorView({value,onChange,language='python',filename='student.py',
  const [channel]=useState(()=>crypto.randomUUID());
  const [output,setOutput]=useState(''),[running,setRunning]=useState(false),[waiting,setWaiting]=useState(false),[input,setInput]=useState(''),[loading,setLoading]=useState(false);
  const [turtleEvents,setTurtleEvents]=useState<TurtleEvent[]>([]),[turtleVisible,setTurtleVisible]=useState(false),[qumirVisible,setQumirVisible]=useState(language==='kumir'),[qumirHasFrame,setQumirHasFrame]=useState(false),[qumirExecutor,setQumirExecutor]=useState<KumirExecutor>(()=>language==='kumir'?findKumirExecutor(value):'text'),[kumirInput,setKumirInput]=useState('');
- const inputs=useRef<string[]>([]),timer=useRef<ReturnType<typeof setTimeout>|null>(null),source=useRef(''),outputCharacters=useRef(0),executionElapsed=useRef(0),executionSegmentStarted=useRef<number|null>(null),outputRef=useRef<HTMLPreElement>(null),inputRef=useRef<HTMLInputElement>(null),qumirCanvas=useRef<HTMLCanvasElement>(null);
+ const inputs=useRef<string[]>([]),timer=useRef<ReturnType<typeof setTimeout>|null>(null),source=useRef(''),outputCharacters=useRef(0),executionElapsed=useRef(0),executionSegmentStarted=useRef<number|null>(null),outputRef=useRef<HTMLPreElement>(null),inputRef=useRef<HTMLInputElement>(null),qumirCanvas=useRef<HTMLCanvasElement>(null),highlightRef=useRef<HTMLPreElement>(null),lineNumbersRef=useRef<HTMLPreElement>(null);
+ const syntaxTokens=useMemo(()=>language==='python'||language==='kumir'?tokenizeSource(value,language):[],[value,language]);
  const executorHint=useRef<KumirExecutor>(language==='kumir'?findKumirExecutor(value):'text');
  const {activeChannel,ready,register,run:runProgram,stop:stopProgram}=runtime;
  const sendTurtleEvent=runtime.turtleEvent;
  const sendExecutorEvent=runtime.executorEvent;
  useEffect(()=>register(channel,message=>{
    if(message.type==='loading')setLoading(true);
-   if(message.type==='executing'){setLoading(false);if(language==='kumir')setQumirExecutor(['robot','turtle','drawer','painter','text'].includes(message.executor||'')?message.executor as KumirExecutor:executorHint.current);if(timer.current)clearTimeout(timer.current);executionSegmentStarted.current=performance.now();timer.current=setTimeout(()=>{stopProgram(channel);executionElapsed.current=10000;executionSegmentStarted.current=null;setRunning(false);setOutput(current=>(current+'\nПрограмма остановлена: превышено 10 секунд выполнения.').slice(-100000));},Math.max(1,10000-executionElapsed.current));}
+   if(message.type==='executing'){setLoading(false);if(language==='kumir')setQumirExecutor(['robot','turtle','drawer','text'].includes(message.executor||'')?message.executor as KumirExecutor:executorHint.current);if(timer.current)clearTimeout(timer.current);executionSegmentStarted.current=performance.now();timer.current=setTimeout(()=>{stopProgram(channel);executionElapsed.current=10000;executionSegmentStarted.current=null;setRunning(false);setOutput(current=>(current+'\nПрограмма остановлена: превышено 10 секунд выполнения.').slice(-100000));},Math.max(1,10000-executionElapsed.current));}
    if(message.type==='stdout'){const text=message.text||'';outputCharacters.current+=text.length;setOutput(current=>(current+text).slice(-100000));}
    if(message.type==='turtle'&&message.event){setTurtleVisible(true);setTurtleEvents(current=>current.length<10000?[...current,message.event!]:current);}
-   if(message.type==='canvas'&&message.bitmap&&qumirCanvas.current){setQumirVisible(true);setQumirHasFrame(true);if(['robot','turtle','drawer','painter','text'].includes(message.executor||''))setQumirExecutor(message.executor as KumirExecutor);const context=qumirCanvas.current.getContext('2d');context?.clearRect(0,0,qumirCanvas.current.width,qumirCanvas.current.height);context?.drawImage(message.bitmap,0,0);message.bitmap.close();}
+   if(message.type==='canvas'&&message.bitmap&&qumirCanvas.current){setQumirVisible(true);setQumirHasFrame(true);if(['robot','turtle','drawer','text'].includes(message.executor||''))setQumirExecutor(message.executor as KumirExecutor);const context=qumirCanvas.current.getContext('2d');context?.clearRect(0,0,qumirCanvas.current.width,qumirCanvas.current.height);context?.drawImage(message.bitmap,0,0);message.bitmap.close();}
    if(message.type==='input'){if(timer.current)clearTimeout(timer.current);if(executionSegmentStarted.current!==null){executionElapsed.current+=performance.now()-executionSegmentStarted.current;executionSegmentStarted.current=null;}setWaiting(true);setRunning(false);setTimeout(()=>inputRef.current?.focus(),50);}
    if(message.type==='done'||message.type==='error'){if(timer.current)clearTimeout(timer.current);if(executionSegmentStarted.current!==null){executionElapsed.current+=performance.now()-executionSegmentStarted.current;executionSegmentStarted.current=null;}setRunning(false);setLoading(false);if(message.type==='error')setOutput(current=>current+'\n'+(message.text||'Ошибка выполнения.'));}
  }),[channel,language,register,stopProgram]);
@@ -144,9 +179,10 @@ function CodeEditorView({value,onChange,language='python',filename='student.py',
       :<button onClick={()=>run()} type="button" className="run-button" title={language==='kumir'&&!roomId?'Запуск Кумир доступен в рабочей комнате':''} disabled={!ready||Boolean(activeChannel&&activeChannel!==channel)||(language==='kumir'&&!roomId)}><Play size={12}/>Запустить</button>)}
     </div>
    </div>
-   <div className="editor-area">
-    <pre className="line-numbers" aria-hidden="true">{value.split('\n').map((_,i)=><span key={i}>{i+1}</span>)}</pre>
-    <textarea aria-label={'Код файла '+filename} value={value} onChange={e=>onChange(e.target.value)} readOnly={readOnly} spellCheck={false} autoCapitalize="off" autoComplete="off" autoCorrect="off" onKeyDown={e=>{if(e.key==='Tab'&&!readOnly){e.preventDefault();const t=e.currentTarget,s=t.selectionStart,end=t.selectionEnd;onChange(value.slice(0,s)+'    '+value.slice(end));requestAnimationFrame(()=>{t.selectionStart=t.selectionEnd=s+4;});}}}/>
+   <div className={'editor-area'+(syntaxTokens.length?' has-syntax-highlighting':'')}>
+    <pre ref={lineNumbersRef} className="line-numbers" aria-hidden="true">{value.split('\n').map((_,i)=><span key={i}>{i+1}</span>)}</pre>
+    {syntaxTokens.length>0&&<pre ref={highlightRef} className="syntax-highlight" aria-hidden="true">{syntaxTokens.map((token,index)=><span className={'syntax-'+token.type} key={index}>{token.text}</span>)}</pre>}
+    <textarea className={syntaxTokens.length?'syntax-source':''} aria-label={'Код файла '+filename} value={value} onChange={e=>onChange(e.target.value)} readOnly={readOnly} spellCheck={false} autoCapitalize="off" autoComplete="off" autoCorrect="off" onScroll={e=>{const target=e.currentTarget;if(highlightRef.current)highlightRef.current.style.transform=`translate(${-target.scrollLeft}px,${-target.scrollTop}px)`;if(lineNumbersRef.current)lineNumbersRef.current.style.transform=`translateY(${-target.scrollTop}px)`;}} onKeyDown={e=>{if(e.key==='Tab'&&!readOnly){e.preventDefault();const t=e.currentTarget,s=t.selectionStart,end=t.selectionEnd;onChange(value.slice(0,s)+'    '+value.slice(end));requestAnimationFrame(()=>{t.selectionStart=t.selectionEnd=s+4;});}}}/>
    </div>
    {runnable&&<div className="editor-terminal">
     <div className="terminal-toolbar">
@@ -158,7 +194,7 @@ function CodeEditorView({value,onChange,language='python',filename='student.py',
     {waiting&&<form className="terminal-input" onSubmit={sendInput}><span>›</span><input ref={inputRef} aria-label="Ввод данных для программы" placeholder="Программа ждёт ввод…" value={input} onChange={e=>setInput(e.target.value)}/><button type="submit" aria-label="Отправить ввод"><Send size={15}/></button></form>}
    </div>}
    {language==='kumir'&&qumirVisible&&<section className="qumir-executor">
-    <header><span>{qumirExecutor==='text'?'Текстовый режим':'Исполнитель'}</span><strong>{({robot:'Робот',turtle:'Черепаха',painter:'Рисователь',drawer:'Чертёжник',text:'Текстовый вывод'} as Record<string,string>)[qumirExecutor]||'Кумир'}</strong></header>
+    <header><span>{qumirExecutor==='text'?'Текстовый режим':'Исполнитель'}</span><strong>{({robot:'Робот',turtle:'Черепаха',drawer:'Чертёжник',text:'Текстовый вывод'} as Record<string,string>)[qumirExecutor]||'Кумир'}</strong></header>
     {!qumirHasFrame&&<div className="qumir-stage-empty"><strong>{qumirExecutor==='text'?'Текстовая программа':'Поле готово'}</strong><span>{qumirExecutor==='text'?'Ввод и вывод программы доступны слева.':'Запусти программу, чтобы увидеть исполнителя.'}</span></div>}
     <canvas ref={qumirCanvas} width={720} height={440} aria-label="Поле исполнителя Кумир" tabIndex={0} onPointerDown={event=>{event.currentTarget.setPointerCapture(event.pointerId);const rect=event.currentTarget.getBoundingClientRect();sendExecutorEvent(channel,{type:'pointerdown',clientX:(event.clientX-rect.left)/rect.width*720,clientY:(event.clientY-rect.top)/rect.height*440,pointerId:event.pointerId,button:event.button,buttons:event.buttons});}} onPointerMove={event=>{const rect=event.currentTarget.getBoundingClientRect();sendExecutorEvent(channel,{type:'pointermove',clientX:(event.clientX-rect.left)/rect.width*720,clientY:(event.clientY-rect.top)/rect.height*440,pointerId:event.pointerId,buttons:event.buttons});}} onPointerUp={event=>sendExecutorEvent(channel,{type:'pointerup',clientX:event.nativeEvent.offsetX/event.currentTarget.clientWidth*720,clientY:event.nativeEvent.offsetY/event.currentTarget.clientHeight*440,pointerId:event.pointerId,button:event.button,buttons:0})} onWheel={event=>{event.preventDefault();sendExecutorEvent(channel,{type:'wheel',clientX:event.nativeEvent.offsetX/event.currentTarget.clientWidth*720,clientY:event.nativeEvent.offsetY/event.currentTarget.clientHeight*440,deltaY:event.deltaY});}} onKeyDown={event=>{sendExecutorEvent(channel,{type:'keydown',key:event.key,code:event.code});}}/>
    </section>}
