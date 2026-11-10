@@ -4,10 +4,24 @@ import { sql } from 'drizzle-orm';
 export const users = sqliteTable('users', {
   id: text('id').primaryKey(), login: text('login').notNull().unique(), password: text('password').notNull(),
   name: text('name').notNull(), role: text('role').notNull(), age: integer('age'), parentName: text('parent_name'),
-  phone: text('phone'), parentPhone: text('parent_phone'), balance: integer('balance').notNull().default(0), createdAt: text('created_at').notNull(),
+  phone: text('phone'), parentPhone: text('parent_phone'), balance: integer('balance').notNull().default(0),
+  pricePerLesson: integer('price_per_lesson').notNull().default(1000), createdAt: text('created_at').notNull(),
 });
 export const sessions = sqliteTable('sessions', { id: text('id').primaryKey(), userId: text('user_id').notNull(), expiresAt: integer('expires_at').notNull() }, t => [index('sessions_expires_at_idx').on(t.expiresAt)]);
 export const settings = sqliteTable('settings', { key: text('key').primaryKey(), value: text('value').notNull() });
+export const paymentRequests = sqliteTable('payment_requests', {
+  id: text('id').primaryKey(), studentId: text('student_id').notNull(), amountRub: integer('amount_rub').notNull(),
+  pricePerLesson: integer('price_per_lesson').notNull(), comment: text('comment'), status: text('status').notNull().default('pending'),
+  creditedLessons: integer('credited_lessons'), reviewNote: text('review_note'), reviewedBy: text('reviewed_by'),
+  createdAt: text('created_at').notNull(), reviewedAt: text('reviewed_at'),
+}, t => [
+  check('payment_requests_amount_check', sql`${t.amountRub} BETWEEN 1 AND 1000000`),
+  check('payment_requests_price_check', sql`${t.pricePerLesson} BETWEEN 1 AND 1000000`),
+  check('payment_requests_status_check', sql`${t.status} IN ('pending', 'approved', 'rejected')`),
+  check('payment_requests_credits_check', sql`${t.creditedLessons} IS NULL OR ${t.creditedLessons} BETWEEN 1 AND 100`),
+  index('payment_requests_student_created_idx').on(t.studentId, t.createdAt),
+  index('payment_requests_status_created_idx').on(t.status, t.createdAt),
+]);
 export const lessons = sqliteTable('lessons', {
   id: text('id').primaryKey(), studentId: text('student_id'), name: text('name').notNull(), phone: text('phone'),
   start: text('start').notNull(), end: text('end').notNull(), type: text('type').notNull(), status: text('status').notNull(),

@@ -74,12 +74,12 @@ function setup(beforeRecovery = () => {}) {
   }));
   const events = new Map();
   let etag = 0;
-  const network = { lostResponse: false, unavailableAfterPatch: false, unavailable: false, skipPatch: false };
+  const network = { lostResponse: false, unavailableAfterPatch: false, unavailable: false, skipPatch: false, busy: [] };
   const calendarFetch = async (url, options) => {
     const path = new URL(url).pathname;
     if (path === '/token') return Response.json({ access_token: 'fixture', expires_in: 3600 });
     if (path.endsWith('/freeBusy')) {
-      return Response.json({ calendars: { 'fixture-calendar': { busy: [] } } });
+      return Response.json({ calendars: { 'fixture-calendar': { busy: network.busy } } });
     }
     if (path.endsWith('/events') && options.method === 'GET') return Response.json({ items: [...events.values()] });
     if (path.endsWith('/events') && options.method === 'POST') {
@@ -125,10 +125,11 @@ function setup(beforeRecovery = () => {}) {
     modules[name] = loaded.exports;
   }
 
-  async function request(path, body, cookie, ip = '192.0.2.1') {
-    const send = body === undefined ? modules.route.GET : modules.route.POST;
+  async function request(path, body, cookie, ip = '192.0.2.1', requestedMethod) {
+    const method = requestedMethod || (body === undefined ? 'GET' : 'POST');
+    const send = modules.route[method];
     const response = await send(new Request(origin + '/api/' + path, {
-      method: body === undefined ? 'GET' : 'POST',
+      method,
       headers: { Origin: origin, 'Content-Type': 'application/json', 'cf-connecting-ip': ip, ...(cookie ? { Cookie: cookie } : {}) },
       body: body === undefined ? undefined : JSON.stringify(body),
     }));
@@ -143,12 +144,31 @@ function setup(beforeRecovery = () => {}) {
     return 'ct-session=' + token;
   }
 
+  async function studentSession(studentId) {
+    const token = 'student-token-' + studentId;
+    const digest = await modules['@/lib/server'].hash(token);
+    sql.prepare('INSERT INTO sessions(id,user_id,expires_at) VALUES (?,?,?)').run(digest, studentId, Date.now() + 60000);
+    return 'ct-session=' + token;
+  }
+
+  async function createStudent(cookie, overrides = {}) {
+    const suffix = crypto.randomUUID().slice(0, 8);
+    const result = await request('students', {
+      name: overrides.name || 'Synthetic Student', age: 12, parent_name: 'QA Parent',
+      login: 'student_' + suffix, password: 'test-password-123', balance: overrides.balance ?? 0,
+      ...(overrides.price_per_lesson === undefined ? {} : { price_per_lesson: overrides.price_per_lesson }),
+    }, cookie);
+    assert.equal(result.status, 200);
+    const student = sql.prepare("SELECT * FROM users WHERE login=?").get('student_' + suffix);
+    return { student, cookie: await studentSession(student.id) };
+  }
+
   const book = (phone, hour, ip) => request('book', {
     name: 'Synthetic QA', phone, start: at(hour), minutes: 45, consent: true,
   }, undefined, ip);
   const lesson = id => sql.prepare('SELECT * FROM lessons WHERE id=?').get(id);
   const locks = id => sql.prepare('SELECT COUNT(*) AS n FROM slot_locks WHERE lesson_id=?').get(id).n;
-  return { sql, request, teacherSession, book, lesson, locks, events, network, at, date, modules };
+  return { sql, request, teacherSession, studentSession, createStudent, book, lesson, locks, events, network, at, date, modules };
 }
 
 test('parseSdkKey принимает Base64 SDK key и отклоняет повреждённые данные', () => {
@@ -255,4 +275,93 @@ test('При недоступной сверке оба окна удержив�
   assert.equal(qa.lesson(id).start, qa.at(12));
   assert.equal(qa.events.get(event_id).start.dateTime, qa.at(12));
   assert.equal(qa.locks(id), 9);
+});
+
+test('Репетитор вручную назначает уроки вне доступности, поверх занятых событий и без баланса', async () => {
+  const qa = setup();
+  const teacher = await qa.teacherSession();
+  const { student, cookie } = await qa.createStudent(teacher);
+  qa.network.busy = [{ start: qa.at(11), end: qa.at(13) }];
+
+  const first = await qa.request('lessons', { studentId: student.id, start: qa.at(12) }, teacher);
+  const second = await qa.request('lessons', { studentId: student.id, start: qa.at(12) }, teacher);
+  assert.equal(first.status, 201);
+  assert.equal(second.status, 201);
+  assert.equal(first.data.lesson.end, new Date(Date.parse(qa.at(12)) + 55 * 60000).toISOString());
+  assert.equal(qa.locks(first.data.lesson.id), 0);
+  assert.equal(qa.events.size, 2);
+
+  const blockedByCalendar = await qa.request('book', { minutes: 55, start: qa.at(12) }, cookie);
+  assert.equal(blockedByCalendar.status, 409);
+  qa.network.busy = [];
+  const blockedByBalance = await qa.request('book', { minutes: 55, start: qa.at(15) }, cookie);
+  assert.equal(blockedByBalance.status, 409);
+  assert.equal((await qa.request('lessons', { studentId: student.id, start: qa.at(15) }, cookie)).status, 403);
+
+  qa.sql.prepare('UPDATE users SET balance=-1 WHERE id=?').run(student.id);
+  const outsideHours = await qa.request('lessons', { studentId: student.id, start: qa.at(22) }, teacher);
+  assert.equal(outsideHours.status, 201);
+  qa.sql.prepare('UPDATE lessons SET start=?,end=? WHERE id=?').run('2000-01-01T07:00:00.000Z', '2000-01-01T07:55:00.000Z', outsideHours.data.lesson.id);
+  const completed = await qa.request('lessons/' + outsideHours.data.lesson.id + '/complete', {}, teacher);
+  assert.equal(completed.status, 200);
+  assert.equal(qa.sql.prepare('SELECT balance FROM users WHERE id=?').get(student.id).balance, -2);
+});
+
+test('Цена ученика по умолчанию, изменение цены и заявка с ручным начислением', async () => {
+  const qa = setup();
+  const teacher = await qa.teacherSession();
+  const { student, cookie } = await qa.createStudent(teacher);
+  const other = await qa.createStudent(teacher, { name: 'Other Student' });
+  assert.equal(student.price_per_lesson, 1000);
+
+  const edited = await qa.request('students', {
+    id: student.id, name: student.name, age: student.age, parent_name: student.parent_name,
+    login: student.login, balance: student.balance, price_per_lesson: 1500,
+  }, teacher);
+  assert.equal(edited.status, 200);
+  assert.equal(qa.sql.prepare('SELECT price_per_lesson FROM users WHERE id=?').get(student.id).price_per_lesson, 1500);
+  assert.equal((await qa.request('payment-link', { url: 'https://pay.example/universal' }, teacher)).status, 200);
+  assert.equal((await qa.request('payment-link', { url: 'http://unsafe.example/pay' }, teacher)).status, 400);
+
+  const submitted = await qa.request('payment-requests', { amount: 4500, comment: 'Перевёл утром' }, cookie);
+  assert.equal(submitted.status, 201);
+  assert.equal(submitted.data.request.price_per_lesson, 1500);
+  assert.equal(qa.sql.prepare('SELECT balance FROM users WHERE id=?').get(student.id).balance, 0);
+  assert.equal((await qa.request('payment-link', { url: 'https://attacker.example' }, cookie)).status, 403);
+  assert.equal((await qa.request('payment-requests/' + submitted.data.request.id + '/approve', { credits: 4 }, cookie)).status, 403);
+
+  const studentWorkspace = await qa.request('workspace', undefined, cookie);
+  const otherWorkspace = await qa.request('workspace', undefined, other.cookie);
+  assert.equal(studentWorkspace.data.paymentLink, 'https://pay.example/universal');
+  assert.equal(studentWorkspace.data.paymentRequests.length, 1);
+  assert.equal(otherWorkspace.data.paymentRequests.length, 0);
+  assert.equal(studentWorkspace.data.user.price_per_lesson, 1500);
+
+  const approved = await qa.request('payment-requests/' + submitted.data.request.id + '/approve', { credits: 3, note: 'Подтверждено' }, teacher);
+  assert.equal(approved.status, 200);
+  assert.equal(approved.data.request.credited_lessons, 3);
+  assert.equal(qa.sql.prepare('SELECT balance FROM users WHERE id=?').get(student.id).balance, 3);
+  assert.equal((await qa.request('payment-requests/' + submitted.data.request.id + '/approve', { credits: 3 }, teacher)).status, 409);
+  assert.equal(qa.sql.prepare('SELECT balance FROM users WHERE id=?').get(student.id).balance, 3);
+
+  const declined = await qa.request('payment-requests', { amount: 1000 }, cookie);
+  assert.equal(declined.status, 201);
+  assert.equal((await qa.request('payment-requests/' + declined.data.request.id + '/reject', { note: 'Перевод не найден' }, teacher)).status, 200);
+  assert.equal(qa.sql.prepare('SELECT balance FROM users WHERE id=?').get(student.id).balance, 3);
+  assert.equal((await qa.request('payment-requests/' + declined.data.request.id + '/approve', { credits: 1 }, teacher)).status, 409);
+});
+
+test('Удаление ученика работает через DELETE и удаляет его заявки и сессии', async () => {
+  const qa = setup();
+  const teacher = await qa.teacherSession();
+  const { student, cookie } = await qa.createStudent(teacher);
+  await qa.request('payment-link', { url: 'https://pay.example/universal' }, teacher);
+  const request = await qa.request('payment-requests', { amount: 1000 }, cookie);
+  assert.equal(request.status, 201);
+  const removed = await qa.request('students/' + student.id, undefined, teacher, undefined, 'DELETE');
+  assert.equal(removed.status, 200);
+  assert.equal(qa.sql.prepare('SELECT COUNT(*) AS n FROM users WHERE id=?').get(student.id).n, 0);
+  assert.equal(qa.sql.prepare('SELECT COUNT(*) AS n FROM sessions WHERE user_id=?').get(student.id).n, 0);
+  assert.equal(qa.sql.prepare('SELECT COUNT(*) AS n FROM payment_requests WHERE student_id=?').get(student.id).n, 0);
+  assert.equal((await qa.request('workspace', undefined, cookie)).status, 401);
 });

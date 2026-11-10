@@ -65,7 +65,7 @@ export async function maintain(environment: ServerEnv = secrets as ServerEnv) {
     try {
       if (lesson.status === "completing") {
         await database.batch([
-          database.prepare("UPDATE users SET balance=MAX(0,balance-1) WHERE id=(SELECT student_id FROM lessons WHERE id=? AND status='completing' AND type='paid')").bind(lesson.id),
+          database.prepare("UPDATE users SET balance=balance-1 WHERE id=(SELECT student_id FROM lessons WHERE id=? AND status='completing' AND type='paid')").bind(lesson.id),
           database.prepare("UPDATE lessons SET status='completed',operation_started_at=NULL WHERE id=? AND status='completing'").bind(lesson.id),
           database.prepare("DELETE FROM slot_locks WHERE lesson_id=?").bind(lesson.id),
         ]);
@@ -78,7 +78,7 @@ export async function maintain(environment: ServerEnv = secrets as ServerEnv) {
           database.prepare("DELETE FROM lessons WHERE id=? AND status='pending' AND operation_started_at<?").bind(lesson.id, cutoff),
         ]);
         else if (lesson.status === "updating" && !lesson.move_id) await database.batch([
-          database.prepare("UPDATE users SET balance=MAX(0,balance-1) WHERE id=(SELECT student_id FROM lessons WHERE id=? AND status='updating' AND type='paid' AND charged=1)").bind(lesson.id),
+          database.prepare("UPDATE users SET balance=balance-1 WHERE id=(SELECT student_id FROM lessons WHERE id=? AND status='updating' AND type='paid' AND charged=1)").bind(lesson.id),
           database.prepare("UPDATE lessons SET status='cancelled',cancelled_at=COALESCE(cancelled_at,operation_started_at),operation_started_at=NULL WHERE id=? AND status='updating' AND move_id IS NULL").bind(lesson.id),
           database.prepare("DELETE FROM slot_locks WHERE lesson_id=?").bind(lesson.id),
           database.prepare("DELETE FROM settings WHERE key=? AND value=?").bind('cancel-lock:'+lesson.student_id,lesson.id),
@@ -132,7 +132,7 @@ export async function maintain(environment: ServerEnv = secrets as ServerEnv) {
       const unchanged = event && event.status !== "cancelled" && Date.parse(event.start?.dateTime || "") === Date.parse(lesson.start) && Date.parse(event.end?.dateTime || "") === Date.parse(lesson.end);
       if (removed) {
         await database.batch([
-          database.prepare("UPDATE users SET balance=MAX(0,balance-1) WHERE id=(SELECT student_id FROM lessons WHERE id=? AND status='updating' AND type='paid' AND charged=1)").bind(lesson.id),
+          database.prepare("UPDATE users SET balance=balance-1 WHERE id=(SELECT student_id FROM lessons WHERE id=? AND status='updating' AND type='paid' AND charged=1)").bind(lesson.id),
           database.prepare("UPDATE lessons SET status='cancelled',cancelled_at=COALESCE(cancelled_at,operation_started_at),operation_started_at=NULL WHERE id=? AND status='updating' AND move_id IS NULL").bind(lesson.id),
           database.prepare("DELETE FROM slot_locks WHERE lesson_id=?").bind(lesson.id),
           database.prepare("DELETE FROM settings WHERE key=? AND value=?").bind('cancel-lock:'+lesson.student_id,lesson.id),

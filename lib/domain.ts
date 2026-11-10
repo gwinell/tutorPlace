@@ -1,5 +1,18 @@
 export type Role = 'student' | 'teacher';
-export type User = { id: string; name: string; role: Role; login?: string; age?: number; parent_name?: string; phone?: string; parent_phone?: string; balance: number };
+export type User = { id: string; name: string; role: Role; login?: string; age?: number; parent_name?: string; phone?: string; parent_phone?: string; balance: number; price_per_lesson?: number };
+export type PaymentRequest = {
+  id: string;
+  student_id: string;
+  amount_rub: number;
+  price_per_lesson: number;
+  comment: string | null;
+  status: 'pending' | 'approved' | 'rejected';
+  credited_lessons: number | null;
+  review_note: string | null;
+  reviewed_by: string | null;
+  created_at: string;
+  reviewed_at: string | null;
+};
 export type Lesson = { id: string; student_id?: string; name: string; start: string; end: string; type: string; status: string; meet_url?: string; jazz_room_id?: string | null; jazz_room_needs_recreation?: number; topic?: string; cancelled_at?: string; cancelled_by?: Role | null; charged?: number; homework?: string; move_id?: string | null; move_start?: string | null; operation_started_at?: string | null; privacy_consent_at?: string | null; privacy_policy_version?: string | null };
 export type Course = { id: string; title: string; description?: string; position: number };
 export type CourseEnrollment = { course_id: string; student_id: string };
@@ -7,7 +20,7 @@ export type Topic = { id: string; course_id: string; title: string; description:
 export type Assignment = { id: string; topic_id?: string | null; student_id?: string | null; lesson_id?: string; title: string; kind: string; prompt: string; options?: string | string[] };
 export type Submission = { id: string; assignment_id: string; student_id: string; content: string; result: string; created_at: string; feedback?: string; feedback_at?: string };
 export type Room = { id: string; student_id: string; name: string; language: string; student_code: string; teacher_code: string; student_state?:string;teacher_state?:string; revision: number; last_active: number };
-export type Notice = { id: string; title: string; body: string; created_at: string; read?: number };
+export type Notice = { id: string; title: string; body: string; created_at: string; student_id?: string; read?: number };
 export type AvailabilityWindow = { from: string; to: string };
 export type Schedule = {
   days: number[];
