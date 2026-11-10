@@ -1119,3 +1119,49 @@
  .robot-field-tools>span{flex-basis:100%}
  .robot-field-resize{flex-wrap:wrap;gap:6px}
 }
+
+/* Student credentials, manual lessons and payment requests. */
+.password-input-wrap{position:relative;width:100%}
+.password-input-wrap input{padding-right:48px}
+.password-visibility{position:absolute;top:50%;right:5px;display:flex;width:38px;height:38px;align-items:center;justify-content:center;transform:translateY(-50%);border-radius:7px;color:var(--muted)}
+.password-visibility:hover{background:var(--surface-2);color:var(--ink)}
+.credential-field>label{display:block;margin-bottom:7px;color:var(--muted);font-size:13px;font-weight:600}
+.credential-field>input{width:100%}
+.credential-generate{display:inline-flex;width:max-content;max-width:100%;min-height:30px;align-items:center;gap:6px;padding:3px 0;color:var(--purple);font-size:13px;font-weight:650;text-align:left}
+.credential-generate:hover{text-decoration:underline}
+.manual-lesson-datetime{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.payment-page{display:grid;gap:22px;padding-bottom:35px}
+.payment-intro{display:flex;align-items:flex-start;gap:16px;padding:25px;background:var(--surface);border:1px solid var(--border);border-radius:13px}
+.payment-intro h2,.payment-settings-card h2,.payment-history-section h2{font-size:25px;line-height:1.3;margin:2px 0 7px}
+.payment-intro p,.payment-settings-card p{font-size:14px;color:var(--muted)}
+.payment-qr-card{display:flex;align-items:center;gap:23px;padding:20px;background:var(--surface-2);border:1px solid var(--border);border-radius:12px}
+.payment-qr-frame{display:grid;place-items:center;flex-shrink:0;padding:11px;background:#fff;border-radius:9px}
+.payment-qr-card strong{display:block;font-size:15px;margin-bottom:5px}
+.payment-qr-card p{font-size:13px;color:var(--muted);margin-bottom:12px}
+.payment-qr-card .button{min-height:36px}
+.payment-request-form,.payment-settings-card,.payment-history-section{padding:24px;background:var(--surface);border:1px solid var(--border);border-radius:13px}
+.payment-request-form h3,.payment-history-section>h3{font-size:19px;margin-bottom:5px}
+.payment-request-form>p{font-size:13px;color:var(--muted);margin-bottom:18px}
+.payment-request-form form,.payment-settings-card form{display:grid;gap:14px}
+.payment-request-form form>.button{justify-self:start}
+.payment-settings-card{display:grid;gap:18px}
+.payment-settings-card>.payment-qr-card{margin-top:3px}
+.payment-settings-actions{display:flex;gap:10px;flex-wrap:wrap}
+.payment-history-section{display:grid;gap:16px}
+.payment-history{display:grid;gap:11px}
+.payment-history-card,.payment-review-card{padding:17px;background:var(--surface-2);border:1px solid var(--border);border-radius:10px}
+.payment-history-heading,.payment-review-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:14px}
+.payment-history-heading strong{display:block;font-size:17px}
+.payment-history-heading small,.payment-review-heading small{display:block;margin-top:4px;color:var(--muted);font-size:12px}
+.payment-history-meta,.payment-history-note{font-size:13px;color:var(--muted);margin-top:10px}
+.payment-history-result{display:flex;align-items:center;gap:7px;color:var(--green);font-size:13px;font-weight:700;margin-top:10px}
+.payment-review-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
+.payment-review-card{display:grid;align-content:start;gap:11px}
+.payment-review-heading h3{font-size:17px}
+.payment-review-card .field{margin:0}
+.payment-review-actions{display:flex;gap:9px;flex-wrap:wrap}
+.payment-review-actions .button{min-height:38px;padding:9px 13px}
+.payment-review-date{font-size:12px;color:var(--muted)}
+.student-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+@media(max-width:800px){.payment-review-list{grid-template-columns:1fr}}
+@media(max-width:560px){.manual-lesson-datetime{grid-template-columns:1fr}.payment-intro{padding:19px}.payment-request-form,.payment-settings-card,.payment-history-section{padding:18px}.payment-qr-card{align-items:flex-start;gap:13px;padding:13px}.payment-qr-frame{padding:6px}.payment-qr-frame svg{width:128px;height:128px}.payment-review-actions{display:grid}.payment-review-actions .button{width:100%}}
