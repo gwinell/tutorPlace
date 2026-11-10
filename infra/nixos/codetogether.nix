@@ -23,8 +23,34 @@ let
     old="$(readlink -f "$root/current" 2>/dev/null || true)"
     ln -sfn "$target" "$root/current.next"
     mv -Tf "$root/current.next" "$root/current"
+    restore_previous() {
+      if [ -n "$old" ]; then
+        ln -sfn "$old" "$root/current.next"
+        mv -Tf "$root/current.next" "$root/current"
+        systemctl restart codetogether-qumir-compiler.service || true
+        systemctl restart codetogether.service || true
+      fi
+    }
+    if ! systemctl restart codetogether-qumir-compiler.service; then
+      echo "Kumir compiler service failed to restart; rolling back" >&2
+      restore_previous
+      exit 1
+    fi
+    compiler_ready=0
+    for attempt in $(seq 1 20); do
+      if ${pkgs.curl}/bin/curl --fail --silent --max-time 10 http://127.0.0.1:3101/health >/dev/null; then
+        compiler_ready=1
+        break
+      fi
+      sleep 1
+    done
+    if [ "$compiler_ready" -ne 1 ]; then
+      echo "Kumir compiler health check failed; rolling back" >&2
+      restore_previous
+      exit 1
+    fi
     if ! systemctl restart codetogether.service; then
-      if [ -n "$old" ]; then ln -sfn "$old" "$root/current.next"; mv -Tf "$root/current.next" "$root/current"; systemctl restart codetogether.service; fi
+      restore_previous
       exit 1
     fi
     for attempt in $(seq 1 20); do
@@ -37,7 +63,7 @@ let
       sleep 1
     done
     echo "health check failed; rolling back" >&2
-    if [ -n "$old" ]; then ln -sfn "$old" "$root/current.next"; mv -Tf "$root/current.next" "$root/current"; systemctl restart codetogether.service; fi
+    restore_previous
     exit 1
   '';
   configDeployScript = pkgs.writeShellScriptBin "codetogether-config-deploy" ''

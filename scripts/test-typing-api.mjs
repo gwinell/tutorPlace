@@ -50,7 +50,19 @@ try {
   database.close();
 
   const fakeCompiler = path.join(directory, 'fake-qumirc');
-  writeFileSync(fakeCompiler, `#!/usr/bin/env node\nconst fs=require('node:fs');const args=process.argv.slice(2);const output=args[args.indexOf('-o')+1];fs.writeFileSync(output,Buffer.from([0,97,115,109,1,0,0,0]));\n`, { mode: 0o700 });
+  writeFileSync(fakeCompiler, `#!/usr/bin/env node
+const fs=require('node:fs');
+const args=process.argv.slice(2);
+const output=args[args.indexOf('-o')+1];
+const source=fs.readFileSync(args.at(-1),'utf8');
+const symbol=[['использовать Черепаха','turtle_forward'],['использовать Робот','robot_paint'],['использовать Чертежник','drawer_move_to']].find(([directive])=>source.includes(directive))?.[1];
+const encodeLength=value=>{const bytes=[];do{let byte=value&127;value>>>=7;if(value)byte|=128;bytes.push(byte);}while(value);return bytes;};
+const encodeString=value=>{const bytes=Buffer.from(value);return [...encodeLength(bytes.length),...bytes];};
+const section=(id,payload)=>[id,...encodeLength(payload.length),...payload];
+const bytes=[0,97,115,109,1,0,0,0];
+if(symbol)bytes.push(...section(1,[1,0x60,0,0]),...section(2,[1,...encodeString('env'),...encodeString(symbol),0,0]));
+fs.writeFileSync(output,Buffer.from(bytes));
+`, { mode: 0o700 });
   chmodSync(fakeCompiler, 0o700);
   compiler = spawn(process.execPath, ['scripts/qumir-compiler-service.mjs'], { cwd: process.cwd(), env: { ...process.env, QUMIR_COMPILER_HOST: '127.0.0.1', QUMIR_COMPILER_PORT: String(compilerPort), QUMIRC_PATH: fakeCompiler, QUMIR_USE_PRLIMIT: '0' }, stdio: ['ignore', 'pipe', 'pipe'] });
   let compilerReady = false;
