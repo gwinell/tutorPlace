@@ -1,11 +1,12 @@
 'use client';
 import {useState,useEffect,useEffectEvent,useImperativeHandle,useRef,type Ref} from 'react';
-import {ArrowLeft,Clock3,Users,FileCode2,Info,Check,RefreshCw} from 'lucide-react';
+import {ArrowLeft,Clock3,Users,FileCode2,Keyboard,Info,Check,RefreshCw} from 'lucide-react';
 import {Room,User} from '@/lib/domain';
+import {ROOM_STARTERS,starterLanguage,type RoomLanguage,type RoomFile} from '@/lib/room-presets';
 import {Tag,Button,api} from './site-ui';
 import {documentFrom,replaceText,encode,encodeUpdate,decode,Y} from '@/lib/collaboration';
 import CodeEditor, { RuntimeProvider } from './code-editor';
-type RoomFile = 'student' | 'teacher';
+import TypingPractice from './typing-practice';
 export type RoomSaveHandle = { flush: () => Promise<boolean> };
 
 type CodeRoomProps = {
@@ -21,6 +22,7 @@ type CodeRoomProps = {
 export default function CodeRoom({ initial, demo, user, notify, onExit, onDemoUpdate, saveHandle }: CodeRoomProps) {
  const [room, setRoom] = useState(initial);
  const [mobileFile, setMobileFile] = useState('student');
+ const [view, setView] = useState<'code'|'typing'>('code');
  const [status, setStatus] = useState('saved');
  const [expired, setExpired] = useState(false);
  const current = useRef(initial);
@@ -218,7 +220,41 @@ export default function CodeRoom({ initial, demo, user, notify, onExit, onDemoUp
    }
  }
  function activity(){const n={...current.current,last_active:Date.now()};current.current=n;setRoom(n);if(demo)persistDemo(n);else touchPending.current=true;}
- async function language(value:string){try{if(demo)persistDemo({...current.current,language:value,last_active:Date.now()});else merge((await api<{room:Room}>('rooms/'+room.id,'POST',{language:value})).room);}catch(e){notify((e as Error).message);}}
+ async function language(value:string){
+  const previous=current.current.language as RoomLanguage;
+  const next=value as RoomLanguage;
+  if(!['python','lua','kumir'].includes(next))return;
+  try{
+   let updated:Room={...current.current,language:next,last_active:Date.now()};
+   if(demo){
+    persistDemo(updated);
+    for(const file of ['student','teacher'] as RoomFile[]){
+     if(starterLanguage(docs[file].getText('code').toString(),file)===previous)change(file,ROOM_STARTERS[next][file]);
+    }
+   }else{
+    updated=(await api<{room:Room}>('rooms/'+room.id,'POST',{language:next})).room;
+    merge(updated);
+   }
+   const untouched=['student','teacher'].some(file=>starterLanguage(docs[file as RoomFile].getText('code').toString(),file as RoomFile)===previous);
+   const custom=['student','teacher'].some(file=>starterLanguage(docs[file as RoomFile].getText('code').toString(),file as RoomFile)===null);
+   if(custom)notify('Язык изменён. Твой код сохранён без изменений.');
+   else if(!untouched)notify('Язык комнаты обновлён.');
+  }catch(e){notify((e as Error).message);}
+ }
  if(expired)return <div className="empty-state"><Clock3 size={35}/><h3>Комната завершена</h3><p>После 30 минут бездействия комната автоматически удаляется.</p><Button onClick={onExit}>Вернуться к комнатам</Button></div>;
- return <div className="code-room"><div className="room-heading"><div><button className="text-link" onClick={onExit}><ArrowLeft size={15}/>Все комнаты</button><h1>{room.name}</h1><p><Users size={13}/>{demo?'Демонстрационная комната':'Совместная комната'}<span>·</span><Clock3 size={13}/>Удаление через 30 минут бездействия</p></div><div className="room-heading-actions"><Tag color={status==='error'?'red':'green'}>{status==='saving'?<RefreshCw size={11}/>:<Check size={11}/>} {status==='saving'?'Сохраняем…':status==='error'?'Повторяем синхронизацию':'Сохранено'}</Tag><select value={room.language} onChange={e=>language(e.target.value)} aria-label="Язык программирования"><option value="python">Python</option><option value="lua">Lua</option></select></div></div><div className="mobile-file-tabs"><button className={mobileFile==='student'?'active':''} onClick={()=>setMobileFile('student')}><FileCode2 size={15}/>Файл ученика</button><button className={mobileFile==='teacher'?'active':''} onClick={()=>setMobileFile('teacher')}><FileCode2 size={15}/>Файл репетитора</button></div><RuntimeProvider><div className="room-editors"><section className={mobileFile==='student'?'selected':''}><div className="room-file-heading"><span className="user-avatar small">У</span><div><strong>Файл ученика</strong><small>Можем редактировать вместе</small></div><Tag color="neutral">Общий доступ</Tag></div><CodeEditor key={'s-'+room.language} value={room.student_code} onChange={v=>change('student',v)} language={room.language} filename={'student.'+(room.language==='lua'?'lua':'py')} onActivity={activity}/></section><section className={mobileFile==='teacher'?'selected':''}><div className="room-file-heading"><span className="user-avatar small teacher">Р</span><div><strong>Файл репетитора</strong><small>{teacher?'Только ты можешь редактировать':'Смотри, разбирайся и запускай'}</small></div><Tag color="neutral">{teacher?'Твой файл':'Только чтение'}</Tag></div><CodeEditor key={'t-'+room.language} value={room.teacher_code} onChange={v=>change('teacher',v)} language={room.language} filename={'teacher.'+(room.language==='lua'?'lua':'py')} readOnly={!teacher} onActivity={activity}/></section></div></RuntimeProvider><div className="info-box"><Info size={16}/><span>В каждом файле свой терминал. Если программа ожидает ввод, поле появится под выводом. Код выполняется в изолированной среде браузера. {demo?'Синхронизацию между ролями можно проверить в двух вкладках демоверсии на этом устройстве.':''}</span></div></div>;
+ return <div className="code-room">
+  <div className="room-heading"><div><button className="text-link" onClick={onExit}><ArrowLeft size={15}/>Все комнаты</button><h1>{room.name}</h1><p><Users size={13}/>{demo?'Демонстрационная комната':'Совместная комната'}<span>·</span><Clock3 size={13}/>Удаление через 30 минут бездействия</p></div><div className="room-heading-actions"><Tag color={status==='error'?'red':'green'}>{status==='saving'?<RefreshCw size={11}/>:<Check size={11}/>} {status==='saving'?'Сохраняем…':status==='error'?'Повторяем синхронизацию':'Сохранено'}</Tag><select value={room.language} onChange={e=>language(e.target.value)} aria-label="Язык программирования"><option value="python">Python</option><option value="lua">Lua</option><option value="kumir">Кумир</option></select></div></div>
+  <div className="room-view-tabs" role="tablist" aria-label="Инструменты комнаты">
+   <button type="button" role="tab" aria-selected={view==='code'} className={view==='code'?'active':''} onClick={()=>setView('code')}><FileCode2 size={16}/>Комната кода</button>
+   <button type="button" role="tab" aria-selected={view==='typing'} className={view==='typing'?'active':''} onClick={()=>setView('typing')}><Keyboard size={16}/>Слепая печать</button>
+  </div>
+  {view==='code' ? <>
+   <div className="mobile-file-tabs"><button className={mobileFile==='student'?'active':''} onClick={()=>setMobileFile('student')}><FileCode2 size={15}/>Файл ученика</button><button className={mobileFile==='teacher'?'active':''} onClick={()=>setMobileFile('teacher')}><FileCode2 size={15}/>Файл репетитора</button></div>
+   <RuntimeProvider><div className="room-editors">
+    <section className={mobileFile==='student'?'selected':''}><div className="room-file-heading"><span className="user-avatar small">У</span><div><strong>Файл ученика</strong><small>Можем редактировать вместе</small></div><Tag color="neutral">Общий доступ</Tag></div><CodeEditor key={'s-'+room.language} value={room.student_code} onChange={v=>change('student',v)} language={room.language} roomId={demo?undefined:room.id} filename={'student.'+(room.language==='lua'?'lua':room.language==='kumir'?'kum':'py')} onActivity={activity}/></section>
+    <section className={mobileFile==='teacher'?'selected':''}><div className="room-file-heading"><span className="user-avatar small teacher">Р</span><div><strong>Файл репетитора</strong><small>{teacher?'Только ты можешь редактировать':'Смотри, разбирайся и запускай'}</small></div><Tag color="neutral">{teacher?'Твой файл':'Только чтение'}</Tag></div><CodeEditor key={'t-'+room.language} value={room.teacher_code} onChange={v=>change('teacher',v)} language={room.language} roomId={demo?undefined:room.id} filename={'teacher.'+(room.language==='lua'?'lua':room.language==='kumir'?'kum':'py')} readOnly={!teacher} onActivity={activity}/></section>
+   </div></RuntimeProvider>
+   <div className="info-box"><Info size={16}/><span>{room.language==='kumir'?'Для команд «ввод» укажи данные перед запуском. Результат или поле исполнителя появятся под файлом.':'В каждом файле свой терминал. Если программа ожидает ввод, поле появится под выводом. Код выполняется в браузере.'} {demo?'Синхронизацию между ролями можно проверить в двух вкладках демоверсии на этом устройстве.':''}</span></div>
+  </> : <TypingPractice roomId={room.id} studentId={room.student_id} teacher={teacher} demo={demo}/>}
+ </div>;
 }

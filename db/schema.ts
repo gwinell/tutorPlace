@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, index, uniqueIndex, check } from 'drizzle-orm/sqlite-core';
+import { sqliteTable, text, integer, real, index, uniqueIndex, check } from 'drizzle-orm/sqlite-core';
 import { sql } from 'drizzle-orm';
 
 export const users = sqliteTable('users', {
@@ -56,6 +56,17 @@ export const rooms = sqliteTable('rooms', {
   studentState: text('student_state'), teacherState: text('teacher_state'),
   lastActive: integer('last_active').notNull(),
 }, t => [index('rooms_last_active_idx').on(t.lastActive)]);
+export const typingResults = sqliteTable('typing_results', {
+  id: text('id').primaryKey(), studentId: text('student_id').notNull(), roomId: text('room_id').notNull(),
+  language: text('language').notNull(), exerciseId: text('exercise_id').notNull(), wpm: integer('wpm').notNull(),
+  accuracy: real('accuracy').notNull(), durationMs: integer('duration_ms').notNull(), createdAt: text('created_at').notNull(),
+}, t => [
+  check('typing_results_language_check', sql`${t.language} IN ('ru', 'en')`),
+  check('typing_results_wpm_check', sql`${t.wpm} BETWEEN 0 AND 250`),
+  check('typing_results_accuracy_check', sql`${t.accuracy} BETWEEN 0 AND 100`),
+  check('typing_results_duration_check', sql`${t.durationMs} BETWEEN 1 AND 900000`),
+  index('typing_results_student_language_created_idx').on(t.studentId, t.language, t.createdAt),
+]);
 export const notifications = sqliteTable('notifications', {
   id: text('id').primaryKey(), studentId: text('student_id').notNull(), title: text('title').notNull(), body: text('body').notNull(),
   createdAt: text('created_at').notNull(), read: integer('read').default(0),

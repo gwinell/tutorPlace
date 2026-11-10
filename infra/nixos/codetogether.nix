@@ -3,6 +3,7 @@
 let
   appRoot = "/var/lib/codetogether";
   deployUser = "codetogether-deploy";
+  qumirCompiler = pkgs.callPackage ./qumir.nix { };
   deployScript = pkgs.writeShellScriptBin "codetogether-deploy" ''
     set -euo pipefail
     if [ "$#" -ne 1 ] || ! [[ "$1" =~ ^[0-9a-f]{40}$ ]]; then
@@ -92,8 +93,9 @@ in
   systemd.services.codetogether = {
     description = "codeTogether Node.js web application";
     wantedBy = [ "multi-user.target" ];
-    after = [ "network-online.target" ];
     wants = [ "network-online.target" ];
+    requires = [ "codetogether-qumir-compiler.service" ];
+    after = [ "network-online.target" "codetogether-qumir-compiler.service" ];
     serviceConfig = {
       User = "codetogether";
       Group = "codetogether";
@@ -103,6 +105,7 @@ in
         "PORT=3000"
         "DATABASE_PATH=${appRoot}/data/codetogether.sqlite"
         "BACKUP_DIRECTORY=${appRoot}/backups"
+        "QUMIR_COMPILER_URL=http://127.0.0.1:3101"
         "NODE_OPTIONS=--disable-warning=ExperimentalWarning"
       ];
       EnvironmentFile = "-/etc/codetogether/secrets.env";
@@ -114,6 +117,37 @@ in
       ProtectSystem = "strict";
       ProtectHome = true;
       ReadWritePaths = [ "${appRoot}/data" "${appRoot}/backups" ];
+    };
+  };
+
+  systemd.services.codetogether-qumir-compiler = {
+    description = "Isolated codeTogether Kumir compiler";
+    wantedBy = [ "multi-user.target" ];
+    serviceConfig = {
+      User = "codetogether";
+      Group = "codetogether";
+      WorkingDirectory = "${appRoot}/current";
+      Environment = [
+        "QUMIR_COMPILER_HOST=127.0.0.1"
+        "QUMIR_COMPILER_PORT=3101"
+        "QUMIRC_PATH=${qumirCompiler}/bin/qumirc"
+        "PRLIMIT_PATH=${pkgs.util-linux}/bin/prlimit"
+      ];
+      ExecStart = "${pkgs.nodejs_22}/bin/node ${appRoot}/current/qumir-compiler-service.mjs";
+      Restart = "always";
+      RestartSec = 3;
+      NoNewPrivileges = true;
+      PrivateTmp = true;
+      PrivateDevices = true;
+      ProtectSystem = "strict";
+      ProtectHome = true;
+      ReadWritePaths = [ "/tmp" ];
+      MemoryMax = "1G";
+      MemorySwapMax = 0;
+      CPUQuota = "30%";
+      TasksMax = 24;
+      LimitNOFILE = 64;
+      Nice = 10;
     };
   };
 

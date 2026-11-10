@@ -1,6 +1,7 @@
 import {db,secrets,HttpError,requireValue,auth,currentUser,safeUser,passwordHash,verifyPassword,hash,now,id,schedule,normalizeSchedule,calendarConfigured,calendar,eventPath,slots,slotKeys,httpsUrl,cleanup} from '@/lib/server';
 import {Lesson,canReschedule,monthBounds,resultStatus,PYTHON_START,TEACHER_START} from '@/lib/domain';
-import {documentFrom,encode,decode,Y} from '@/lib/collaboration';
+import {documentFrom,encode,decode,replaceText,Y} from '@/lib/collaboration';
+import {ROOM_STARTERS,starterLanguage,type RoomLanguage} from '@/lib/room-presets';
 import {normalizeTrialPhone,limitTrialBooking} from '@/lib/trial-booking';
 import {reserveLessonMove,confirmLessonMove} from '@/lib/lesson-move';
 import {createSaluteJazzRoom,disableSaluteJazzRoom,saluteJazzConfigured} from '@/lib/salutejazz';
@@ -17,6 +18,8 @@ type ApiBody = {
  start?:string;dateOverrides?:Record<string,unknown>;weeklyAvailability?:Record<string,unknown>;days?:unknown[];from?:string;to?:string;timezone?:string;availabilityCalendarIds?:unknown[];
  options?:unknown[];topicIds?:unknown[];topicId?:string;topic_id?:string;lesson_id?:string;student_id?:string;
  meetUrl?:string;meet_url?:string;colab_url?:string;topic?:string;file?:string;update?:string;language?:string;id?:string;
+ exerciseId?:string;wpm?:number;accuracy?:number;durationMs?:number;
+ code?:string;
 };
 type CalendarItem={id?:string;accessRole?:string;summary?:string;summaryOverride?:string;primary?:boolean};
 const PRIVACY_POLICY_VERSION='2026-11-09';
@@ -296,9 +299,41 @@ async function route(request:Request){
      return json({rooms},200,headers);
    }
    if(!path[1]&&method==='POST'){requireValue(u.role==='student','Комнату создаёт ученик.',403);const count=await db().prepare('SELECT COUNT(*) n FROM rooms WHERE student_id=?').bind(u.id).first<{n:number}>();requireValue(Number(count?.n)<3,'Можно открыть до трёх комнат одновременно.');const r={id:id(),student_id:u.id,name:'Комната · '+u.name,language:'python',student_code:PYTHON_START,teacher_code:TEACHER_START,revision:0,last_active:Date.now()};await db().prepare('INSERT INTO rooms (id,student_id,name,language,student_code,teacher_code,revision,last_active) VALUES (?,?,?,?,?,?,?,?)').bind(...Object.values(r)).run();return json({room:r},201);}
-   const r=await db().prepare('SELECT * FROM rooms WHERE id=?').bind(path[1]).first<Row>();requireValue(r&&(u.role==='teacher'||r.student_id===u.id),'Комната удалена или недоступна.',404);if(method==='GET')return json({room:r});
+   const r=await db().prepare('SELECT * FROM rooms WHERE id=?').bind(path[1]).first<Row>();requireValue(r&&(u.role==='teacher'||r.student_id===u.id),'Комната удалена или недоступна.',404);
+   if(path[2]==='compile-kumir'){
+    requireValue(method==='POST','Компиляция принимает только POST.',404);
+    requireValue(typeof body.code==='string'&&body.code.length>0&&body.code.length<=100000,'Исходный файл должен содержать от 1 до 100 000 символов.');
+    const compilerUrl=secrets.QUMIR_COMPILER_URL;
+    requireValue(compilerUrl,'Компилятор Кумир пока не настроен.',503);
+    let compiled:Response;
+    try{compiled=await fetch(new URL('/compile',compilerUrl),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:body.code}),signal:AbortSignal.timeout(6800)});}
+    catch{throw new HttpError('Компилятор не ответил вовремя. Попробуй ещё раз.',503);}
+    if(!compiled.ok){const result=await compiled.json().catch(()=>({error:'Не удалось скомпилировать программу.'})) as {error?:string};throw new HttpError((result.error||'Не удалось скомпилировать программу.').slice(0,4000),compiled.status===422?422:compiled.status===408?408:compiled.status===429?429:503);}
+    const wasm=await compiled.arrayBuffer();requireValue(wasm.byteLength>=8&&wasm.byteLength<=4*1024*1024,'Компилятор вернул некорректный размер программы.',502);
+    return new Response(wasm,{status:200,headers:{'Content-Type':'application/wasm','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}});
+   }
+   if(path[2]==='typing-results'){
+    if(method==='GET'){
+     const results=await all('SELECT id,language,exercise_id,wpm,accuracy,duration_ms,created_at FROM typing_results WHERE student_id=? ORDER BY created_at DESC,rowid DESC LIMIT 60',r!.student_id);
+     return json({results});
+    }
+    requireValue(method==='POST','Действие с результатами тренировки не найдено.',404);
+    requireValue(u.role==='student'&&r!.student_id===u.id,'Результат может отправить только ученик этой комнаты.',403);
+    requireValue(typeof body.language==='string'&&['ru','en'].includes(body.language),'Выбери русский или английский язык тренировки.');
+    requireValue(typeof body.exerciseId==='string'&&/^[a-z0-9-]{1,64}$/.test(body.exerciseId),'Некорректное упражнение.');
+    requireValue(Number.isInteger(body.wpm)&&body.wpm!>=0&&body.wpm!<=250,'Проверь скорость печати.');
+    requireValue(typeof body.accuracy==='number'&&Number.isFinite(body.accuracy)&&body.accuracy>=0&&body.accuracy<=100,'Проверь точность печати.');
+    requireValue(Number.isInteger(body.durationMs)&&body.durationMs!>=1&&body.durationMs!<=900000,'Проверь длительность упражнения.');
+    const resultId=id(),createdAt=now();
+    await db().batch([
+     db().prepare('INSERT INTO typing_results (id,student_id,room_id,language,exercise_id,wpm,accuracy,duration_ms,created_at) VALUES (?,?,?,?,?,?,?,?,?)').bind(resultId,u.id,r!.id,body.language,body.exerciseId,body.wpm,body.accuracy,body.durationMs,createdAt),
+     db().prepare('DELETE FROM typing_results WHERE student_id=? AND language=? AND id NOT IN (SELECT id FROM typing_results WHERE student_id=? AND language=? ORDER BY rowid DESC LIMIT 30)').bind(u.id,body.language,u.id,body.language),
+    ]);
+    return json({result:{id:resultId,language:body.language,exercise_id:body.exerciseId,wpm:body.wpm,accuracy:body.accuracy,duration_ms:body.durationMs,created_at:createdAt}},201);
+   }
+   if(method==='GET')return json({room:r});
    if(method==='POST'){
-    requireValue(!body.language||['python','lua'].includes(body.language),'Поддерживаются Python и Lua.');
+    requireValue(!body.language||['python','lua','kumir'].includes(body.language),'Поддерживаются Python, Lua и Кумир.');
     requireValue(body.file!=='teacher'||u.role==='teacher','Файл репетитора доступен ученику только для чтения.',403);
     requireValue(!body.file||['student','teacher'].includes(body.file),'Неизвестный файл.');
     if(body.file){
@@ -308,11 +343,31 @@ async function route(request:Request){
       for(let attempt=0;attempt<5;attempt++){
         const latest=await db().prepare('SELECT * FROM rooms WHERE id=?').bind(r!.id).first<Row>();requireValue(latest&&latest.last_active>Date.now()-1800000,'Комната удалена или недоступна.',404);
         const doc=documentFrom(latest![stateColumn],latest![column]);try{Y.applyUpdate(doc,decode(body.update));}catch{doc.destroy();throw new HttpError('Некорректное изменение файла.');}
-        const code=doc.getText('code').toString();requireValue(code.length<100000,'Максимальный размер файла — 100 000 символов.');const state=encode(doc);doc.destroy();requireValue(state.length<500000,'История комнаты слишком большая. Создай новую комнату.');
+        const code=doc.getText('code').toString();requireValue(code.length<=100000,'Максимальный размер файла — 100 000 символов.');const state=encode(doc);doc.destroy();requireValue(state.length<500000,'История комнаты слишком большая. Создай новую комнату.');
         const result=await db().prepare('UPDATE rooms SET '+column+'=?,'+stateColumn+'=?,revision=revision+1,last_active=? WHERE id=? AND revision=?').bind(code,state,Date.now(),r!.id,latest!.revision).run();if(result.meta.changes){saved=true;break;}
       }
       requireValue(saved,'Не удалось синхронизировать код. Изменения сохранены локально, повторим отправку.',409);
-    }else if(body.language)await db().prepare('UPDATE rooms SET language=?,revision=revision+1,last_active=? WHERE id=?').bind(body.language,Date.now(),r!.id).run();
+    }else if(body.language){
+      let saved=false;
+      for(let attempt=0;attempt<5;attempt++){
+        const latest=await db().prepare('SELECT * FROM rooms WHERE id=?').bind(r!.id).first<Row>();
+        requireValue(latest&&latest.last_active>Date.now()-1800000,'Комната удалена или недоступна.',404);
+        const values:{student_code:string;student_state:string;teacher_code:string;teacher_state:string}={student_code:latest.student_code,student_state:latest.student_state||'',teacher_code:latest.teacher_code,teacher_state:latest.teacher_state||''};
+        for(const file of ['student','teacher'] as const){
+          const codeKey=file==='student'?'student_code':'teacher_code';
+          const stateKey=file==='student'?'student_state':'teacher_state';
+          if(starterLanguage(values[codeKey],file)!==latest.language)continue;
+          const doc=documentFrom(values[stateKey],values[codeKey]);
+          replaceText(doc,ROOM_STARTERS[body.language as RoomLanguage][file]);
+          values[codeKey]=doc.getText('code').toString();
+          values[stateKey]=encode(doc);
+          doc.destroy();
+        }
+        const result=await db().prepare('UPDATE rooms SET language=?,student_code=?,student_state=?,teacher_code=?,teacher_state=?,revision=revision+1,last_active=? WHERE id=? AND revision=?').bind(body.language,values.student_code,values.student_state,values.teacher_code,values.teacher_state,Date.now(),r!.id,latest.revision).run();
+        if(result.meta.changes){saved=true;break;}
+      }
+      requireValue(saved,'Не удалось обновить язык комнаты. Попробуй ещё раз.',409);
+    }
     else await db().prepare('UPDATE rooms SET last_active=? WHERE id=?').bind(Date.now(),r!.id).run();
     return json({room:await db().prepare('SELECT * FROM rooms WHERE id=?').bind(r!.id).first()});
    }

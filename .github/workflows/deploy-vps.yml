@@ -3,6 +3,7 @@ name: Deploy to NixOS VPS
 on:
   push:
     branches: [main]
+  pull_request:
   workflow_dispatch:
 
 permissions:
@@ -13,6 +14,21 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  verify:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+      - run: npm run test:typing-api
   deploy:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
@@ -36,7 +52,15 @@ jobs:
       - if: steps.release.outputs.ready == 'true'
         run: npm ci
       - if: steps.release.outputs.ready == 'true'
+        run: npm run check
+      - if: steps.release.outputs.ready == 'true'
+        run: npm run lint
+      - if: steps.release.outputs.ready == 'true'
+        run: npm test
+      - if: steps.release.outputs.ready == 'true'
         run: npm run build
+      - if: steps.release.outputs.ready == 'true'
+        run: npm run test:typing-api
       - name: Package standalone release
         if: steps.release.outputs.ready == 'true'
         run: tar -czf "codetogether-${GITHUB_SHA}.tar.gz" -C dist/standalone .

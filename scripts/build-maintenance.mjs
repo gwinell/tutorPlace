@@ -16,3 +16,4 @@ await cp("drizzle", "dist/standalone/drizzle", { recursive: true, force: true })
 await cp("scripts/migrate-sqlite.mjs", "dist/standalone/migrate-sqlite.mjs");
 await cp("scripts/import-d1-export.mjs", "dist/standalone/import-d1-export.mjs");
 await cp("scripts/backup-sqlite.mjs", "dist/standalone/backup-sqlite.mjs");
+await cp("scripts/qumir-compiler-service.mjs", "dist/standalone/qumir-compiler-service.mjs");
