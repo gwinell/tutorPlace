@@ -910,12 +910,152 @@
   .marketing .footer{gap:20px}
   .marketing .footer-bottom{font-size:13px;gap:8px}
 }
-@media(min-width:761px) and (max-width:850px){
-  .marketing .hero{grid-template-columns:minmax(0,1fr);min-height:0;padding-top:48px;padding-bottom:36px;gap:28px}
-  .marketing .hero-copy{max-width:640px}
-  .marketing .hero h1{font-size:56px}
-  .marketing .hero-visual{width:min(100%,440px);height:420px;justify-self:center;align-self:auto;margin:0 auto}
-  .marketing .benefit-strip{grid-template-columns:1fr;gap:0}
-  .marketing .benefit-strip>div{min-height:64px;padding:12px 8px}
-  .marketing .benefit-strip>div:not(:first-child){border-left:0;border-top:1px solid var(--border);padding-left:8px}
+/* Keep the landing page fluid between desktop, tablet, and phone widths. */
+.marketing .hero{
+  grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);
+  min-height:0;
+  padding-block:clamp(48px,5vw,72px) clamp(40px,4vw,56px);
+  gap:clamp(28px,3.5vw,48px);
+  align-items:center;
+}
+.marketing .hero-copy,.marketing .hero-visual{min-width:0}
+.marketing .hero-copy{padding-bottom:0}
+.marketing .hero h1{
+  width:auto;
+  max-width:100%;
+  font-size:clamp(40px,3.8vw,56px);
+  line-height:1.08;
+  letter-spacing:-.04em;
+  text-wrap:balance;
+}
+.marketing .hero-visual{
+  width:100%;
+  height:clamp(460px,38vw,520px);
+  align-self:center;
+  justify-self:stretch;
+}
+.marketing .portrait-sticker{left:0}
+.marketing .hero-byline{display:flex;align-items:center;gap:11px;margin-top:16px;color:var(--ink);font-size:15px;font-weight:700;line-height:1.4}
+.marketing .hero-byline>span:last-child{display:block}
+.marketing .hero-byline .waving-hand{width:34px;height:34px;flex:0 0 34px;font-size:22px}
+.marketing .hero-byline small{display:block;margin-top:3px;color:var(--muted);font-size:13px;font-weight:500;line-height:1.45}
+.marketing .floating-code{left:0;bottom:-8px;width:min(330px,82%)}
+.marketing .benefit-strip{grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(12px,2.4vw,28px)}
+.marketing .benefit-strip>div{min-width:0}
+
+@media(max-width:1100px){
+  .marketing .header-nav{
+    display:none;
+    position:absolute;
+    top:75px;
+    left:20px;
+    right:20px;
+    z-index:30;
+    padding:10px 16px;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:12px;
+    box-shadow:var(--shadow);
+  }
+  .marketing .header-nav.is-open{display:flex;flex-direction:column;align-items:stretch;gap:4px}
+  .marketing .header-nav button{min-height:44px;text-align:left}
+  .marketing .mobile-menu{display:inline-flex;width:40px;height:40px}
+}
+
+@media(max-width:1100px){
+  .marketing .hero{
+    grid-template-columns:minmax(0,1fr);
+    padding-top:clamp(40px,6vw,60px);
+    padding-bottom:clamp(32px,5vw,48px);
+    gap:clamp(24px,4vw,36px);
+    align-items:start;
+  }
+  .marketing .hero-copy{max-width:780px}
+  .marketing .hero h1{font-size:clamp(42px,6.2vw,60px)}
+  .marketing .hero-visual{
+    width:min(100%,600px);
+    height:clamp(460px,52vw,540px);
+    justify-self:center;
+    align-self:auto;
+    margin:0 auto;
+  }
+  .marketing .tutor-portrait{width:125%;left:-12%}
+  .marketing .benefit-strip{padding:20px 0}
+  .marketing .benefit-strip>div{padding:0 8px}
+  .marketing .benefit-strip>div:not(:first-child){padding-left:clamp(12px,2.4vw,28px)}
+}
+
+@media(max-width:760px){
+  .marketing .header-nav{top:67px;left:20px;right:20px}
+  .marketing .hero{padding-top:32px;padding-bottom:28px;gap:20px}
+  .marketing .hero h1{font-size:clamp(38px,8vw,50px);line-height:1.08}
+  .marketing .hero-byline{margin-top:14px;font-size:14px}
+  .marketing .hero-byline small{font-size:12px}
+  .marketing .hero-visual{height:clamp(350px,88vw,500px);width:min(100%,560px);margin-bottom:0}
+  .marketing .floating-code{left:0;bottom:-6px;width:min(305px,84%)}
+  .marketing .benefit-strip{grid-template-columns:1fr;gap:0;padding:8px 0}
+  .marketing .benefit-strip>div{min-height:64px;padding:12px 5px}
+  .marketing .benefit-strip>div:not(:first-child){border-left:0;border-top:1px solid var(--border);padding-left:5px}
+  .marketing .footer>.footer-links{flex-wrap:wrap;justify-content:flex-start;column-gap:18px;row-gap:12px}
+}
+
+@media(max-width:480px){
+  .marketing .cta-doodle{right:8px}
+}
+
+/* Kumir gets one workspace: source and console on the left, performer on the right. */
+.kumir-file-tabs{display:flex;gap:8px;margin-bottom:12px;padding:7px;border:1px solid var(--border);border-radius:12px;background:var(--surface-2)}
+.kumir-file-tabs>button{display:flex;align-items:center;gap:10px;flex:1;min-width:0;min-height:54px;padding:9px 13px;border:1px solid transparent;border-radius:8px;color:var(--muted);text-align:left}
+.kumir-file-tabs>button.active{border-color:var(--border);background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
+.kumir-file-tabs>button>svg{flex:0 0 auto;color:var(--purple)}
+.kumir-file-tabs>button>span{min-width:0;font-size:14px;font-weight:700;line-height:1.35}
+.kumir-file-tabs small{display:block;margin-top:3px;color:var(--muted);font-size:12px;font-weight:500;line-height:1.4}
+.room-editors.kumir-workspace{display:grid;grid-template-columns:minmax(0,1fr);gap:0}
+.room-editors.kumir-workspace>section{display:none;min-width:0}
+.room-editors.kumir-workspace>section.selected{display:block}
+.room-editors.kumir-workspace .room-file-heading{display:none}
+.code-editor.kumir-workspace-editor{
+  display:grid;
+  grid-template-columns:minmax(0,1.05fr) minmax(320px,.95fr);
+  grid-template-rows:54px minmax(340px,1fr) minmax(170px,auto);
+  min-height:0;
+  overflow:hidden;
+  border-radius:12px;
+}
+.code-editor.kumir-workspace-editor>.editor-toolbar{grid-column:1;grid-row:1;min-height:54px;height:auto;padding:0 16px}
+.code-editor.kumir-workspace-editor>.editor-toolbar>span{font-size:14px}
+.code-editor.kumir-workspace-editor>.editor-area{grid-column:1;grid-row:2;height:min(44dvh,420px);min-height:340px;max-height:none;padding:18px 0;border-bottom:1px solid #ffffff13}
+.code-editor.kumir-workspace-editor>.editor-area>textarea{min-height:300px;font-size:16px;line-height:1.75;resize:vertical}
+.code-editor.kumir-workspace-editor>.editor-terminal{grid-column:1;grid-row:3;display:flex;flex-direction:column;min-height:170px;margin:0;border-radius:0}
+.code-editor.kumir-workspace-editor>.editor-terminal>.terminal-toolbar{min-height:46px;padding:0 16px}
+.code-editor.kumir-workspace-editor>.editor-terminal>pre{flex:1;min-height:86px;max-height:180px;font-size:14px}
+.code-editor.kumir-workspace-editor>.qumir-executor{grid-column:2;grid-row:1/4;display:flex;flex-direction:column;position:relative;min-width:0;min-height:0;margin:0;border:0;border-left:1px solid var(--border);border-radius:0;background:var(--surface)}
+.code-editor.kumir-workspace-editor>.qumir-executor>header{min-height:54px;padding:0 16px;background:var(--surface-2)}
+.code-editor.kumir-workspace-editor>.qumir-executor>canvas{position:relative;z-index:0;flex:1;width:100%;height:100%;min-height:0;max-height:none;aspect-ratio:auto;object-fit:contain}
+.qumir-stage-empty{position:absolute;z-index:1;inset:54px 0 0;display:grid;align-content:center;justify-items:center;gap:8px;padding:24px;color:var(--muted);text-align:center;pointer-events:none}
+.qumir-stage-empty strong{color:var(--ink);font-size:16px}
+.qumir-stage-empty span{max-width:280px;font-size:14px;line-height:1.6}
+.kumir-workspace-info{margin-top:12px}
+@media(max-width:900px){
+  .code-editor.kumir-workspace-editor{grid-template-columns:minmax(0,1fr);grid-template-rows:54px minmax(300px,1fr) minmax(160px,auto) minmax(320px,auto)}
+  .code-editor.kumir-workspace-editor>.editor-area{grid-column:1;grid-row:2;height:min(42dvh,400px);min-height:300px}
+  .code-editor.kumir-workspace-editor>.editor-terminal{grid-column:1;grid-row:3}
+  .code-editor.kumir-workspace-editor>.qumir-executor{grid-column:1;grid-row:4;min-height:360px;border-left:0;border-top:1px solid var(--border)}
+  .code-editor.kumir-workspace-editor>.qumir-executor>canvas{flex:none;height:auto;min-height:300px;max-height:52vh;aspect-ratio:18/11}
+}
+@media(max-width:680px){
+  .kumir-file-tabs{gap:5px;padding:5px}
+  .kumir-file-tabs>button{min-height:56px;padding:8px;gap:7px}
+  .kumir-file-tabs>button>span{font-size:13px}
+  .kumir-file-tabs small{font-size:11px}
+  .code-editor.kumir-workspace-editor>.editor-toolbar{padding:6px 10px;gap:6px}
+  .code-editor.kumir-workspace-editor>.editor-toolbar>span{font-size:12px;gap:5px}
+  .code-editor.kumir-workspace-editor>.editor-toolbar>div{gap:6px}
+  .code-editor.kumir-workspace-editor>.editor-area>textarea{font-size:14px}
+  .code-editor.kumir-workspace-editor>.qumir-executor>header{min-height:48px;padding:0 12px}
+  .qumir-stage-empty{inset:48px 0 0;padding:16px}
+}
+@media(max-width:380px){
+  .kumir-file-tabs{flex-direction:column}
+  .kumir-file-tabs>button{width:100%}
 }
