@@ -1187,3 +1187,4 @@
 .lesson-preparation-editor{max-height:300px;overflow:auto}
 .lesson-preparation-editor .field-hint{margin:0 0 4px}
 @media(max-width:760px){.course-subtopic-row{margin-left:10px;padding-left:7px}.lesson-preparation-checklist{padding:11px}}
+.assignment-image-editor{display:flex;flex-direction:column;gap:10px;margin:-6px 0 18px}.assignment-image-editor .upload-field{margin:0}.assignment-image-preview{display:flex;align-items:center;gap:12px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;min-width:0}.assignment-image-preview img{width:72px;height:54px;object-fit:cover;border-radius:5px;background:var(--surface-2)}.assignment-image-preview span{font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}.assignment-image-preview button{display:grid;place-items:center;width:30px;height:30px;border-radius:6px;color:var(--muted)}.assignment-image-preview button:hover{background:var(--red-bg);color:var(--red)}
