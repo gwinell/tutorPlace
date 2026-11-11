@@ -25,3 +25,25 @@ jobs:
       - run: npm test
       - run: npm run build
       - run: npm run test:typing-api
+      - name: Apply disposable local D1 migrations
+        run: ./node_modules/.bin/wrangler d1 migrations apply DB --local --config wrangler.dev.jsonc --persist-to .wrangler/state
+      - name: Start local app for D1 integration checks
+        shell: bash
+        run: |
+          node scripts/run-framework.mjs dev > "$RUNNER_TEMP/codetogether-dev.log" 2>&1 &
+          echo "$!" > "$RUNNER_TEMP/codetogether-dev.pid"
+          for attempt in $(seq 1 60); do
+            if curl --silent --fail --output /dev/null http://127.0.0.1:5173/; then exit 0; fi
+            sleep 1
+          done
+          cat "$RUNNER_TEMP/codetogether-dev.log"
+          exit 1
+      - name: Run D1 course integration checks
+        run: npm run test:integration
+      - name: Stop local app
+        if: always()
+        shell: bash
+        run: |
+          if [ -f "$RUNNER_TEMP/codetogether-dev.pid" ]; then
+            kill "$(cat "$RUNNER_TEMP/codetogether-dev.pid")" 2>/dev/null || true
+          fi

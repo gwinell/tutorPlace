@@ -53,12 +53,22 @@ export const courseEnrollments = sqliteTable('course_enrollments', {
 export const topics = sqliteTable('topics', {
   id: text('id').primaryKey(), courseId: text('course_id').notNull(), title: text('title').notNull(), description: text('description'), position: integer('position').default(0),
   content: text('content').notNull(), format: text('format').notNull(), colabUrl: text('colab_url'),
-});
+  parentTopicId: text('parent_topic_id'), githubUrl: text('github_url'),
+}, t => [index('topics_course_parent_position_idx').on(t.courseId, t.parentTopicId, t.position)]);
 export const access = sqliteTable('topic_access', { id: text('id').primaryKey(), topicId: text('topic_id').notNull(), studentId: text('student_id').notNull() }, t => [uniqueIndex('access_unique').on(t.topicId, t.studentId)]);
 export const assignments = sqliteTable('assignments', {
   id: text('id').primaryKey(), topicId: text('topic_id'), studentId: text('student_id'), lessonId: text('lesson_id'), title: text('title').notNull(),
   kind: text('kind').notNull(), prompt: text('prompt').notNull(), options: text('options'), answer: text('answer'), tests: text('tests'),
 }, t => [check('assignment_target_check', sql`(${t.topicId} IS NOT NULL AND ${t.studentId} IS NULL) OR (${t.topicId} IS NULL AND ${t.studentId} IS NOT NULL)`)]);
+export const lessonPreparationItems = sqliteTable('lesson_preparation_items', {
+  id: text('id').primaryKey(), lessonId: text('lesson_id').notNull(), kind: text('kind').notNull(),
+  topicId: text('topic_id'), assignmentId: text('assignment_id'), position: integer('position').notNull().default(0), completedAt: text('completed_at'),
+}, t => [
+  check('lesson_preparation_target_check', sql`(${t.kind}='topic' AND ${t.topicId} IS NOT NULL AND ${t.assignmentId} IS NULL) OR (${t.kind}='assignment' AND ${t.assignmentId} IS NOT NULL AND ${t.topicId} IS NULL)`),
+  index('lesson_preparation_lesson_position_idx').on(t.lessonId, t.position),
+  uniqueIndex('lesson_preparation_topic_unique').on(t.lessonId, t.topicId),
+  uniqueIndex('lesson_preparation_assignment_unique').on(t.lessonId, t.assignmentId),
+]);
 export const submissions = sqliteTable('submissions', {
   id: text('id').primaryKey(), assignmentId: text('assignment_id').notNull(), studentId: text('student_id').notNull(),
   content: text('content').notNull(), result: text('result').notNull(), createdAt: text('created_at').notNull(),

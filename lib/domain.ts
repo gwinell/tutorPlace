@@ -16,8 +16,18 @@ export type PaymentRequest = {
 export type Lesson = { id: string; student_id?: string; name: string; start: string; end: string; type: string; status: string; meet_url?: string; jazz_room_id?: string | null; jazz_room_needs_recreation?: number; topic?: string; cancelled_at?: string; cancelled_by?: Role | null; charged?: number; homework?: string; move_id?: string | null; move_start?: string | null; operation_started_at?: string | null; privacy_consent_at?: string | null; privacy_policy_version?: string | null };
 export type Course = { id: string; title: string; description?: string; position: number };
 export type CourseEnrollment = { course_id: string; student_id: string };
-export type Topic = { id: string; course_id: string; title: string; description: string; content: string; format: string; colab_url?: string; locked?: boolean | number; position?: number };
+export type Topic = { id: string; course_id: string; title: string; description: string; content?: string; format: string; colab_url?: string; github_url?: string | null; parent_topic_id?: string | null; locked?: boolean | number; position?: number };
 export type Assignment = { id: string; topic_id?: string | null; student_id?: string | null; lesson_id?: string; title: string; kind: string; prompt: string; options?: string | string[] };
+export type TopicAccess = { topic_id: string; student_id: string };
+export type LessonPreparationItem = { id: string; lesson_id: string; kind: 'topic' | 'assignment'; topic_id: string | null; assignment_id: string | null; position: number; completed_at: string | null };
+export type LessonPreparationSelection = {kind:'topic'|'assignment';id:string};
+export function serializeLessonPreparation(keys:string[]):LessonPreparationSelection[]{
+ return keys.map(key=>{
+  const separator=key.indexOf(':'),kind=key.slice(0,separator),id=key.slice(separator+1);
+  if(separator<1||(kind!=='topic'&&kind!=='assignment')||!id)throw new Error('Некорректный пункт подготовки.');
+  return {kind,id};
+ });
+}
 export type Submission = { id: string; assignment_id: string; student_id: string; content: string; result: string; created_at: string; feedback?: string; feedback_at?: string };
 export type Room = { id: string; student_id: string; name: string; language: string; student_code: string; teacher_code: string; student_state?:string;teacher_state?:string; revision: number; last_active: number };
 export type Notice = { id: string; title: string; body: string; created_at: string; student_id?: string; read?: number };

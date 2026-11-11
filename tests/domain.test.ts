@@ -1,7 +1,28 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {addDaysToDateKey,cancellationPolicy,canReschedule,createSlots,dateKeyInTimeZone,monthBounds,monthKey,overlaps,resultStatus,type Lesson} from '../lib/domain.ts';
+import {addDaysToDateKey,cancellationPolicy,canReschedule,createSlots,dateKeyInTimeZone,monthBounds,monthKey,overlaps,resultStatus,serializeLessonPreparation,type Lesson} from '../lib/domain.ts';
+import {isGithubMaterialContentType,normalizeGithubSource} from '../lib/github-source.ts';
 const lesson=(extra:Partial<Lesson>={}):Lesson=>({id:'test',name:'test',start:'2026-11-07T13:00:00.000Z',end:'2026-11-07T13:55:00.000Z',type:'paid',status:'scheduled',...extra});
+test('Пункты подготовки формы сериализуются в API-контракт',()=>{
+ assert.deepEqual(serializeLessonPreparation(['topic:unit-1','assignment:task-2']),[{kind:'topic',id:'unit-1'},{kind:'assignment',id:'task-2'}]);
+ assert.throws(()=>serializeLessonPreparation(['unknown:item']),/Некорректный пункт/);
+});
+test('Ссылка GitHub приводится к raw и блокирует посторонние хосты и типы файлов',()=>{
+ assert.deepEqual(normalizeGithubSource('https://github.com/octocat/Hello-World/blob/main/notes/intro.md'),{url:'https://raw.githubusercontent.com/octocat/Hello-World/main/notes/intro.md',format:'md'});
+ assert.deepEqual(normalizeGithubSource('https://github.com/octocat/Hello-World/blob/feature/course-notes/notes/intro.md'),{url:'https://raw.githubusercontent.com/octocat/Hello-World/feature/course-notes/notes/intro.md',format:'md'});
+ assert.throws(()=>normalizeGithubSource('https://evil.example/notes.md'),/Разрешены только/);
+ assert.throws(()=>normalizeGithubSource('https://github.com/octocat/Hello-World/blob/main/notes.txt'),/Поддерживаются только/);
+ assert.throws(()=>normalizeGithubSource('https://github.com/octocat/Hello-World/blob/main/%2e%2e/notes.md'),/недопустимый сегмент/);
+});
+test('GitHub материалы принимают поддерживаемые MIME и отклоняют HTML и неизвестные типы',()=>{
+ assert.equal(isGithubMaterialContentType('text/plain; charset=utf-8'),true);
+ assert.equal(isGithubMaterialContentType('text/markdown'),true);
+ assert.equal(isGithubMaterialContentType('application/json'),true);
+ assert.equal(isGithubMaterialContentType('application/octet-stream'),true);
+ assert.equal(isGithubMaterialContentType('text/html'),false);
+ assert.equal(isGithubMaterialContentType('image/png'),false);
+ assert.equal(isGithubMaterialContentType(null),false);
+});
 test('Перенос разрешён ровно за два часа, за миллисекунду позднее запрещён',()=>{
  const l=lesson();const start=Date.parse(l.start);
  assert.equal(canReschedule(l,start-7200000),true);assert.equal(canReschedule(l,start-7199999),false);assert.equal(canReschedule(lesson({status:'cancelled'}),start-86400000),false);

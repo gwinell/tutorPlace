@@ -5,6 +5,7 @@ import {ROOM_STARTERS,starterLanguage,type RoomLanguage} from '@/lib/room-preset
 import {normalizeTrialPhone,limitTrialBooking} from '@/lib/trial-booking';
 import {reserveLessonMove,confirmLessonMove} from '@/lib/lesson-move';
 import {createSaluteJazzRoom,disableSaluteJazzRoom,saluteJazzConfigured} from '@/lib/salutejazz';
+import {isGithubMaterialContentType,normalizeGithubSource} from '@/lib/github-source';
 export const dynamic='force-dynamic';
 // D1 projects differ per query; request bodies below use endpoint-specific fields.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -16,8 +17,8 @@ type ApiBody = {
  assignmentId?:string;studentId?:string;studentIds?:unknown[];courseId?:string;course_id?:string;
  title?:string;description?:string;format?:string;content?:string;kind?:string;prompt?:string;feedback?:string;status?:string;
  start?:string;dateOverrides?:Record<string,unknown>;weeklyAvailability?:Record<string,unknown>;days?:unknown[];from?:string;to?:string;timezone?:string;availabilityCalendarIds?:unknown[];
- options?:unknown[];topicIds?:unknown[];topicId?:string;topic_id?:string;lesson_id?:string;student_id?:string;
- meetUrl?:string;meet_url?:string;colab_url?:string;topic?:string;file?:string;update?:string;language?:string;id?:string;
+ options?:unknown[];topicIds?:unknown[];topicId?:string;topic_id?:string;parentTopicId?:string;parent_topic_id?:string;github_url?:string;lesson_id?:string;student_id?:string;
+ meetUrl?:string;meet_url?:string;colab_url?:string;topic?:string;preparation?:unknown[];completed?:boolean;file?:string;update?:string;language?:string;id?:string;
  exerciseId?:string;wpm?:number;accuracy?:number;durationMs?:number;
  code?:string;url?:string;comment?:string;note?:string;
 };
@@ -27,6 +28,20 @@ function json(data:unknown,status=200,headers:Record<string,string>={}){return R
 async function all(sql:string,...values:unknown[]){return (await db().prepare(sql).bind(...values).all<Row>()).results;}
 const text=(v:unknown,max=200)=>typeof v==='string'?v.trim().slice(0,max):'';
 function validDateKey(value:string){if(!/^\d{4}-\d{2}-\d{2}$/.test(value))return false;const time=Date.parse(value+'T00:00:00Z');return Number.isFinite(time)&&new Date(time).toISOString().slice(0,10)===value;}
+function githubSource(value:string){
+ try{return normalizeGithubSource(value);}catch(error){throw new HttpError(error instanceof Error?error.message:'Некорректная ссылка GitHub.',400);}
+}
+async function readLimitedText(response:Response,maxBytes:number){
+ const declared=Number(response.headers.get('content-length')||0);if(declared>maxBytes){await response.body?.cancel();throw new HttpError('Файл GitHub слишком большой.',413);}
+ const reader=response.body?.getReader();if(!reader)return '';
+ const chunks:Uint8Array[]=[];let total=0;
+ try{while(true){const {done,value}=await reader.read();if(done)break;total+=value.byteLength;if(total>maxBytes){await reader.cancel();throw new HttpError('Файл GitHub слишком большой.',413);}chunks.push(value);}}
+ finally{reader.releaseLock();}
+ const bytes=new Uint8Array(total);let offset=0;for(const chunk of chunks){bytes.set(chunk,offset);offset+=chunk.byteLength;}
+ return new TextDecoder('utf-8',{fatal:false}).decode(bytes);
+}
+function validateNotebook(content:string){let parsed:unknown;try{parsed=JSON.parse(content);}catch{throw new HttpError('Файл .ipynb содержит некорректный JSON.',422);}requireValue(!!parsed&&typeof parsed==='object'&&'cells'in parsed&&Array.isArray((parsed as {cells?:unknown}).cells),'Файл .ipynb не содержит список ячеек.',422);}
+async function studentCanReadTopic(studentId:string,topicId:string){return !!await db().prepare(`SELECT t.id FROM topics t JOIN course_enrollments e ON e.course_id=t.course_id AND e.student_id=? JOIN topic_access a ON a.topic_id=COALESCE(t.parent_topic_id,t.id) AND a.student_id=? WHERE t.id=?`).bind(studentId,studentId,topicId).first();}
 async function retireMeeting(lessonId:string,roomId:string|undefined|null){
  if(!roomId)return;
  try{await disableSaluteJazzRoom(roomId,secrets,2500);await db().prepare('UPDATE lessons SET jazz_room_id=NULL,jazz_room_needs_recreation=0 WHERE id=? AND jazz_room_id=?').bind(lessonId,roomId).run();}
@@ -57,6 +72,21 @@ async function route(request:Request){
  if(path[0]==='reviews'&&method==='GET')return json({reviews:await all('SELECT id,name,body,rating FROM reviews WHERE published=1')});
  if(path[0]==='reviews'&&method==='POST'){await teacher(request);requireValue(text(body.name)&&text(body.body,5000)&&Number.isInteger(body.rating)&&body.rating!>=1&&body.rating!<=5,'Проверь имя, текст и оценку.');await db().prepare('INSERT INTO reviews (id,name,body,rating,published) VALUES (?,?,?,?,?)').bind(id(),text(body.name),text(body.body,5000),body.rating,body.published?1:0).run();return json({ok:true});}
  if(path[0]==='me')return json({user:await currentUser(request)});
+ if(path[0]==='topics'&&path[1]&&path[2]==='content'&&method==='GET'){
+   const user=await auth(request),topic=await db().prepare('SELECT id,format,content,github_url FROM topics WHERE id=?').bind(path[1]).first<Row>();
+   requireValue(topic,'Материал не найден.',404);
+   if(user.role!=='teacher')requireValue(await studentCanReadTopic(user.id,path[1]),'Материал недоступен.',403);
+   let content=String(topic!.content||'');
+   if(topic!.github_url){
+     const source=githubSource(String(topic!.github_url));requireValue(source.format===topic!.format,'Формат материала не совпадает со ссылкой GitHub.',409);
+     let response:Response;try{response=await fetch(source.url,{redirect:'error',signal:AbortSignal.timeout(10000),headers:{'Accept':'text/plain, text/markdown, application/json, application/octet-stream','User-Agent':'codeTogether-course-materials'}});}catch{throw new HttpError('Не удалось загрузить файл из публичного GitHub. Проверь ссылку и повтори попытку.',502);}
+     requireValue(response.ok,'Файл GitHub не найден или репозиторий закрыт.',502);
+     requireValue(isGithubMaterialContentType(response.headers.get('content-type')),'GitHub вернул неподдерживаемый тип файла.',502);
+     content=await readLimitedText(response,source.format==='ipynb'?5_000_000:2_000_000);
+     if(source.format==='ipynb')validateNotebook(content);
+   }
+   return json({content,format:topic!.format});
+ }
  if(path[0]==='logout'&&method==='POST'){const token=request.headers.get('cookie')?.match(/(?:^|;\s*)ct-session=([^;]+)/)?.[1];if(token)await db().prepare('DELETE FROM sessions WHERE id=?').bind(await hash(token)).run();return json({ok:true},200,{'Set-Cookie':'ct-session=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0'+(url.protocol==='https:'?'; Secure':'')});}
  if(path[0]==='login'&&method==='POST'){
    requireValue(typeof body.login==='string'&&body.login.length<=100&&typeof body.password==='string'&&body.password.length<=128,'Проверь логин и пароль.');
@@ -233,16 +263,18 @@ async function route(request:Request){
    const u=await auth(request);await cleanup();const isTeacher=u.role==='teacher';
    const courses=isTeacher?await all('SELECT * FROM courses ORDER BY position,title'):await all('SELECT c.* FROM courses c JOIN course_enrollments e ON e.course_id=c.id WHERE e.student_id=? ORDER BY c.position,c.title',u.id);
    const courseEnrollments=isTeacher?await all('SELECT course_id,student_id FROM course_enrollments'):[];
-   const topics=isTeacher?await all('SELECT * FROM topics ORDER BY course_id,position,title'):await all('SELECT t.id,t.course_id,t.title,t.description,t.format,t.position,CASE WHEN a.id IS NULL THEN 1 ELSE 0 END locked,CASE WHEN a.id IS NULL THEN \'\' ELSE t.content END content,CASE WHEN a.id IS NULL THEN NULL ELSE t.colab_url END colab_url FROM topics t JOIN course_enrollments e ON e.course_id=t.course_id AND e.student_id=? LEFT JOIN topic_access a ON a.topic_id=t.id AND a.student_id=? ORDER BY t.course_id,t.position,t.title',u.id,u.id);
+   const topics=isTeacher?await all('SELECT id,course_id,parent_topic_id,title,description,format,colab_url,github_url,position FROM topics ORDER BY course_id,parent_topic_id,position,title'):await all('SELECT t.id,t.course_id,t.parent_topic_id,t.title,t.description,t.format,t.position,CASE WHEN a.id IS NULL THEN NULL ELSE t.github_url END github_url,CASE WHEN a.id IS NULL THEN 1 ELSE 0 END locked,CASE WHEN a.id IS NULL THEN NULL ELSE t.colab_url END colab_url FROM topics t JOIN course_enrollments e ON e.course_id=t.course_id AND e.student_id=? LEFT JOIN topic_access a ON a.topic_id=COALESCE(t.parent_topic_id,t.id) AND a.student_id=? ORDER BY t.course_id,t.parent_topic_id,t.position,t.title',u.id,u.id);
    const assignments=isTeacher?await all('SELECT * FROM assignments'):await all(`SELECT a.id,a.topic_id,a.student_id,a.lesson_id,a.title,a.kind,a.prompt,a.options FROM assignments a
-     WHERE ((a.topic_id IS NOT NULL AND EXISTS (SELECT 1 FROM topics t JOIN course_enrollments e ON e.course_id=t.course_id AND e.student_id=? JOIN topic_access x ON x.topic_id=t.id AND x.student_id=? WHERE t.id=a.topic_id))
+     WHERE ((a.topic_id IS NOT NULL AND EXISTS (SELECT 1 FROM topics t JOIN course_enrollments e ON e.course_id=t.course_id AND e.student_id=? JOIN topic_access x ON x.topic_id=COALESCE(t.parent_topic_id,t.id) AND x.student_id=? WHERE t.id=a.topic_id))
        OR (a.topic_id IS NULL AND a.student_id=?))
        AND (a.lesson_id IS NULL OR EXISTS (SELECT 1 FROM lessons l WHERE l.id=a.lesson_id AND l.student_id=?))`,u.id,u.id,u.id,u.id);
+   const topicAccess=isTeacher?await all('SELECT topic_id,student_id FROM topic_access'):[];
+   const preparationItems=isTeacher?await all('SELECT * FROM lesson_preparation_items ORDER BY lesson_id,position'):await all('SELECT p.* FROM lesson_preparation_items p JOIN lessons l ON l.id=p.lesson_id WHERE l.student_id=? ORDER BY p.lesson_id,p.position',u.id);
    const [paymentLink,paymentRequests]=await Promise.all([
      db().prepare("SELECT value FROM settings WHERE key='payment-link'").first<{value:string}>(),
      isTeacher?all('SELECT * FROM payment_requests ORDER BY created_at DESC'):all('SELECT * FROM payment_requests WHERE student_id=? ORDER BY created_at DESC',u.id),
    ]);
-   return json({user:u,lessons:isTeacher?await all('SELECT * FROM lessons ORDER BY start'):await all('SELECT * FROM lessons WHERE student_id=? ORDER BY start',u.id),courses,courseEnrollments,topics,assignments,submissions:isTeacher?await all('SELECT * FROM submissions ORDER BY created_at'):await all('SELECT * FROM submissions WHERE student_id=? ORDER BY created_at',u.id),students:isTeacher?(await all("SELECT * FROM users WHERE role='student'")).map(safeUser):[u],rooms:isTeacher?await all('SELECT * FROM rooms'):await all('SELECT * FROM rooms WHERE student_id=?',u.id),notifications:isTeacher?await all('SELECT * FROM notifications ORDER BY created_at DESC'):await all('SELECT * FROM notifications WHERE student_id=? ORDER BY created_at DESC',u.id),paymentLink:paymentLink?.value||null,paymentRequests,schedule:isTeacher?await schedule():undefined,configured:calendarConfigured(),saluteJazzConfigured:saluteJazzConfigured(secrets)});
+   return json({user:u,lessons:isTeacher?await all('SELECT * FROM lessons ORDER BY start'):await all('SELECT * FROM lessons WHERE student_id=? ORDER BY start',u.id),courses,courseEnrollments,topics,topicAccess,assignments,preparationItems,submissions:isTeacher?await all('SELECT * FROM submissions ORDER BY created_at'):await all('SELECT * FROM submissions WHERE student_id=? ORDER BY created_at',u.id),students:isTeacher?(await all("SELECT * FROM users WHERE role='student'")).map(safeUser):[u],rooms:isTeacher?await all('SELECT * FROM rooms'):await all('SELECT * FROM rooms WHERE student_id=?',u.id),notifications:isTeacher?await all('SELECT * FROM notifications ORDER BY created_at DESC'):await all('SELECT * FROM notifications WHERE student_id=? ORDER BY created_at DESC',u.id),paymentLink:paymentLink?.value||null,paymentRequests,schedule:isTeacher?await schedule():undefined,configured:calendarConfigured(),saluteJazzConfigured:saluteJazzConfigured(secrets)});
  }
  if(path[0]==='students'&&method==='POST'){
    await teacher(request);requireValue(text(body.name)&&text(body.parent_name)&&text(body.login),'Обязательны имя, возраст, родитель и логин.');requireValue(Number.isInteger(body.age)&&body.age!>=1&&body.age!<=100,'Укажи корректный возраст.');requireValue(Number.isSafeInteger(body.balance)&&body.balance!>=-1000000&&body.balance!<=1000000&&(!body.balance||body.balance>=0||Boolean(body.id)),'Баланс должен быть целым числом от -1 000 000 до 1 000 000.');requireValue(body.price_per_lesson===undefined||Number.isInteger(body.price_per_lesson)&&body.price_per_lesson!>=1&&body.price_per_lesson!<=1000000,'Цена занятия должна быть целым числом от 1 до 1 000 000 ₽.');requireValue(!body.password||typeof body.password==='string'&&body.password.length>=8&&body.password.length<=128,'Пароль — от 8 до 128 символов.');
@@ -268,6 +300,8 @@ async function route(request:Request){
      database.prepare(`DELETE FROM course_enrollments WHERE student_id=? AND ${absent}`).bind(studentId,studentId),
      database.prepare(`DELETE FROM topic_access WHERE student_id=? AND ${absent}`).bind(studentId,studentId),
      database.prepare(`DELETE FROM submissions WHERE (student_id=? OR assignment_id IN (SELECT id FROM assignments WHERE student_id=? OR lesson_id IN (SELECT id FROM lessons WHERE student_id=?))) AND ${absent}`).bind(studentId,studentId,studentId,studentId),
+     database.prepare(`DELETE FROM lesson_preparation_items WHERE lesson_id IN (SELECT id FROM lessons WHERE student_id=?) AND ${absent}`).bind(studentId,studentId),
+     database.prepare(`DELETE FROM lesson_preparation_items WHERE assignment_id IN (SELECT id FROM assignments WHERE student_id=? OR lesson_id IN (SELECT id FROM lessons WHERE student_id=?)) AND ${absent}`).bind(studentId,studentId,studentId),
      database.prepare(`DELETE FROM assignments WHERE (student_id=? OR lesson_id IN (SELECT id FROM lessons WHERE student_id=?)) AND ${absent}`).bind(studentId,studentId,studentId),
      database.prepare(`DELETE FROM slot_locks WHERE lesson_id IN (SELECT id FROM lessons WHERE student_id=?) AND ${absent}`).bind(studentId,studentId),
      database.prepare(`DELETE FROM payment_requests WHERE student_id=? AND ${absent}`).bind(studentId,studentId),
@@ -330,34 +364,86 @@ async function route(request:Request){
    await db().batch(statements);return json({ok:true,id:courseId});
  }
  if(path[0]==='topics'&&path[1]==='order'&&method==='POST'){
-   await teacher(request);const courseId=text(body.courseId,100),topicIds=Array.isArray(body.topicIds)?body.topicIds:[];requireValue(await db().prepare('SELECT id FROM courses WHERE id=?').bind(courseId).first(),'Курс не найден.');
+   await teacher(request);const courseId=text(body.courseId,100),parentTopicId=text(body.parentTopicId,100)||null,topicIds=Array.isArray(body.topicIds)?body.topicIds:[];requireValue(await db().prepare('SELECT id FROM courses WHERE id=?').bind(courseId).first(),'Курс не найден.');
+   if(parentTopicId)requireValue(await db().prepare('SELECT id FROM topics WHERE id=? AND course_id=? AND parent_topic_id IS NULL').bind(parentTopicId,courseId).first(),'Основная тема не найдена.',404);
    requireValue(topicIds.length<=500&&topicIds.every((x):x is string=>typeof x==='string')&&new Set(topicIds).size===topicIds.length,'Некорректный порядок тем.');
-   const topics=await all('SELECT id FROM topics WHERE course_id=?',courseId);requireValue(topics.length===topicIds.length&&topics.every(t=>topicIds.includes(t.id)),'Список тем курса изменился. Обнови страницу.',409);
-   await db().batch(topicIds.map((topicId:string,position:number)=>db().prepare('UPDATE topics SET position=? WHERE id=? AND course_id=?').bind(position,topicId,courseId)));return json({ok:true});
+   const topics=await all('SELECT id FROM topics WHERE course_id=? AND parent_topic_id IS ?',courseId,parentTopicId);requireValue(topics.length===topicIds.length&&topics.every(t=>topicIds.includes(t.id)),'Список тем изменился. Обнови страницу.',409);
+   await db().batch(topicIds.map((topicId:string,position:number)=>db().prepare('UPDATE topics SET position=? WHERE id=? AND course_id=? AND parent_topic_id IS ?').bind(position,topicId,courseId,parentTopicId)));return json({ok:true});
  }
  if(path[0]==='topics'&&method==='POST'){
-   await teacher(request);requireValue(text(body.title)&&['md','ipynb'].includes(body.format||'')&&typeof body.content==='string'&&body.content.length<=2000000,'Проверь название, формат и размер материала.');const courseId=text(body.course_id,100);requireValue(await db().prepare('SELECT id FROM courses WHERE id=?').bind(courseId).first(),'Курс не найден.');if(body.format==='ipynb'){let parsed:{cells?:unknown[]}={};try{parsed=JSON.parse(body.content!) as {cells?:unknown[]};}catch{}requireValue(Array.isArray(parsed.cells),'Некорректный блокнот Jupyter.');}const colab=httpsUrl(body.colab_url);if(colab)requireValue(new URL(colab).hostname==='colab.research.google.com','Укажи ссылку Google Colab.');
-   const position=Number.isInteger(body.position)&&body.position!>=0?body.position!:Number((await db().prepare('SELECT COALESCE(MAX(position),-1)+1 position FROM topics WHERE course_id=?').bind(courseId).first<Row>())?.position||0);
-   await db().prepare('INSERT INTO topics (id,course_id,title,description,content,format,colab_url,position) VALUES (?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET course_id=excluded.course_id,title=excluded.title,description=excluded.description,content=excluded.content,format=excluded.format,colab_url=excluded.colab_url,position=excluded.position').bind(body.id||id(),courseId,text(body.title),text(body.description,500),body.content,body.format,colab,position).run();return json({ok:true});
+   await teacher(request);const courseId=text(body.course_id,100),topicId=text(body.id,100)||id(),parentTopicId=text(body.parent_topic_id,100)||null;let githubUrl=text(body.github_url,2000)||null;const existing=await db().prepare('SELECT id,course_id,parent_topic_id FROM topics WHERE id=?').bind(topicId).first<Row>();
+   requireValue(text(body.title)&&['md','ipynb'].includes(body.format||''),'Проверь название и формат материала.');requireValue(await db().prepare('SELECT id FROM courses WHERE id=?').bind(courseId).first(),'Курс не найден.');
+   if(existing)requireValue(existing.course_id===courseId,'Нельзя переместить существующую тему в другой курс.',409);
+   if(parentTopicId){const parent=await db().prepare('SELECT id FROM topics WHERE id=? AND course_id=? AND parent_topic_id IS NULL').bind(parentTopicId,courseId).first();requireValue(parent&&parentTopicId!==topicId,'Подтема должна относиться к основной теме этого курса.');requireValue(!await db().prepare('SELECT id FROM topics WHERE parent_topic_id=? LIMIT 1').bind(topicId).first(),'Тема с подтемами не может стать подтемой.',409);}
+   else if(existing?.parent_topic_id){/* Saving a subtopic without its parent is rejected below rather than silently promoting it. */requireValue(Object.prototype.hasOwnProperty.call(body,'parent_topic_id'),'Укажи основную тему для подтемы.');}
+   let content=typeof body.content==='string'?body.content:'';const format=body.format!;
+   if(githubUrl){const source=githubSource(githubUrl);requireValue(source.format===format,'Формат материала должен совпадать с расширением файла GitHub.');githubUrl=source.url;content='';}
+   else{requireValue(content.length>0&&content.length<=2000000,'Добавь содержимое материала размером до 2 МБ.');if(format==='ipynb')validateNotebook(content);}
+   const colab=httpsUrl(body.colab_url);if(colab)requireValue(new URL(colab).hostname==='colab.research.google.com','Укажи ссылку Google Colab.');
+   const position=Number.isInteger(body.position)&&body.position!>=0?body.position!:Number((await db().prepare('SELECT COALESCE(MAX(position),-1)+1 position FROM topics WHERE course_id=? AND parent_topic_id IS ?').bind(courseId,parentTopicId).first<Row>())?.position||0);
+   await db().prepare('INSERT INTO topics (id,course_id,parent_topic_id,title,description,content,format,colab_url,github_url,position) VALUES (?,?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET parent_topic_id=excluded.parent_topic_id,title=excluded.title,description=excluded.description,content=excluded.content,format=excluded.format,colab_url=excluded.colab_url,github_url=excluded.github_url,position=excluded.position').bind(topicId,courseId,parentTopicId,text(body.title),text(body.description,500),content,format,colab,githubUrl,position).run();return json({ok:true,id:topicId});
  }
  if(path[0]==='access'&&method==='POST'){
-   await teacher(request);requireValue(await db().prepare("SELECT id FROM users WHERE id=? AND role='student'").bind(body.studentId).first(),'Ученик не найден.');const topic=await db().prepare('SELECT course_id FROM topics WHERE id=?').bind(body.topicId).first<Row>();requireValue(topic,'Тема не найдена.');requireValue(await db().prepare('SELECT id FROM course_enrollments WHERE course_id=? AND student_id=?').bind(topic!.course_id,body.studentId).first(),'Сначала открой доступ ученику к курсу.');if(body.enabled)await db().prepare('INSERT OR IGNORE INTO topic_access (id,topic_id,student_id) VALUES (?,?,?)').bind(id(),body.topicId,body.studentId).run();else await db().prepare('DELETE FROM topic_access WHERE topic_id=? AND student_id=?').bind(body.topicId,body.studentId).run();return json({ok:true});
+   await teacher(request);requireValue(await db().prepare("SELECT id FROM users WHERE id=? AND role='student'").bind(body.studentId).first(),'Ученик не найден.');const topic=await db().prepare('SELECT course_id,parent_topic_id FROM topics WHERE id=?').bind(body.topicId).first<Row>();requireValue(topic,'Тема не найдена.');requireValue(!topic!.parent_topic_id,'Доступ настраивается у основной темы и наследуется подтемами.');requireValue(await db().prepare('SELECT id FROM course_enrollments WHERE course_id=? AND student_id=?').bind(topic!.course_id,body.studentId).first(),'Сначала открой доступ ученику к курсу.');if(body.enabled)await db().prepare('INSERT OR IGNORE INTO topic_access (id,topic_id,student_id) VALUES (?,?,?)').bind(id(),body.topicId,body.studentId).run();else await db().prepare('DELETE FROM topic_access WHERE topic_id=? AND student_id=?').bind(body.topicId,body.studentId).run();return json({ok:true});
  }
  if(path[0]==='notifications'&&method==='POST'){
    await teacher(request);requireValue(await db().prepare("SELECT id FROM users WHERE id=? AND role='student'").bind(body.student_id).first(),'Выбери ученика.');requireValue(text(body.title)&&text(body.body,4000),'Добавь заголовок и сообщение.');await db().prepare('INSERT INTO notifications (id,student_id,title,body,created_at) VALUES (?,?,?,?,?)').bind(id(),body.student_id,text(body.title),text(body.body,4000),now()).run();return json({ok:true});
  }
  if(path[0]==='assignments'&&method==='POST'){
-   await teacher(request);requireValue(text(body.title)&&text(body.prompt,20000)&&['code','quiz','text'].includes(body.kind||''),'Проверь данные задания.');const topicId=text(body.topic_id,100)||null,studentId=text(body.student_id,100)||null;requireValue(Boolean(topicId)!==Boolean(studentId),'Выбери тему курса или одного ученика.');if(topicId)requireValue(await db().prepare('SELECT id FROM topics WHERE id=?').bind(topicId).first(),'Тема не найдена.');if(studentId)requireValue(await db().prepare("SELECT id FROM users WHERE id=? AND role='student'").bind(studentId).first(),'Ученик не найден.');if(body.kind==='quiz')requireValue(Array.isArray(body.options)&&body.options.length>=2&&body.options.length<=20&&Number(body.answer)>=0&&Number(body.answer)<body.options.length,'Проверь варианты и номер правильного ответа.');const lessonId=text(body.lesson_id,100)||null;if(lessonId){const lesson=await db().prepare('SELECT student_id FROM lessons WHERE id=?').bind(lessonId).first<Row>();requireValue(lesson,'Урок не найден.');if(studentId)requireValue(lesson!.student_id===studentId,'Урок не принадлежит выбранному ученику.');}
+   await teacher(request);requireValue(text(body.title)&&text(body.prompt,20000)&&['code','quiz','text'].includes(body.kind||''),'Проверь данные задания.');const topicId=text(body.topic_id,100)||null,studentId=text(body.student_id,100)||null;requireValue(Boolean(topicId)!==Boolean(studentId),'Выбери тему курса или одного ученика.');if(topicId)requireValue(await db().prepare('SELECT id FROM topics WHERE id=?').bind(topicId).first(),'Тема не найдена.');if(studentId)requireValue(await db().prepare("SELECT id FROM users WHERE id=? AND role='student'").bind(studentId).first(),'Ученик не найден.');if(body.kind==='quiz')requireValue(Array.isArray(body.options)&&body.options.length>=2&&body.options.length<=20&&Number(body.answer)>=0&&Number(body.answer)<body.options.length,'Проверь варианты и номер правильного ответа.');const lessonId=text(body.lesson_id,100)||null;if(lessonId){const lesson=await db().prepare('SELECT student_id FROM lessons WHERE id=?').bind(lessonId).first<Row>();requireValue(lesson,'Урок не найден.');if(studentId)requireValue(lesson!.student_id===studentId,'Урок не принадлежит выбранному ученику.');if(topicId)requireValue(!!lesson!.student_id&&await studentCanReadTopic(lesson!.student_id,topicId),'У ученика нет доступа к теме, связанной с уроком.',403);}
    await db().prepare('INSERT INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES (?,?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET topic_id=excluded.topic_id,student_id=excluded.student_id,lesson_id=excluded.lesson_id,title=excluded.title,kind=excluded.kind,prompt=excluded.prompt,options=excluded.options,answer=excluded.answer,tests=NULL').bind(body.id||id(),topicId,studentId,lessonId,text(body.title),body.kind,text(body.prompt,20000),body.kind==='quiz'?JSON.stringify(body.options):null,body.kind==='quiz'?String(body.answer):null,null).run();return json({ok:true});
  }
  if(path[0]==='submit'&&method==='POST'){
-   const u=await auth(request);requireValue(u.role==='student','Отправка доступна ученику.',403);const a=await db().prepare(`SELECT a.* FROM assignments a WHERE a.id=? AND ((a.student_id=? AND a.topic_id IS NULL) OR (a.topic_id IS NOT NULL AND EXISTS (SELECT 1 FROM topics t JOIN course_enrollments e ON e.course_id=t.course_id AND e.student_id=? JOIN topic_access x ON x.topic_id=t.id AND x.student_id=? WHERE t.id=a.topic_id))) AND (a.lesson_id IS NULL OR EXISTS (SELECT 1 FROM lessons l WHERE l.id=a.lesson_id AND l.student_id=?))`).bind(body.assignmentId,u.id,u.id,u.id,u.id).first<Row>();requireValue(a,'Задание недоступно.',403);const content=text(body.content,50000);requireValue(content,'Добавь решение.');
+   const u=await auth(request);requireValue(u.role==='student','Отправка доступна ученику.',403);const a=await db().prepare(`SELECT a.* FROM assignments a WHERE a.id=? AND ((a.student_id=? AND a.topic_id IS NULL) OR (a.topic_id IS NOT NULL AND EXISTS (SELECT 1 FROM topics t JOIN course_enrollments e ON e.course_id=t.course_id AND e.student_id=? JOIN topic_access x ON x.topic_id=COALESCE(t.parent_topic_id,t.id) AND x.student_id=? WHERE t.id=a.topic_id))) AND (a.lesson_id IS NULL OR EXISTS (SELECT 1 FROM lessons l WHERE l.id=a.lesson_id AND l.student_id=?))`).bind(body.assignmentId,u.id,u.id,u.id,u.id).first<Row>();requireValue(a,'Задание недоступно.',403);const content=text(body.content,50000);requireValue(content,'Добавь решение.');
    let result:{status:string;tests?:{number:number;passed:boolean}[]}={status:'pending'};
    if(a!.kind==='quiz')result={status:content===a!.answer?'passed':'failed',tests:[{number:1,passed:content===a!.answer}]};
    const submission={id:id(),assignment_id:a!.id,student_id:u.id,content,result:JSON.stringify(result),created_at:now()};await db().prepare('INSERT INTO submissions (id,assignment_id,student_id,content,result,created_at) VALUES (?,?,?,?,?,?)').bind(...Object.values(submission)).run();return json({submission});
  }
  if(path[0]==='submissions'&&path[1]&&method==='POST'){await teacher(request);requireValue(body.status==='passed'||body.status==='needs_work','Некорректный результат.');const submission=await db().prepare('SELECT result FROM submissions WHERE id=?').bind(path[1]).first<Row>();requireValue(submission,'Работа не найдена.',404);requireValue(resultStatus(submission!.result)==='pending','Эта работа уже проверена.',409);const feedback=text(body.feedback,2000);await db().prepare('UPDATE submissions SET result=?,feedback=?,feedback_at=? WHERE id=?').bind(JSON.stringify({status:body.status}),feedback||null,feedback?now():null,path[1]).run();return json({ok:true});}
- if(path[0]==='lesson-details'&&method==='POST'){await teacher(request);const l=await db().prepare('SELECT * FROM lessons WHERE id=?').bind(body.id).first<Row>();requireValue(l,'Урок не найден.',404);const meet=httpsUrl(body.meet_url);if(l!.event_id&&l!.status==='scheduled')await calendar(eventPath(l!.event_id),'PATCH',{summary:'codeTogether · '+text(body.topic),location:meet});await db().prepare('UPDATE lessons SET topic=?,meet_url=? WHERE id=?').bind(text(body.topic),meet,body.id).run();return json({ok:true});}
+ if(path[0]==='lesson-details'&&method==='POST'){
+   await teacher(request);const lessonId=text(body.id,100),l=await db().prepare('SELECT * FROM lessons WHERE id=?').bind(lessonId).first<Row>();requireValue(l,'Урок не найден.',404);
+   const meet=httpsUrl(body.meet_url),topicLabel=text(body.topic,200);
+   const statements=[db().prepare('UPDATE lessons SET topic=?,meet_url=? WHERE id=?').bind(topicLabel,meet,lessonId)];
+   if(body.preparation!==undefined){
+     requireValue(Array.isArray(body.preparation)&&body.preparation.length<=100,'Список подготовки должен содержать не более 100 пунктов.');
+     const emptyTrialChecklist=l!.student_id===null&&l!.status==='scheduled'&&body.preparation.length===0;
+     if(!emptyTrialChecklist)requireValue(l!.student_id&&l!.status==='scheduled','Подготовку можно назначить только к запланированному уроку ученика.',409);
+     const parsed:{kind:'topic'|'assignment';targetId:string;key:string}[]=[];
+     for(const item of body.preparation){
+       requireValue(!!item&&typeof item==='object'&&'kind'in item&&'id'in item,'Некорректный пункт подготовки.');
+       const value=item as {kind?:unknown;id?:unknown};requireValue((value.kind==='topic'||value.kind==='assignment')&&typeof value.id==='string'&&value.id.length<=100,'Некорректный пункт подготовки.');
+       const key=value.kind+':'+value.id;requireValue(!parsed.some(existing=>existing.key===key),'В списке подготовки есть повтор.');
+       if(value.kind==='topic'){
+         requireValue(await db().prepare('SELECT id FROM topics WHERE id=?').bind(value.id).first(),'Тема не найдена.',404);
+         requireValue(await studentCanReadTopic(l!.student_id,value.id),'Сначала открой ученику доступ к курсу и основной теме.',403);
+       }else{
+         const assignment=await db().prepare('SELECT topic_id,student_id,lesson_id FROM assignments WHERE id=?').bind(value.id).first<Row>();requireValue(assignment,'Задание не найдено.',404);requireValue(!assignment!.lesson_id||assignment!.lesson_id===lessonId,'Задание уже привязано к другому уроку.',409);
+         if(assignment!.topic_id)requireValue(await studentCanReadTopic(l!.student_id,assignment!.topic_id),'У ученика нет доступа к теме этого задания.',403);
+         else requireValue(assignment!.student_id===l!.student_id,'Личное задание принадлежит другому ученику.',403);
+       }
+       parsed.push({kind:value.kind,targetId:value.id,key});
+     }
+     const keepConditions:string[]=[],keepBindings:unknown[]=[];
+     for(const kind of ['topic','assignment'] as const){
+       const targetIds=parsed.filter(item=>item.kind===kind).map(item=>item.targetId);if(!targetIds.length)continue;
+       const column=kind==='topic'?'topic_id':'assignment_id';keepConditions.push(`(kind='${kind}' AND ${column} IN (${targetIds.map(()=>'?').join(',')}))`);keepBindings.push(...targetIds);
+     }
+     statements.push(db().prepare(`DELETE FROM lesson_preparation_items WHERE lesson_id=? AND NOT (${keepConditions.join(' OR ')||'0'})`).bind(lessonId,...keepBindings));
+     statements.push(...parsed.map((item,position)=>{
+       const topic=item.kind==='topic',conflictTarget=topic?'topic_id':'assignment_id';
+       return db().prepare(`INSERT INTO lesson_preparation_items (id,lesson_id,kind,topic_id,assignment_id,position,completed_at) VALUES (?,?,?,?,?,?,NULL) ON CONFLICT(lesson_id,${conflictTarget}) DO UPDATE SET position=excluded.position`).bind(id(),lessonId,item.kind,topic?item.targetId:null,topic?null:item.targetId,position);
+     }));
+   }
+   if(l!.event_id&&l!.status==='scheduled')await calendar(eventPath(l!.event_id),'PATCH',{summary:'codeTogether · '+topicLabel,location:meet});
+   await db().batch(statements);return json({ok:true});
+ }
+ if(path[0]==='lesson-preparation'&&path[1]&&method==='POST'){
+   const user=await auth(request);requireValue(user.role==='student','Отмечать подготовку может ученик.',403);requireValue(typeof body.completed==='boolean','Укажи состояние пункта.');
+   const item=await db().prepare("SELECT p.topic_id FROM lesson_preparation_items p JOIN lessons l ON l.id=p.lesson_id WHERE p.id=? AND p.kind='topic' AND l.student_id=? AND l.status='scheduled'").bind(path[1],user.id).first<{topic_id:string}>();requireValue(item,'Пункт подготовки не найден или недоступен.',404);
+   if(body.completed)requireValue(await studentCanReadTopic(user.id,item!.topic_id),'Доступ к теме закрыт.',403);
+   const completedAt=body.completed?now():null,result=await db().prepare("UPDATE lesson_preparation_items SET completed_at=? WHERE id=? AND kind='topic' AND EXISTS (SELECT 1 FROM lessons l WHERE l.id=lesson_preparation_items.lesson_id AND l.student_id=? AND l.status='scheduled')").bind(completedAt,path[1],user.id).run();
+   requireValue(result.meta.changes===1,'Пункт подготовки не найден или недоступен.',404);return json({ok:true,completed_at:completedAt});
+ }
  if(path[0]==='lessons'&&path[1]&&method==='POST'){
    const {u,l}=await lessonAccess(request,path[1]);
    if(path[2]==='move-retry'){

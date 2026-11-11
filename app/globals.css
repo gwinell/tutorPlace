@@ -1170,3 +1170,20 @@
 .student-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 @media(max-width:800px){.payment-review-list{grid-template-columns:1fr}}
 @media(max-width:560px){.manual-lesson-datetime{grid-template-columns:1fr}.payment-intro{padding:19px}.payment-request-form,.payment-settings-card,.payment-history-section{padding:18px}.payment-qr-card{align-items:flex-start;gap:13px;padding:13px}.payment-qr-frame{padding:6px}.payment-qr-frame svg{width:128px;height:128px}.payment-review-actions{display:grid}.payment-review-actions .button{width:100%}}
+
+/* Nested course materials and per-lesson preparation checklist. */
+.course-topic-group{display:grid;gap:4px;min-width:0}
+.course-subtopic-row{margin-left:17px;padding-left:10px;border-left:1px solid var(--border)}
+.subtopic-marker{display:block;width:7px;height:7px;border:1px solid var(--purple);border-radius:50%}
+.material-external>a{display:flex;align-items:center;gap:6px;color:var(--purple);font-size:13px;text-decoration:none}
+.lesson-preparation-checklist{display:grid;gap:8px;margin-top:14px;padding:12px;border:1px solid var(--border);border-radius:8px;background:var(--surface-2)}
+.lesson-preparation-checklist>strong{font-size:13px}
+.lesson-preparation-item{display:flex;align-items:flex-start;gap:9px;cursor:pointer}
+.lesson-preparation-item>input{width:17px;height:17px;flex:0 0 17px;margin:2px 0 0;accent-color:var(--purple)}
+.lesson-preparation-item>span{display:grid;gap:2px;min-width:0}
+.lesson-preparation-item>span>span{font-size:13px;line-height:1.45;overflow-wrap:anywhere}
+.lesson-preparation-item small{font-size:12px;color:var(--muted)}
+.lesson-preparation-item input:disabled{opacity:.75}
+.lesson-preparation-editor{max-height:300px;overflow:auto}
+.lesson-preparation-editor .field-hint{margin:0 0 4px}
+@media(max-width:760px){.course-subtopic-row{margin-left:10px;padding-left:7px}.lesson-preparation-checklist{padding:11px}}
