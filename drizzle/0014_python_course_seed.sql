@@ -120,47 +120,79 @@ INSERT OR IGNORE INTO topics (id,course_id,parent_topic_id,title,description,con
 --> statement-breakpoint
 INSERT OR IGNORE INTO topics (id,course_id,parent_topic_id,title,description,content,format,colab_url,github_url,position) VALUES ('mixed-lessons','python-course','additional-practice','Смешанные уроки','','','md',NULL,'https://github.com/gwinell/proglang-courses/blob/codetogether/python-course/python/00_mixed_lessons/lesson.md',6);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-9d28301184e99d2f','text-input-output',NULL,NULL,'Выведи название любимой книги или игры в кавычках.','code','Выведи название любимой книги или игры в кавычках. Пока не добавляй к ответу поясняющий текст.',NULL,NULL,NULL);
---> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-f962626e1fe4ea48','text-input-output',NULL,NULL,'Одной командой print() выведи имя и любимый цвет через запятую.','code','Одной командой `print()` выведи имя и любимый цвет через запятую. Между ними должен появиться пробел.',NULL,NULL,NULL);
---> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-b5e7aa1926889d68','text-input-output',NULL,NULL,'Создай переменную pet_name и сохрани в ней имя животного или вымышленного персонажа.','code','Создай переменную `pet_name` и сохрани в ней имя животного или вымышленного персонажа.',NULL,NULL,NULL);
---> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-525cb5793df3b1f3','text-input-output',NULL,NULL,'Создай переменную с понятным именем для любимого предмета и выведи оба значения.','code','Создай переменную с понятным именем для любимого предмета и выведи оба значения.',NULL,NULL,NULL);
---> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-06a4fc2d849408f0','text-input-output',NULL,NULL,'Попробуй назвать переменную my name.','code','Попробуй назвать переменную `my name`. Исправь имя так, чтобы программа запустилась.',NULL,NULL,NULL);
---> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-25db98fbd4fd4376','text-input-output',NULL,NULL,'Спроси у пользователя название любимой книги или игры.','code','Спроси у пользователя название любимой книги или игры. Сохрани ответ в переменную с подходящим именем, а затем покажи его командой `print()`.',NULL,NULL,NULL);
---> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-0a527d306edd6de6','text-input-output',NULL,NULL,'Соедини имя и фамилию в одну строку так, чтобы между ними был пробел.','code','Соедини имя и фамилию в одну строку так, чтобы между ними был пробел.',NULL,NULL,NULL);
---> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-78499149f296aa68','text-input-output',NULL,NULL,'Выведи слово Python два раза подряд.','code','Выведи слово `Python` два раза подряд.',NULL,NULL,NULL);
---> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-4259493d73457dbe','text-input-output',NULL,NULL,'Нарисуй строкой рамку из 12 знаков =.','code','Нарисуй строкой рамку из 12 знаков `=`.',NULL,NULL,NULL);
---> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-c7f21e9f9c2b48dc','text-input-output',NULL,NULL,'Спроси имя с помощью input(), сохрани его в name, а затем одной f-строкой напиши приветствие с этим именем.','code','Спроси имя с помощью `input()`, сохрани его в `name`, а затем одной f-строкой напиши приветствие с этим именем.',NULL,NULL,NULL);
---> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-5929eb0d72fb3be8','text-input-output',NULL,NULL,'Выведи три слова через звёздочку с помощью sep.','code','Выведи три слова через звёздочку с помощью `sep`. Затем двумя командами `print()` выведи фразу в одной строке, используя `end`.',NULL,NULL,NULL);
---> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-ed87c669ada2ed85','text-input-output',NULL,NULL,'Выведи два пункта списка на разных строках с помощью \n.','code','Выведи два пункта списка на разных строках с помощью `\n`.',NULL,NULL,NULL);
---> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-2cdd92d6d5e4660e','text-input-output',NULL,NULL,'Выведи подписи Имя: и Класс: с отступами \t.','code','Выведи подписи `Имя:` и `Класс:` с отступами `\t`.',NULL,NULL,NULL);
---> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-c1903cd75914beeb','text-input-output',NULL,NULL,'Покажи в выводе две обратные косые черты.','code','Покажи в выводе две обратные косые черты. Для каждой отображаемой черты в исходном коде нужно написать пару `\\`.',NULL,NULL,NULL);
---> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-4edea2d31c43f396','text-input-output',NULL,NULL,'Собери короткую программу-знакомство.','code','Собери короткую программу-знакомство. Она должна спросить имя и увлечение, а потом вывести аккуратную карточку на нескольких строках. Используй только то, что было в этом уроке: `input()`, переменные, f-строки, `print()` и `\n`.
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-9d28301184e99d2f','text-input-output',NULL,NULL,'Выведи название любимой книги или игры в кавычках.','code','**Задача.** Выведи название любимой книги или игры в кавычках. Пока не добавляй к ответу поясняющий текст.
 
-**Подсказка:** сначала получи каждый ответ отдельно, затем составь одну f-строку с помощью `print()`.',NULL,NULL,NULL);
+**Ожидаемый результат.** В выводе показано выбранное название книги или игры в кавычках, без поясняющего текста.',NULL,NULL,NULL);
+--> statement-breakpoint
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-f962626e1fe4ea48','text-input-output',NULL,NULL,'Одной командой print() выведи имя и любимый цвет через запятую.','code','**Задача.** Одной командой `print()` выведи имя и любимый цвет через запятую. Между ними должен появиться пробел.
+
+**Ожидаемый результат.** Одна команда `print()` выводит имя и цвет в этом порядке, разделённые запятой и одним пробелом.',NULL,NULL,NULL);
+--> statement-breakpoint
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-b5e7aa1926889d68','text-input-output',NULL,NULL,'Создай переменную pet_name и сохрани в ней имя животного или вымышленного персонажа.','code','**Задача.** Создай переменную `pet_name` и сохрани в ней имя животного или вымышленного персонажа.
+
+**Ожидаемый результат.** После выполнения `pet_name` содержит выбранное имя животного или вымышленного персонажа.',NULL,NULL,NULL);
+--> statement-breakpoint
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-525cb5793df3b1f3','text-input-output',NULL,NULL,'Переменная любимого предмета','code','**Задача.** Создай переменную с понятным именем для любимого предмета и выведи имя ученика вместе с названием предмета.
+
+**Ожидаемый результат.** В выводе показаны имя ученика и название предмета, сохранённое в созданной переменной.',NULL,NULL,NULL);
+--> statement-breakpoint
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-06a4fc2d849408f0','text-input-output',NULL,NULL,'Попробуй назвать переменную my name.','code','**Задача.** Попробуй назвать переменную `my name`. Исправь имя так, чтобы программа запустилась.
+
+**Ожидаемый результат.** После исправления имени переменной программа запускается без ошибки из-за пробела в идентификаторе.',NULL,NULL,NULL);
+--> statement-breakpoint
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-25db98fbd4fd4376','text-input-output',NULL,NULL,'Спроси у пользователя название любимой книги или игры.','code','**Задача.** Спроси у пользователя название любимой книги или игры. Сохрани ответ в переменную с подходящим именем, а затем покажи его командой `print()`.
+
+**Ожидаемый результат.** Введённое название сохранено в переменной и затем показано командой `print()`.',NULL,NULL,NULL);
+--> statement-breakpoint
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-0a527d306edd6de6','text-input-output',NULL,NULL,'Имя и фамилия','code','**Задача.** Соедини имя и фамилию в одну строку так, чтобы между ними был пробел.
+
+**Ожидаемый результат.** Получена одна строка: имя, один пробел, фамилия.',NULL,NULL,NULL);
+--> statement-breakpoint
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-78499149f296aa68','text-input-output',NULL,NULL,'Выведи слово Python два раза подряд.','code','**Задача.** Выведи слово `Python` два раза подряд.
+
+**Ожидаемый результат.** В выводе подряд, без разделителя, стоят две копии слова `Python`.',NULL,NULL,NULL);
+--> statement-breakpoint
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-4259493d73457dbe','text-input-output',NULL,NULL,'Нарисуй строкой рамку из 12 знаков =.','code','**Задача.** Нарисуй строкой рамку из 12 знаков `=`.
+
+**Ожидаемый результат.** В одной строке ровно 12 знаков `=`.',NULL,NULL,NULL);
+--> statement-breakpoint
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-c7f21e9f9c2b48dc','text-input-output',NULL,NULL,'Спроси имя с помощью input(), сохрани его в name, а затем одной f-строкой напиши приветствие с этим именем.','code','**Задача.** Спроси имя с помощью `input()`, сохрани его в `name`, а затем одной f-строкой напиши приветствие с этим именем.
+
+**Ожидаемый результат.** После ввода имя подставлено в приветствие с помощью одной f-строки.',NULL,NULL,NULL);
+--> statement-breakpoint
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-5929eb0d72fb3be8','text-input-output',NULL,NULL,'Выведи три слова через звёздочку с помощью sep.','code','**Задача.** Выведи три слова через звёздочку с помощью `sep`. Затем двумя командами `print()` выведи фразу в одной строке, используя `end`.
+
+**Ожидаемый результат.** Первая часть выводит три слова через `*`; два вызова `print()` второй части продолжают вывод на одной строке благодаря `end`.',NULL,NULL,NULL);
+--> statement-breakpoint
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-ed87c669ada2ed85','text-input-output',NULL,NULL,'Выведи два пункта списка на разных строках с помощью \n.','code','**Задача.** Выведи два пункта списка на разных строках с помощью `\n`.
+
+**Ожидаемый результат.** В выводе два пункта списка расположены на разных строках благодаря `\n`.',NULL,NULL,NULL);
+--> statement-breakpoint
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-2cdd92d6d5e4660e','text-input-output',NULL,NULL,'Выведи подписи Имя: и Класс: с отступами \t.','code','**Задача.** Выведи подписи `Имя:` и `Класс:` с отступами `\t`.
+
+**Ожидаемый результат.** В выводе есть подписи `Имя:` и `Класс:` с табуляцией `\t` в заданных местах.',NULL,NULL,NULL);
+--> statement-breakpoint
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-c1903cd75914beeb','text-input-output',NULL,NULL,'Покажи в выводе две обратные косые черты.','code','**Задача.** Покажи в выводе две обратные косые черты. Для каждой отображаемой черты в исходном коде нужно написать пару `\\`.
+
+**Ожидаемый результат.** В выводе отображаются две обратные косые черты; для каждой в строковом литерале записана пара `\\`.',NULL,NULL,NULL);
+--> statement-breakpoint
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-4edea2d31c43f396','text-input-output',NULL,NULL,'Собери короткую программу-знакомство.','code','**Задача.** Собери короткую программу-знакомство. Она должна спросить имя и увлечение, а потом вывести аккуратную карточку на нескольких строках. Используй только то, что было в этом уроке: `input()`, переменные, f-строки, `print()` и `\n`.
+
+**Подсказка:** сначала получи каждый ответ отдельно, затем составь одну f-строку с помощью `print()`.
+
+**Ожидаемый результат.** После двух вводов появляется карточка на нескольких строках, содержащая имя и увлечение; используются только перечисленные в условии средства.',NULL,NULL,NULL);
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-91fb88d91bb1432c','text-input-output',NULL,NULL,'Приветствие на борту · обязательная','code','**Сюжет.** Бортовой компьютер встречает нового участника экспедиции.
 
-**Условие.** Получите имя участника и название планеты. Подготовьте приветствие по образцу.
+**Задача.** Получите имя участника и название планеты. Подготовьте приветствие по образцу.
 
 **Формат данных**
 
 | Входные данные | Выходные данные |
 |---|---|
 | Две строки: имя, затем название планеты. | Одна строка: `Привет, ИМЯ! Добро пожаловать на планету ПЛАНЕТА.` |
+
+**Ожидаемый результат.** Одна строка: `Привет, ИМЯ! Добро пожаловать на планету ПЛАНЕТА.`
 
 **Ограничения.** Каждая строка содержит от 1 до 30 символов; строки непустые. Значения выводятся без изменений.
 
@@ -177,13 +209,15 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-05b56c8f1454031b','text-input-output',NULL,NULL,'Открытка из путешествия · обязательная','code','**Сюжет.** Путешественник отправляет другу короткую открытку из нового города.
 
-**Условие.** Прочитайте имя получателя и город. Сформируйте открытку ровно из трёх строк.
+**Задача.** Прочитайте имя получателя и город. Сформируйте открытку ровно из трёх строк.
 
 **Формат данных**
 
 | Входные данные | Выходные данные |
 |---|---|
 | Две строки: имя получателя, затем город. | Три строки: `Привет, ИМЯ!`, `Пишу тебе из города ГОРОД.`, `До встречи!`. |
+
+**Ожидаемый результат.** Три строки: `Привет, ИМЯ!`, `Пишу тебе из города ГОРОД.`, `До встречи!`.
 
 **Ограничения.** От 1 до 40 символов в каждой строке; пробелы внутри названий разрешены.
 
@@ -200,13 +234,15 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-defd14ead2dff855','text-input-output',NULL,NULL,'Профиль для команды · обязательная','code','**Сюжет.** Участники команды заполняют короткие профили, чтобы познакомиться.
 
-**Условие.** Получите любимый цвет, животное и занятие. Выведите их в порядке ввода с разделителем ` | `.
+**Задача.** Получите любимый цвет, животное и занятие. Выведите их в порядке ввода с разделителем ` | `.
 
 **Формат данных**
 
 | Входные данные | Выходные данные |
 |---|---|
 | Три строки: цвет, животное, занятие. | Одна строка из трёх ответов. Между соседними ответами — пробел, вертикальная черта и пробел. В начале и конце разделителя нет. |
+
+**Ожидаемый результат.** Одна строка из трёх ответов. Между соседними ответами — пробел, вертикальная черта и пробел. В начале и конце разделителя нет.
 
 **Ограничения.** Каждая строка непустая и содержит не более 50 символов; пробелы внутри разрешены.
 
@@ -223,13 +259,15 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-5bdd9e7987b25126','text-input-output',NULL,NULL,'Билет на поезд · по выбору','code','**Сюжет.** Касса печатает пассажиру простой текстовый билет.
 
-**Условие.** Прочитайте имя пассажира и пункт назначения. Напечатайте билет с заголовком из двенадцати знаков равенства.
+**Задача.** Прочитайте имя пассажира и пункт назначения. Напечатайте билет с заголовком из двенадцати знаков равенства.
 
 **Формат данных**
 
 | Входные данные | Выходные данные |
 |---|---|
 | Две строки: имя пассажира, затем пункт назначения. | Три строки: `============`, `Пассажир: ИМЯ`, `Куда: ПУНКТ`. Заголовок получите повторением строки. |
+
+**Ожидаемый результат.** Три строки: `============`, `Пассажир: ИМЯ`, `Куда: ПУНКТ`. Заголовок получите повторением строки.
 
 **Ограничения.** Каждая строка содержит от 1 до 50 символов. В обязательной версии нет числового ввода.
 
@@ -246,13 +284,15 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-0cbf1ce3b7f82e54','text-input-output',NULL,NULL,'Анкета читательского клуба · по выбору','code','**Сюжет.** Клуб хранит сведения об участниках в одинаковых текстовых анкетах.
 
-**Условие.** Получите имя, любимую книгу и любимую игру. Выведите анкету с заданными подписями.
+**Задача.** Получите имя, любимую книгу и любимую игру. Выведите анкету с заданными подписями.
 
 **Формат данных**
 
 | Входные данные | Выходные данные |
 |---|---|
 | Три строки: имя, название книги, название игры. | Три строки: `Имя: ИМЯ`, `Книга: КНИГА`, `Игра: ИГРА`. После двоеточия ровно один пробел. |
+
+**Ожидаемый результат.** Три строки: `Имя: ИМЯ`, `Книга: КНИГА`, `Игра: ИГРА`. После двоеточия ровно один пробел.
 
 **Ограничения.** Все строки непустые, не длиннее 80 символов; названия могут содержать пробелы.
 
@@ -269,13 +309,15 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-5737064c087e16c8','text-input-output',NULL,NULL,'Сообщение курьера · по выбору','code','**Сюжет.** Диспетчер записал два кодовых слова в обратном порядке. Курьеру нужно восстановить сообщение.
 
-**Условие.** Прочитайте два слова. Выведите сначала второе, затем первое, разделив их строкой ` -> `.
+**Задача.** Прочитайте два слова. Выведите сначала второе, затем первое, разделив их строкой ` -> `.
 
 **Формат данных**
 
 | Входные данные | Выходные данные |
 |---|---|
 | Две строки: по одному слову в строке. | Одна строка: `ВТОРОЕ -> ПЕРВОЕ`. |
+
+**Ожидаемый результат.** Одна строка: `ВТОРОЕ -> ПЕРВОЕ`.
 
 **Ограничения.** Каждое слово содержит от 1 до 20 символов без пробелов; регистр сохраняется.
 
@@ -290,31 +332,49 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 
 **Источник.** Авторская задача курса.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-1f8332a920ffe72b','numbers-and-conditions',NULL,NULL,'Выведи сумму двух чисел и их произведение.','code','Выведи сумму двух чисел и их произведение. Подставь свои значения.',NULL,NULL,NULL);
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-1f8332a920ffe72b','numbers-and-conditions',NULL,NULL,'Выведи сумму двух чисел и их произведение.','code','**Задача.** Выведи сумму двух чисел и их произведение. Подставь свои значения.
+
+**Ожидаемый результат.** В выводе представлены сумма и произведение выбранных двух чисел.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-6d4c00ca79b76db3','numbers-and-conditions',NULL,NULL,'Попроси пользователя ввести номер любимого числа и выведи ответ с пояснением.','code','Попроси пользователя ввести номер любимого числа и выведи ответ с пояснением.',NULL,NULL,NULL);
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-6d4c00ca79b76db3','numbers-and-conditions',NULL,NULL,'Любимое число','code','**Задача.** Попроси пользователя ввести номер любимого числа и выведи ответ с пояснением.
+
+**Ожидаемый результат.** После ввода номера программа показывает его и поясняющий текст.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-30ce9a461c912350','numbers-and-conditions',NULL,NULL,'Попроси два целых числа, преобразуй оба ответа и выведи сумму.','code','Попроси два целых числа, преобразуй оба ответа и выведи сумму.',NULL,NULL,NULL);
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-30ce9a461c912350','numbers-and-conditions',NULL,NULL,'Сумма двух целых чисел','code','**Задача.** Попроси два целых числа, преобразуй оба ответа и выведи сумму.
+
+**Ожидаемый результат.** Два введённых значения преобразованы в целые числа, а программа выводит их сумму.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-83c41374c0d44ed6','numbers-and-conditions',NULL,NULL,'Сравни возраст с числом 12 с помощью >=.','code','Сравни возраст с числом 12 с помощью `>=`. Выведи полученный ответ.',NULL,NULL,NULL);
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-83c41374c0d44ed6','numbers-and-conditions',NULL,NULL,'Сравни возраст с числом 12 с помощью >=.','code','**Задача.** Сравни возраст с числом 12 с помощью `>=`. Выведи полученный ответ.
+
+**Ожидаемый результат.** Проверка даёт `True` для возраста 12 и старше и `False` для возраста меньше 12.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-451355c690403631','numbers-and-conditions',NULL,NULL,'Спроси число.','code','Спроси число. Если оно равно 10, выведи «Нашли десять», иначе — «Это другое число».',NULL,NULL,NULL);
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-451355c690403631','numbers-and-conditions',NULL,NULL,'Спроси число.','code','**Задача.** Спроси число. Если оно равно 10, выведи «Нашли десять», иначе — «Это другое число».
+
+**Ожидаемый результат.** Для числа 10 выводится `Нашли десять`, для любого другого введённого числа — `Это другое число`.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-acc85edb4568225e','numbers-and-conditions',NULL,NULL,'Спроси температуру.','code','Спроси температуру. Для значений ниже 0 напечатай «мороз», для значений от 0 до 20 включительно — «прохладно», иначе — «тепло».',NULL,NULL,NULL);
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-acc85edb4568225e','numbers-and-conditions',NULL,NULL,'Спроси температуру.','code','**Задача.** Спроси температуру. Для значений ниже 0 напечатай «мороз», для значений от 0 до 20 включительно — «прохладно», иначе — «тепло».
+
+**Ожидаемый результат.** Сообщение выбирается согласно трём диапазонам: ниже 0, от 0 до 20 включительно и выше 20.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-bba10ae38d11ddb0','numbers-and-conditions',NULL,NULL,'Проверь, находится ли число в промежутке от 1 до 10 включительно: одновременно number >= 1 и number <= 10.','code','Проверь, находится ли число в промежутке от 1 до 10 включительно: одновременно `number >= 1` и `number <= 10`.',NULL,NULL,NULL);
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-bba10ae38d11ddb0','numbers-and-conditions',NULL,NULL,'Проверь, находится ли число в промежутке от 1 до 10 включительно: одновременно number >= 1 и number <= 10.','code','**Задача.** Проверь, находится ли число в промежутке от 1 до 10 включительно: одновременно `number >= 1` и `number <= 10`.
+
+**Ожидаемый результат.** Логическое выражение истинно для чисел от 1 до 10 включительно и ложно вне этого диапазона.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-fcd61f9930f78cf2','numbers-and-conditions',NULL,NULL,'Билет доступен от 12 до 16 лет включительно.','code','Билет доступен от 12 до 16 лет включительно. Напиши проверку и проверь возраст 11, 12, 16, 17. Ожидаются ответы: нет, да, да, нет.',NULL,NULL,NULL);
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-fcd61f9930f78cf2','numbers-and-conditions',NULL,NULL,'Билет доступен от 12 до 16 лет включительно.','code','**Задача.** Билет доступен от 12 до 16 лет включительно. Напиши проверку и проверь возраст 11, 12, 16, 17. Ожидаются ответы: нет, да, да, нет.
+
+**Ожидаемый результат.** Проверка граничных значений возвращает ответы в указанном порядке для возрастов 11, 12, 16 и 17.',NULL,NULL,NULL);
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-b92c2704200342db','numbers-and-conditions',NULL,NULL,'Запасы двух складов · обязательная','code','**Сюжет.** Экспедиция получила ящики с двух складов.
 
-**Условие.** Найдите общее количество ящиков.
+**Задача.** Найдите общее количество ящиков.
 
 **Формат данных**
 
 | Входные данные | Выходные данные |
 |---|---|
 | Две строки: целые количества `a` и `b`. | Одно целое число — сумма запасов. |
+
+**Ожидаемый результат.** Одно целое число — сумма запасов.
 
 **Ограничения.** 0 ≤ a, b ≤ 10000.
 
@@ -331,13 +391,15 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-98e6afccf8a0f6f4','numbers-and-conditions',NULL,NULL,'Кристаллы для экспедиции · обязательная','code','**Сюжет.** Команда раскладывает кристаллы в одинаковые контейнеры, заполняя их целиком.
 
-**Условие.** Найдите число полных контейнеров и количество оставшихся кристаллов.
+**Задача.** Найдите число полных контейнеров и количество оставшихся кристаллов.
 
 **Формат данных**
 
 | Входные данные | Выходные данные |
 |---|---|
 | Две строки: число кристаллов `n`, затем вместимость контейнера `k`. | Два целых числа через пробел: полные контейнеры, затем остаток. |
+
+**Ожидаемый результат.** Два целых числа через пробел: полные контейнеры, затем остаток.
 
 **Ограничения.** 0 ≤ n ≤ 10000; 1 ≤ k ≤ 100.
 
@@ -355,13 +417,15 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-a9c657ad82db9769','numbers-and-conditions',NULL,NULL,'Проверка пустого резервуара · обязательная','code','**Сюжет.** Датчик передаёт количество литров в резервуаре.
 
-**Условие.** Сообщите, пуст ли резервуар.
+**Задача.** Сообщите, пуст ли резервуар.
 
 **Формат данных**
 
 | Входные данные | Выходные данные |
 |---|---|
 | Одна строка: целое количество литров `v`. | `Пусто`, если воды нет; иначе `Вода есть`. |
+
+**Ожидаемый результат.** `Пусто`, если воды нет; иначе `Вода есть`.
 
 **Ограничения.** 0 ≤ v ≤ 10000.
 
@@ -378,13 +442,15 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-623f5926e4989ea8','numbers-and-conditions',NULL,NULL,'Пропуск в мастерскую · обязательная','code','**Сюжет.** Самостоятельно работать в мастерской разрешают с 14 лет.
 
-**Условие.** По возрасту определите, разрешён ли вход.
+**Задача.** По возрасту определите, разрешён ли вход.
 
 **Формат данных**
 
 | Входные данные | Выходные данные |
 |---|---|
 | Одна строка: целый возраст `age`. | `Можно`, если возраст не меньше 14; иначе `Пока рано`. |
+
+**Ожидаемый результат.** `Можно`, если возраст не меньше 14; иначе `Пока рано`.
 
 **Ограничения.** 0 ≤ age ≤ 120.
 
@@ -401,13 +467,15 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-ac78ec4d2061edb6','numbers-and-conditions',NULL,NULL,'Температура груза · обязательная','code','**Сюжет.** Для перевозки нужно определить, ниже ли температура груза нуля.
 
-**Условие.** Разделите показания на три случая: ниже нуля, выше нуля и ровно ноль.
+**Задача.** Разделите показания на три случая: ниже нуля, выше нуля и ровно ноль.
 
 **Формат данных**
 
 | Входные данные | Выходные данные |
 |---|---|
 | Одна строка: целая температура `t`. | `Ниже нуля`, `Выше нуля` или `Ровно ноль` — одна строка. |
+
+**Ожидаемый результат.** `Ниже нуля`, `Выше нуля` или `Ровно ноль` — одна строка.
 
 **Ограничения.** −100 ≤ t ≤ 100.
 
@@ -425,13 +493,15 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-672bb4540e001afb','numbers-and-conditions',NULL,NULL,'Результат испытания · по выбору','code','**Сюжет.** Учебный центр переводит баллы испытания в оценку.
 
-**Условие.** За 85–100 баллов поставьте 5, за 70–84 — 4, за 50–69 — 3, за 0–49 предложите повторить попытку.
+**Задача.** За 85–100 баллов поставьте 5, за 70–84 — 4, за 50–69 — 3, за 0–49 предложите повторить попытку.
 
 **Формат данных**
 
 | Входные данные | Выходные данные |
 |---|---|
 | Одна строка: целое число баллов `score`. | Одна строка: `5`, `4`, `3` или `Попробуй ещё раз`. |
+
+**Ожидаемый результат.** Одна строка: `5`, `4`, `3` или `Попробуй ещё раз`.
 
 **Ограничения.** 0 ≤ score ≤ 100.
 
@@ -449,13 +519,15 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-e59a4162eb663a42','numbers-and-conditions',NULL,NULL,'Хранение лекарства · по выбору','code','**Сюжет.** Лекарство можно хранить при температуре от 10 до 20 градусов включительно.
 
-**Условие.** Определите, нарушены ли условия хранения.
+**Задача.** Определите, нарушены ли условия хранения.
 
 **Формат данных**
 
 | Входные данные | Выходные данные |
 |---|---|
 | Одна строка: целая температура `t`. | `Нарушение`, если температура вне допустимого диапазона; иначе `Норма`. |
+
+**Ожидаемый результат.** `Нарушение`, если температура вне допустимого диапазона; иначе `Норма`.
 
 **Ограничения.** −50 ≤ t ≤ 50.
 
@@ -473,13 +545,15 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-29a6a9da918865da','numbers-and-conditions',NULL,NULL,'Лучший результат · по выбору','code','**Сюжет.** Три участника доставили разное или одинаковое число посылок.
 
-**Условие.** Выведите наибольшее из трёх количеств.
+**Задача.** Выведите наибольшее из трёх количеств.
 
 **Формат данных**
 
 | Входные данные | Выходные данные |
 |---|---|
 | Три строки: целые количества `a`, `b`, `c`. | Одно целое число — наибольший результат. Имя победителя определять не нужно. |
+
+**Ожидаемый результат.** Одно целое число — наибольший результат. Имя победителя определять не нужно.
 
 **Ограничения.** 0 ≤ a, b, c ≤ 1000. Результаты могут совпадать.
 
@@ -496,13 +570,15 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-7594de7c9e74ec4e','numbers-and-conditions',NULL,NULL,'Возраст по календарю · по выбору','code','**Сюжет.** Для предварительной заявки учитывают возраст, которого человек достигнет в текущем году.
 
-**Условие.** Вычислите разность текущего года и года рождения. Выведите её и сообщите, достигнет ли человек 18 лет к концу года. Точная дата рождения не учитывается.
+**Задача.** Вычислите разность текущего года и года рождения. Выведите её и сообщите, достигнет ли человек 18 лет к концу года. Точная дата рождения не учитывается.
 
 **Формат данных**
 
 | Входные данные | Выходные данные |
 |---|---|
 | Две строки: год рождения `birth`, затем текущий год `year`. | Две строки: целый возраст, затем `Совершеннолетний` при возрасте от 18 лет либо `Несовершеннолетний`. |
+
+**Ожидаемый результат.** Две строки: целый возраст, затем `Совершеннолетний` при возрасте от 18 лет либо `Несовершеннолетний`.
 
 **Ограничения.** 1900 ≤ birth ≤ year ≤ 2100.
 
@@ -519,13 +595,15 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-9bcd8dddf8a51bc4','numbers-and-conditions',NULL,NULL,'Календарь выставок · по выбору','code','**Сюжет.** Организатор сортирует заявки по половинам года. Иногда вместо месяца приходит неверное число.
 
-**Условие.** Для месяцев 1–6 выберите первую половину года, для 7–12 — вторую. Остальные числа обозначьте как неверный месяц.
+**Задача.** Для месяцев 1–6 выберите первую половину года, для 7–12 — вторую. Остальные числа обозначьте как неверный месяц.
 
 **Формат данных**
 
 | Входные данные | Выходные данные |
 |---|---|
 | Одна строка: целое число `month`. | `Первая половина года`, `Вторая половина года` или `Такого месяца нет`. |
+
+**Ожидаемый результат.** `Первая половина года`, `Вторая половина года` или `Такого месяца нет`.
 
 **Ограничения.** −100 ≤ month ≤ 100. Проверка числа вне 1–12 входит в задачу.
 
@@ -543,13 +621,15 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-68d0fea45504118b','numbers-and-conditions',NULL,NULL,'Парные значки · по выбору','code','**Сюжет.** Все значки нужно раздать парами, без остатка.
 
-**Условие.** Определите, делится ли количество значков на 2.
+**Задача.** Определите, делится ли количество значков на 2.
 
 **Формат данных**
 
 | Входные данные | Выходные данные |
 |---|---|
 | Одна строка: целое количество `n`. | `Да`, если значки можно разбить на пары; иначе `Нет`. |
+
+**Ожидаемый результат.** `Да`, если значки можно разбить на пары; иначе `Нет`.
 
 **Ограничения.** 0 ≤ n ≤ 10000. Ноль значков считается подходящим количеством: остатка нет.
 
@@ -567,13 +647,15 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-ddefb6ef52e2c49e','numbers-and-conditions',NULL,NULL,'Каркас палатки · по выбору','code','**Сюжет.** Мастера выбирают три рейки, чтобы сделать треугольный каркас.
 
-**Условие.** Определите, можно ли составить невырожденный треугольник. Он существует, только если каждая сторона меньше суммы двух остальных.
+**Задача.** Определите, можно ли составить невырожденный треугольник. Он существует, только если каждая сторона меньше суммы двух остальных.
 
 **Формат данных**
 
 | Входные данные | Выходные данные |
 |---|---|
 | Три строки: целые длины `a`, `b`, `c`. | `Треугольник существует` или `Треугольник не существует`. |
+
+**Ожидаемый результат.** `Треугольник существует` или `Треугольник не существует`.
 
 **Ограничения.** 1 ≤ a, b, c ≤ 1000.
 
@@ -590,13 +672,15 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-a0b7ec0669e5ab13','numbers-and-conditions',NULL,NULL,'Доступ в клуб · по выбору','code','**Сюжет.** Взрослые посетители входят свободно. Подростки с 13 лет могут войти по кодовому слову.
 
-**Условие.** Разрешите вход человеку от 18 лет при любом слове либо человеку от 13 до 17 лет со словом `python`. Все остальные получают отказ.
+**Задача.** Разрешите вход человеку от 18 лет при любом слове либо человеку от 13 до 17 лет со словом `python`. Все остальные получают отказ.
 
 **Формат данных**
 
 | Входные данные | Выходные данные |
 |---|---|
 | Две строки: целый возраст `age`, затем кодовое слово. | `Вход разрешён` или `Вход запрещён`. |
+
+**Ожидаемый результат.** `Вход разрешён` или `Вход запрещён`.
 
 **Ограничения.** 0 ≤ age ≤ 120; слово содержит 1–20 строчных латинских букв.
 
@@ -614,13 +698,15 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-c139cc474dd9b6fd','numbers-and-conditions',NULL,NULL,'Делим арбуз · по выбору','code','**Сюжет.** Два друга хотят разделить арбуз так, чтобы каждому достался положительный чётный вес.
 
-**Условие.** Определите, можно ли представить общую массу как сумму двух положительных чётных целых чисел.
+**Задача.** Определите, можно ли представить общую массу как сумму двух положительных чётных целых чисел.
 
 **Формат данных**
 
 | Входные данные | Выходные данные |
 |---|---|
 | Одна строка: целая масса `w`. | `YES`, если такое разделение возможно; иначе `NO`. |
+
+**Ожидаемый результат.** `YES`, если такое разделение возможно; иначе `NO`.
 
 **Ограничения.** 1 ≤ w ≤ 100.
 
@@ -636,23 +722,57 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 
 **Источник.** Адаптация [Codeforces 4A — Watermelon](https://codeforces.com/problemset/problem/4/A). Условие пересказано; ввод, ограничения и ответы YES/NO сохранены; добавлены граничные примеры.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-8b811d904386627d','truthiness-and-conditions',NULL,NULL,'Не запуская, укажи, какую строку напечатает каждая пара значений.','code','Не запуская, укажи, какую строку напечатает каждая пара значений. Затем проверь в Python.',NULL,NULL,NULL);
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-8b811d904386627d','truthiness-and-conditions',NULL,NULL,'Не запуская, укажи, какую строку напечатает каждая пара значений.','code','**Задача.** Для значений `value` в показанной программе вручную предскажи напечатанную строку, затем запусти фрагмент и сравни результат.
+
+```python
+value = 0
+if value:
+    print(value, "да")
+else:
+    print(value, "нет")
+
+value = 1
+if value:
+    print(value, "да")
+else:
+    print(value, "нет")
+
+value = -1
+if value:
+    print(value, "да")
+else:
+    print(value, "нет")
+```
+
+**Ожидаемый результат.** Для каждого из трёх значений записана строка, которую печатает программа; предсказание сверено запуском.
+
+**Что сдать.** Предсказание для каждого значения и проверка запуска программы.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-44dda53000746f7f','truthiness-and-conditions',NULL,NULL,'Напиши программу, которая получает число мест seats.','code','Напиши программу, которая получает число мест `seats`. Напечатай `Есть место`, если оно больше нуля, иначе `Мест нет`. Проверь `0`, `1` и `-1`. Для отрицательного числа выбери поведение согласно условию: если отрицательные значения запрещены входными данными, не добавляй неподсказанную обработку.',NULL,NULL,NULL);
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-44dda53000746f7f','truthiness-and-conditions',NULL,NULL,'Напиши программу, которая получает число мест seats.','code','**Задача.** Получи целое число `seats` — количество мест. Напечатай `Есть место`, если `seats` больше нуля. Во всех остальных случаях напечатай `Мест нет`. Проверь значения `0`, `1` и `-1`.
+
+**Ожидаемый результат.** Для `1` выводится `Есть место`; для `0` и `-1` — `Мест нет`.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-933593df699e30b5','truthiness-and-conditions',NULL,NULL,'Для уже изученной строки ответа проверь, совпадает ли она с "да" или "д".','code','Для уже изученной строки ответа проверь, совпадает ли она с `"да"` или `"д"`. Сделай таблицу проверки для `"да"`, `"д"`, `"нет"`.',NULL,NULL,NULL);
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-933593df699e30b5','truthiness-and-conditions',NULL,NULL,'Для уже изученной строки ответа проверь, совпадает ли она с "да" или "д".','code','**Задача.** Для уже изученной строки ответа проверь, совпадает ли она с `"да"` или `"д"`. Сделай таблицу проверки для `"да"`, `"д"`, `"нет"`.
+
+**Ожидаемый результат.** Таблица проверки показывает совпадение для `да` и `д` и отсутствие совпадения для `нет`.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-85da4c38b74aeffb','truthiness-and-conditions',NULL,NULL,'Объясни разницу между числом 0 и строкой "0", а также между "" и строкой из пробела.','text','Объясни разницу между числом `0` и строкой `"0"`, а также между `""` и строкой из пробела.',NULL,NULL,NULL);
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-85da4c38b74aeffb','truthiness-and-conditions',NULL,NULL,'Объясни разницу между числом 0 и строкой "0", а также между "" и строкой из пробела.','text','**Задача.** Объясни разницу между числом `0` и строкой `"0"`, а также между `""` и строкой из пробела.
+
+**Ожидаемый результат.** Объяснение для каждого из четырёх значений указывает тип данных и результат проверки истинности; отдельно объяснено, почему строка с пробелом не пустая.
+
+**Что сдать.** Краткое объяснение различий для всех четырёх значений.',NULL,NULL,NULL);
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-b0c8c83f46bf09e9','truthiness-and-conditions',NULL,NULL,'Пустое сообщение · обязательная','code','**Сюжет.** Робот принимает текст сообщения. Даже один символ означает, что сообщение поступило.
 
-**Условие.** Проверьте, пуста ли введённая строка. Пробелы и цифры считаются обычными символами.
+**Задача.** Проверьте, пуста ли введённая строка. Пробелы и цифры считаются обычными символами.
 
 **Формат данных**
 
 | Входные данные | Выходные данные |
 |---|---|
 | Одна строка `message`, которая может быть пустой. | `Сообщение получено`, если строка непустая; иначе `Нет сообщения`. |
+
+**Ожидаемый результат.** `Сообщение получено`, если строка непустая; иначе `Нет сообщения`.
 
 **Ограничения.** От 0 до 80 символов. Не удаляйте пробелы и не преобразовывайте текст в число.
 
@@ -669,13 +789,15 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-dd22651512996a42','truthiness-and-conditions',NULL,NULL,'Места на экскурсию · обязательная','code','**Сюжет.** Знак числа свободных мест важен: отрицательное значение означает переполненную заявку.
 
-**Условие.** Выведите «Есть места» при положительном количестве, «Мест нет» при нуле, «Перебор заявок» при отрицательном количестве.
+**Задача.** Выведите «Есть места» при положительном количестве, «Мест нет» при нуле, «Перебор заявок» при отрицательном количестве.
 
 **Формат данных**
 
 | Входные данные | Выходные данные |
 |---|---|
 | Одна строка: целое число `seats`. | Одна строка: `Есть места`, `Мест нет` или `Перебор заявок`. |
+
+**Ожидаемый результат.** Одна строка: `Есть места`, `Мест нет` или `Перебор заявок`.
 
 **Ограничения.** −100 ≤ seats ≤ 100. Отрицательные значения разрешены.
 
@@ -693,13 +815,15 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-9d5d77d54580f3bb','truthiness-and-conditions',NULL,NULL,'Пропуск с именем · обязательная','code','**Сюжет.** Турникет разрешает вход только по действующему коду и с заполненным именем.
 
-**Условие.** Разрешите вход, если имя непустое, а числовой код равен 2026. Иначе откажите.
+**Задача.** Разрешите вход, если имя непустое, а числовой код равен 2026. Иначе откажите.
 
 **Формат данных**
 
 | Входные данные | Выходные данные |
 |---|---|
 | Две строки: имя, затем целый код. | `Добро пожаловать, ИМЯ!` при разрешённом входе; иначе `Доступ закрыт`. |
+
+**Ожидаемый результат.** `Добро пожаловать, ИМЯ!` при разрешённом входе; иначе `Доступ закрыт`.
 
 **Ограничения.** Длина имени от 0 до 30 символов; имя состоит из букв и не содержит пробелов. 0 ≤ код ≤ 9999.
 
@@ -717,13 +841,15 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-208b1a9839069cc5','truthiness-and-conditions',NULL,NULL,'Ответ на приглашение · по выбору','code','**Сюжет.** Бот принимает два варианта согласия на участие в игре.
 
-**Условие.** Считайте согласием только ответы `да` и `д`. Любая другая строка означает отказ.
+**Задача.** Считайте согласием только ответы `да` и `д`. Любая другая строка означает отказ.
 
 **Формат данных**
 
 | Входные данные | Выходные данные |
 |---|---|
 | Одна строка ответа, возможно пустая. | `Участие подтверждено` при согласии; иначе `Участие отменено`. |
+
+**Ожидаемый результат.** `Участие подтверждено` при согласии; иначе `Участие отменено`.
 
 **Ограничения.** От 0 до 20 символов; регистр важен. Например, `Да` не совпадает с `да`.
 
@@ -741,13 +867,15 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-81c958de90a0baeb','truthiness-and-conditions',NULL,NULL,'Вода для команды · по выбору','code','**Сюжет.** Команда рассчитывает, хватит ли воды из общего запаса: каждому требуется не меньше двух литров.
 
-**Условие.** Если участников больше нуля и запаса хватит каждому на два литра, подтвердите готовность. Если участников нет или воды не хватает, напечатайте отказ.
+**Задача.** Если участников больше нуля и запаса хватит каждому на два литра, подтвердите готовность. Если участников нет или воды не хватает, напечатайте отказ.
 
 **Формат данных**
 
 | Входные данные | Выходные данные |
 |---|---|
 | Две строки: целое число участников `people`, затем целое количество литров `water`. | `Можно отправляться` или `Подготовка не завершена`. |
+
+**Ожидаемый результат.** `Можно отправляться` или `Подготовка не завершена`.
 
 **Ограничения.** 0 ≤ people ≤ 100; 0 ≤ water ≤ 1000. Делить на ноль нельзя: случай без участников должен дать отказ.
 
@@ -770,13 +898,7 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 
 </details>',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-95bbf1e5e9c79514','python-quick-reference',NULL,NULL,'Задание 1. Знакомство','code','Напишите программу, которая запрашивает у пользователя:
-
-- имя;
-- возраст;
-- город.
-
-После этого программа должна вывести информацию в виде:
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-95bbf1e5e9c79514','python-quick-reference',NULL,NULL,'Задание 1. Знакомство','code','**Задача.** Запроси у пользователя имя, возраст и город. Выведи сведения тремя строками в указанном формате, подставив введённые значения:
 
 ```text
 Меня зовут: Алекс
@@ -784,23 +906,21 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 Я живу в: Хельсинки
 ```
 
-Используйте `input()` и f-строку.',NULL,NULL,NULL);
+Используй `input()` и f-строку.
+
+**Ожидаемый результат.** После ввода программа печатает имя, возраст и город — каждый на своей строке, как в примере.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-21f2e685c364174c','python-quick-reference',NULL,NULL,'Задание 2. Расчёт возраста','code','Запросите у пользователя его имя и год рождения. Рассчитайте примерный возраст и выведите сообщение:
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-21f2e685c364174c','python-quick-reference',NULL,NULL,'Задание 2. Расчёт возраста','code','**Задача.** Запроси у пользователя имя, год рождения и текущий год. Преобразуй оба года в числа с помощью `int()` и вычти год рождения из текущего года. Выведи сообщение по образцу:
 
 ```text
 Алекс, вам примерно 18 лет.
 ```
 
-Для получения года рождения используйте `int()`.',NULL,NULL,NULL);
+Для проверки используй имя `Алекс`, год рождения `2008` и текущий год `2026`.
+
+**Ожидаемый результат.** Для указанных тестовых данных выводится `Алекс, вам примерно 18 лет.`; для других введённых данных показывается имя пользователя и вычисленная разница между годами.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-9568f1bf1712ba1e','python-quick-reference',NULL,NULL,'Задание 3. Чек','code','Запросите у пользователя:
-
-- название товара;
-- цену товара;
-- количество товара.
-
-Рассчитайте общую стоимость и выведите:
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-9568f1bf1712ba1e','python-quick-reference',NULL,NULL,'Задание 3. Чек','code','**Задача.** Запроси название товара, его цену и количество. Используя переменные, `input()`, `int()` или `float()` и f-строку, рассчитай общую стоимость и выведи чек:
 
 ```text
 Товар: Яблоки
@@ -809,11 +929,9 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 Итого: 10.0 €
 ```
 
-Используйте переменные, `input()`, `int()` или `float()` и f-строку.',NULL,NULL,NULL);
+**Ожидаемый результат.** В чеке указаны введённые товар, цена и количество, а строка «Итого» содержит произведение цены на количество.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-b275c925fcc14140','python-quick-reference',NULL,NULL,'Задание 4. `sep` и `end`','code','Самостоятельно создайте программу, которая с помощью `print()`, `sep` и `end` выводит информацию минимум в 3 строки.
-
-Попробуйте использовать разные разделители:
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-b275c925fcc14140','python-quick-reference',NULL,NULL,'Задание 4. `sep` и `end`','code','**Задача.** Самостоятельно составь программу, которая с помощью `print()`, параметров `sep` и `end` выводит информацию как минимум в три строки. Попробуй разные значения разделителя:
 
 ```python
 sep=" | "
@@ -821,19 +939,11 @@ sep="-"
 sep=", "
 ```
 
-и разные значения `end`.',NULL,NULL,NULL);
+Также попробуй разные значения `end`.
+
+**Ожидаемый результат.** Программа выводит не менее трёх строк; выбранные `sep` и `end` меняют разделение значений и окончание строк.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-a3121aa8b8c98fec','python-quick-reference',NULL,NULL,'Задание 5. Мини-профиль','code','Создайте программу, которая спрашивает у пользователя:
-
-- имя;
-- фамилию;
-- возраст;
-- профессию;
-- любимый язык программирования.
-
-Затем выведите красиво оформленный профиль с помощью f-строк.
-
-Пример:
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-a3121aa8b8c98fec','python-quick-reference',NULL,NULL,'Задание 5. Мини-профиль','code','**Задача.** Запроси у пользователя имя, фамилию, возраст, профессию и любимый язык программирования. С помощью f-строк выведи оформленный профиль по образцу:
 
 ```text
 === Профиль ===
@@ -841,27 +951,61 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 Возраст: 18
 Профессия: Студент
 Любимый язык: Python
-```',NULL,NULL,NULL);
---> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-a1dea3057cae17dd','for-step-by-step',NULL,NULL,'Задание на предсказание','text','Не запускай сразу: выпиши, что напечатает каждая строка и сколько всего будет строк. Потом запусти и сравни.',NULL,NULL,NULL);
---> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-b267e05f8994d850','for-step-by-step',NULL,NULL,'Практика чтения','text','Заполни на бумаге таблицу для `range(3, 8, 2)`: запиши все значения, которые получит `n`. Затем проверь:',NULL,NULL,NULL);
---> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-f7d63c190d6fbaf9','for-step-by-step',NULL,NULL,'Задание: поменяй программу','code','Измени программу с квадратами так, чтобы она выводила куб каждого числа от 1 до `N`. Куб — это число, умноженное на себя три раза. Подсказка: `number * number * number`.
+```
 
-Добавь ниже свою ячейку или используй эту:',NULL,NULL,NULL);
+**Ожидаемый результат.** Профиль содержит заголовок и введённые имя с фамилией, возраст, профессию и любимый язык.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-dd5669b8a51559d5','for-step-by-step',NULL,NULL,'Посчитай сумму чётных чисел от 1 до n включительно.','code','Посчитай сумму чётных чисел от 1 до `n` включительно. Проверь `n = 1` → 0, `n = 2` → 2, `n = 6` → 12. Объясни, почему начальное значение суммы равно нулю.',NULL,NULL,NULL);
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-a1dea3057cae17dd','for-step-by-step',NULL,NULL,'Задание на предсказание','text','**Задача.** До запуска проследи показанный код: выпиши каждую строку вывода в порядке появления и укажи их общее количество. Затем выполни программу и сравни результат.
+
+```python
+for step in range(2):
+    print("Начало", step)
+    print("Продолжаем")
+print("Цикл закончился")
+```
+
+**Ожидаемый результат.** Ответ перечисляет все строки вывода в правильном порядке и указывает их количество; результат проверен запуском.
+
+**Что сдать.** Список прогнозируемых строк, их количество и сверка с запуском.',NULL,NULL,NULL);
+--> statement-breakpoint
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-b267e05f8994d850','for-step-by-step',NULL,NULL,'Практика чтения','text','**Задача.** Заполни на бумаге таблицу для `range(3, 8, 2)`: запиши в порядке обхода все значения, которые получит `n`. Затем проверь цикл:
+
+```python
+for n in range(3, 8, 2):
+    print(n)
+```
+
+**Ожидаемый результат.** В таблице записаны значения `n` в порядке обхода; при запуске цикла они появляются по одному на строке.
+
+**Что сдать.** Заполненная таблица значений `n`.',NULL,NULL,NULL);
+--> statement-breakpoint
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-f7d63c190d6fbaf9','for-step-by-step',NULL,NULL,'Задание: поменяй программу','code','**Задача.** Измени показанную программу: вместо квадрата для каждого числа от 1 до `N` вычисляй куб. Куб — это число, умноженное на себя три раза. Подсказка: `number * number * number`.
+
+```python
+n = int(input("Введите N: "))
+
+for number in range(1, n + 1):
+    square = number * number
+    print(f"{number} в квадрате = {square}")
+```
+
+**Ожидаемый результат.** Для каждого целого числа от 1 до `N` программа выводит его куб, а не квадрат.',NULL,NULL,NULL);
+--> statement-breakpoint
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-dd5669b8a51559d5','for-step-by-step',NULL,NULL,'Посчитай сумму чётных чисел от 1 до n включительно.','code','**Задача.** Посчитай сумму чётных чисел от 1 до `n` включительно. Проверь `n = 1` → 0, `n = 2` → 2, `n = 6` → 12. Объясни, почему начальное значение суммы равно нулю.
+
+**Ожидаемый результат.** Для контрольных значений получаются суммы из условия; ответ также объясняет, почему начальная сумма равна нейтральному значению сложения.',NULL,NULL,NULL);
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-7c353a4df2a9fbb4','for-step-by-step',NULL,NULL,'Сигналы маяка · обязательная','code','**Сюжет.** Маяк отправляет одинаковое сообщение несколько раз.
 
-**Условие.** Выведите сообщение ровно n раз. Используйте for.
+**Задача.** Выведите сообщение ровно n раз. Используйте for.
 
 **Формат данных**
 
 | Входные данные | Выходные данные |
 |---|---|
 | Первая строка — сообщение; вторая — целое n. | По одной копии сообщения на строке. При n=0 ничего не выводите. |
+
+**Ожидаемый результат.** По одной копии сообщения на строке. При n=0 ничего не выводите.
 
 **Ограничения.** Сообщение непустое, до 40 символов; 0 ≤ n ≤ 10.
 
@@ -876,13 +1020,15 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-b43509ed337963ad','for-step-by-step',NULL,NULL,'Номера экспедиции · обязательная','code','**Сюжет.** Каждый участник получает номер по порядку.
 
-**Условие.** Выведите номера от 1 до n включительно.
+**Задача.** Выведите номера от 1 до n включительно.
 
 **Формат данных**
 
 | Входные данные | Выходные данные |
 |---|---|
 | Одно целое n. | Номера по одному на строке; при n=0 вывод пустой. |
+
+**Ожидаемый результат.** Номера по одному на строке; при n=0 вывод пустой.
 
 **Ограничения.** 0 ≤ n ≤ 100.
 
@@ -897,13 +1043,15 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-66b94d4bd6dc1e6b','for-step-by-step',NULL,NULL,'Площадь квадратных участков · обязательная','code','**Сюжет.** Картограф рассматривает участки со сторонами от 1 до n метров.
 
-**Условие.** Для каждой стороны выведите её длину и площадь квадрата.
+**Задача.** Для каждой стороны выведите её длину и площадь квадрата.
 
 **Формат данных**
 
 | Входные данные | Выходные данные |
 |---|---|
 | Одно целое n. | n строк вида «сторона площадь» через пробел. |
+
+**Ожидаемый результат.** n строк вида «сторона площадь» через пробел.
 
 **Ограничения.** 1 ≤ n ≤ 10.
 
@@ -918,13 +1066,15 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-96cecc9761623838','for-step-by-step',NULL,NULL,'Бананы для солдата · повторение','code','**Сюжет.** Покупатель платит за первый банан k монет, за второй 2k, за третий 3k и так далее.
 
-**Условие.** Найдите недостающую сумму для w бананов, если уже есть n монет. Если денег хватает, ответ 0.
+**Задача.** Найдите недостающую сумму для w бананов, если уже есть n монет. Если денег хватает, ответ 0.
 
 **Формат данных**
 
 | Входные данные | Выходные данные |
 |---|---|
 | Три строки: k, n, w. | Одно целое число — недостающая сумма. |
+
+**Ожидаемый результат.** Одно целое число — недостающая сумма.
 
 **Ограничения.** 1 ≤ k,w ≤ 1000; 0 ≤ n ≤ 1000000000.
 
@@ -939,13 +1089,15 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-abe2db74bb352dde','for-step-by-step',NULL,NULL,'Чётные ячейки · по выбору','code','**Сюжет.** Склад выдаёт ячейки с чётными номерами.
 
-**Условие.** Для номеров от 1 до n выведите чётные номера, затем их количество и сумму.
+**Задача.** Для номеров от 1 до n выведите чётные номера, затем их количество и сумму.
 
 **Формат данных**
 
 | Входные данные | Выходные данные |
 |---|---|
 | Одно целое n. | Сначала подходящие номера по одному на строке, затем строка «Количество: K» и строка «Сумма: S». Если подходящих номеров нет, выведите только две итоговые строки с нулями. |
+
+**Ожидаемый результат.** Сначала подходящие номера по одному на строке, затем строка «Количество: K» и строка «Сумма: S». Если подходящих номеров нет, выведите только две итоговые строки с нулями.
 
 **Ограничения.** 0 ≤ n ≤ 100.
 
@@ -960,13 +1112,15 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-421b69fd0e2442d3','for-step-by-step',NULL,NULL,'Таблица стоимости · по выбору','code','**Сюжет.** Один жетон стоит a рублей. Кассиру нужны цены наборов от одного до десяти жетонов.
 
-**Условие.** Выведите количество жетонов и стоимость каждого набора.
+**Задача.** Выведите количество жетонов и стоимость каждого набора.
 
 **Формат данных**
 
 | Входные данные | Выходные данные |
 |---|---|
 | Одно целое a. | 10 строк вида «количество стоимость», разделённых пробелом. |
+
+**Ожидаемый результат.** 10 строк вида «количество стоимость», разделённых пробелом.
 
 **Ограничения.** 0 ≤ a ≤ 1000.
 
@@ -981,13 +1135,15 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-ef1f3ad6af15dc51','for-step-by-step',NULL,NULL,'Резервная линия · по выбору','code','**Сюжет.** Датчики нумеруются от 1 до n. На резервную линию попадают номера, кратные 2 или 5.
 
-**Условие.** Посчитайте подходящие номера. Число, кратное обоим делителям, учитывается один раз.
+**Задача.** Посчитайте подходящие номера. Число, кратное обоим делителям, учитывается один раз.
 
 **Формат данных**
 
 | Входные данные | Выходные данные |
 |---|---|
 | Одно целое n. | Одно целое количество. |
+
+**Ожидаемый результат.** Одно целое количество.
 
 **Ограничения.** 0 ≤ n ≤ 1000.
 
@@ -1002,13 +1158,15 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-8aad7606fe26ef6f','for-step-by-step',NULL,NULL,'Квадратные панели · по выбору','code','**Сюжет.** Для ступени i требуется i² небольших панелей.
 
-**Условие.** Найдите общее число панелей для ступеней от 1 до n.
+**Задача.** Найдите общее число панелей для ступеней от 1 до n.
 
 **Формат данных**
 
 | Входные данные | Выходные данные |
 |---|---|
 | Одно целое n. | Одно целое число. |
+
+**Ожидаемый результат.** Одно целое число.
 
 **Ограничения.** 0 ≤ n ≤ 100.
 
@@ -1023,13 +1181,15 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-721adca49393a436','for-step-by-step',NULL,NULL,'Пропуск на участок · по выбору','code','**Сюжет.** Инспектор обходит участки от 1 до n; доступ разрешён только номерам больше 3 и меньше 8.
 
-**Условие.** Для каждого номера выведите его и статус.
+**Задача.** Для каждого номера выведите его и статус.
 
 **Формат данных**
 
 | Входные данные | Выходные данные |
 |---|---|
 | Одно целое n. | n строк: номер, пробел, «доступ» либо «закрыто». |
+
+**Ожидаемый результат.** n строк: номер, пробел, «доступ» либо «закрыто».
 
 **Ограничения.** 1 ≤ n ≤ 10.
 
@@ -1044,13 +1204,15 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-296a621b43815217','for-practice',NULL,NULL,'Перекличка роботов · обязательная','code','**Сюжет.** Контролёр приветствует роботов одной серии.
 
-**Условие.** Получите имя серии и число роботов. Напечатайте приветствие для каждого.
+**Задача.** Получите имя серии и число роботов. Напечатайте приветствие для каждого.
 
 **Формат данных**
 
 | Входные данные | Выходные данные |
 |---|---|
 | Две строки: имя и n. | n строк «Привет, ИМЯ!». При n=0 вывод пустой. |
+
+**Ожидаемый результат.** n строк «Привет, ИМЯ!». При n=0 вывод пустой.
 
 **Ограничения.** Имя до 30 символов; 0 ≤ n ≤ 20.
 
@@ -1065,13 +1227,15 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-535d1461fb881317','for-practice',NULL,NULL,'Контрольные метки · обязательная','code','**Сюжет.** Маршрут содержит метки с номерами от 1 до n.
 
-**Условие.** Напечатайте все номера меток.
+**Задача.** Напечатайте все номера меток.
 
 **Формат данных**
 
 | Входные данные | Выходные данные |
 |---|---|
 | Одно целое n. | По номеру на строке; при n=0 вывод пустой. |
+
+**Ожидаемый результат.** По номеру на строке; при n=0 вывод пустой.
 
 **Ограничения.** 0 ≤ n ≤ 30.
 
@@ -1086,13 +1250,15 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-4bbb69e2a2753244','for-practice',NULL,NULL,'Парные посты · обязательная','code','**Сюжет.** Проверка нужна только постам с чётными номерами.
 
-**Условие.** Выведите чётные номера от 1 до n.
+**Задача.** Выведите чётные номера от 1 до n.
 
 **Формат данных**
 
 | Входные данные | Выходные данные |
 |---|---|
 | Одно целое n. | По номеру на строке; если номеров нет, вывод пустой. |
+
+**Ожидаемый результат.** По номеру на строке; если номеров нет, вывод пустой.
 
 **Ограничения.** 0 ≤ n ≤ 30.
 
@@ -1107,13 +1273,15 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-22b7e4a0553c694c','for-practice',NULL,NULL,'План сада · повторение','code','**Сюжет.** В саду строят квадратные клумбы со сторонами от 1 до n.
 
-**Условие.** Для каждой стороны покажите её и площадь.
+**Задача.** Для каждой стороны покажите её и площадь.
 
 **Формат данных**
 
 | Входные данные | Выходные данные |
 |---|---|
 | Одно целое n. | n строк: сторона и площадь через пробел. |
+
+**Ожидаемый результат.** n строк: сторона и площадь через пробел.
 
 **Ограничения.** 1 ≤ n ≤ 10.
 
@@ -1128,13 +1296,15 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-820d7de85ae113c0','for-practice',NULL,NULL,'Цена наборов · по выбору','code','**Сюжет.** Киоск продаёт одинаковые наборы по a рублей.
 
-**Условие.** Подготовьте таблицу цены от одного до трёх наборов.
+**Задача.** Подготовьте таблицу цены от одного до трёх наборов.
 
 **Формат данных**
 
 | Входные данные | Выходные данные |
 |---|---|
 | Одно целое a. | 3 строки: количество и цена через пробел. |
+
+**Ожидаемый результат.** 3 строки: количество и цена через пробел.
 
 **Ограничения.** 0 ≤ a ≤ 1000.
 
@@ -1149,13 +1319,15 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-762629411ecb7106','for-practice',NULL,NULL,'Монеты за этапы · по выбору','code','**Сюжет.** За этап i участнику дают i монет.
 
-**Условие.** Сложите награды первых n этапов циклом.
+**Задача.** Сложите награды первых n этапов циклом.
 
 **Формат данных**
 
 | Входные данные | Выходные данные |
 |---|---|
 | Одно целое n. | Одно целое число — общая награда. |
+
+**Ожидаемый результат.** Одно целое число — общая награда.
 
 **Ограничения.** 0 ≤ n ≤ 1000.
 
@@ -1170,13 +1342,15 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-30b7ea2a6a1dc2a8','for-practice',NULL,NULL,'Каждый третий · по выбору','code','**Сюжет.** Посетители получают номера от 1 до n, каждый третий — подарок.
 
-**Условие.** Посчитайте получателей подарка.
+**Задача.** Посчитайте получателей подарка.
 
 **Формат данных**
 
 | Входные данные | Выходные данные |
 |---|---|
 | Одно целое n. | Одно целое количество. |
+
+**Ожидаемый результат.** Одно целое количество.
 
 **Ограничения.** 0 ≤ n ≤ 1000.
 
@@ -1191,13 +1365,15 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-d0db4e354ec7c984','for-practice',NULL,NULL,'Чётные выплаты · по выбору','code','**Сюжет.** За этапы с чётными номерами выплачивают столько монет, каков номер этапа.
 
-**Условие.** Найдите сумму выплат для этапов 1…n.
+**Задача.** Найдите сумму выплат для этапов 1…n.
 
 **Формат данных**
 
 | Входные данные | Выходные данные |
 |---|---|
 | Одно целое n. | Одно целое число. |
+
+**Ожидаемый результат.** Одно целое число.
 
 **Ограничения.** 0 ≤ n ≤ 1000.
 
@@ -1212,13 +1388,15 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-f5fa1c0f211bdb6d','for-practice',NULL,NULL,'Панели по этажам · по выбору','code','**Сюжет.** На этаже i устанавливают i² панелей.
 
-**Условие.** Найдите число панелей на первых n этажах.
+**Задача.** Найдите число панелей на первых n этажах.
 
 **Формат данных**
 
 | Входные данные | Выходные данные |
 |---|---|
 | Одно целое n. | Одно целое число. |
+
+**Ожидаемый результат.** Одно целое число.
 
 **Ограничения.** 0 ≤ n ≤ 100.
 
@@ -1233,13 +1411,15 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-c47685632a05b967','for-practice',NULL,NULL,'Метки через одну · по выбору','code','**Сюжет.** Строитель ставит метки через два метра, начиная с позиции start.
 
-**Условие.** Выведите позиции start, start+2 и так далее, пока позиция строго меньше stop.
+**Задача.** Выведите позиции start, start+2 и так далее, пока позиция строго меньше stop.
 
 **Формат данных**
 
 | Входные данные | Выходные данные |
 |---|---|
 | Две строки: start и stop. | Каждую позицию на отдельной строке; при отсутствии позиций вывод пустой. |
+
+**Ожидаемый результат.** Каждую позицию на отдельной строке; при отсутствии позиций вывод пустой.
 
 **Ограничения.** −20 ≤ start,stop ≤ 20. Если start ≥ stop, меток нет.
 
@@ -1252,31 +1432,70 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 
 **Источник.** Авторская задача курса.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-93cfb3afe35ea931','while-and-random',NULL,NULL,'Измени программу: Сделай так, чтобы печатались числа от 1 до 6.','code','Измени программу:
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-93cfb3afe35ea931','while-and-random',NULL,NULL,'Измени программу: Сделай так, чтобы печатались числа от 1 до 6.','code','**Задача.** Напиши программу с циклом `while`, которая выводит числа от 1 до 6 включительно.
 
-Сделай так, чтобы печатались числа от 1 до 6.',NULL,NULL,NULL);
+**Ожидаемый результат.** Вывод содержит последовательность от 1 до 6 в возрастающем порядке; после 6 цикл завершается.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-f1781b2df0d0c711','while-and-random',NULL,NULL,'Измени программу: Измени команду увеличения: пусть счётчик каждый раз растёт на 2.','code','Измени программу:
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-f1781b2df0d0c711','while-and-random',NULL,NULL,'Измени программу: Измени команду увеличения: пусть счётчик каждый раз растёт на 2.','code','**Задача.** Измени программу: увеличивай `step` на 2 за итерацию и подбери условие цикла, чтобы получить значения `1, 3, 5`.
 
-Измени команду увеличения: пусть счётчик каждый раз растёт на 2. Какое условие подойдёт, чтобы получить `1, 3, 5`?',NULL,NULL,NULL);
+```python
+step = 1
+
+while step <= 4:
+    print("Сейчас шаг", step)
+    step = step + 1
+
+print("Готово")
+```
+
+**Ожидаемый результат.** В выводе значения счётчика идут как `1, 3, 5`; условие включает 5 и завершает цикл до следующего шага.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-c27f10a92d6b387d','while-and-random',NULL,NULL,'Попроси ввести число от 1 до 5.','code','Попроси ввести число от 1 до 5. Пока введённое число меньше 1 **или** больше 5, попроси ввести его снова. Используй `int()` и `or`.',NULL,NULL,NULL);
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-c27f10a92d6b387d','while-and-random',NULL,NULL,'Попроси ввести число от 1 до 5.','code','**Задача.** Попроси ввести число от 1 до 5. Пока введённое число меньше 1 **или** больше 5, попроси ввести его снова. Используй `int()` и `or`.
+
+**Ожидаемый результат.** Ввод повторяется для значений меньше 1 или больше 5; при целом числе от 1 до 5 включительно программа прекращает повтор.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-42013f8cd7a7ea0c','while-and-random',NULL,NULL,'Улучши игру','code','Добавь счётчик попыток: создай `attempts = 1` до цикла и увеличивай его на 1 после каждого нового ввода. После победы выведи количество попыток.',NULL,NULL,NULL);
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-42013f8cd7a7ea0c','while-and-random',NULL,NULL,'Улучши игру','code','**Задача.** Добавь к игре счётчик попыток. Создай `attempts = 1` перед циклом, увеличивай его на 1 после каждого нового ввода и после победы выведи число попыток.
+
+Базовая игра из урока:
+
+```python
+import random
+
+secret = random.randint(1, 10)
+guess = int(input("Угадай число от 1 до 10: "))
+
+while guess != secret:
+    if guess < secret:
+        print("Моё число больше")
+    else:
+        print("Моё число меньше")
+
+    guess = int(input("Попробуй ещё раз: "))
+
+print("Верно! Ты угадал.")
+```
+
+**Ожидаемый результат.** После победы выведено количество всех введённых догадок, включая правильную.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-c0dd48c12b57cd65','while-and-random',NULL,NULL,'Спроси число.','code','Спроси число. Повторяй ввод, пока число не будет меньше 0 или больше 100. Для продолжения используй условие `number < 0 or number > 100`.',NULL,NULL,NULL);
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-c0dd48c12b57cd65','while-and-random',NULL,NULL,'Спроси число.','code','**Задача.** Спроси число. Повторяй ввод, пока число не будет меньше 0 или больше 100. Для продолжения используй условие `number < 0 or number > 100`.
+
+**Ожидаемый результат.** Программа запрашивает число повторно, пока оно вне диапазона от 0 до 100; значение 0 или 100 завершает повтор.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-9f7aa23d3d7020a5','while-and-random',NULL,NULL,'Выведи числа от 1 до 10, пропуская кратные 3, и остановись перед 8.','code','Выведи числа от 1 до 10, пропуская кратные 3, и остановись перед 8. Ожидается: 1, 2, 4, 5, 7. Реши через `for`, затем через `while`. Проверь, что в обоих случаях счётчик продвигается после пропуска.',NULL,NULL,NULL);
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-9f7aa23d3d7020a5','while-and-random',NULL,NULL,'Выведи числа от 1 до 10, пропуская кратные 3, и остановись перед 8.','code','**Задача.** Выведи числа от 1 до 10, пропуская кратные 3, и остановись перед 8. Ожидается: 1, 2, 4, 5, 7. Реши через `for`, затем через `while`. Проверь, что в обоих случаях счётчик продвигается после пропуска.
+
+**Ожидаемый результат.** Обе версии программы печатают `1, 2, 4, 5, 7` и продолжают счётчик после пропущенных значений.',NULL,NULL,NULL);
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-73c3d64bc5a9da4b','while-and-random',NULL,NULL,'Обратный отсчёт · обязательная','code','**Сюжет.** Диспетчер запускает аппарат после обратного отсчёта.
 
-**Условие.** Выведите числа от n до 1 и затем «Старт!». Используйте while.
+**Задача.** Выведите числа от n до 1 и затем «Старт!». Используйте while.
 
 **Формат данных**
 
 | Входные данные | Выходные данные |
 |---|---|
 | Одно целое n. | Числа по одному на строке и финальное сообщение; при n=0 только сообщение. |
+
+**Ожидаемый результат.** Числа по одному на строке и финальное сообщение; при n=0 только сообщение.
 
 **Ограничения.** 0 ≤ n ≤ 20.
 
@@ -1291,13 +1510,15 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-e0f35d2adc556f9e','while-and-random',NULL,NULL,'Пароль шлюза · обязательная','code','**Сюжет.** Шлюз принимает пароль «луна», остальные попытки отвергает.
 
-**Условие.** Читайте попытки до первого правильного пароля. Для каждой неправильной печатайте отказ, затем сообщение об открытии.
+**Задача.** Читайте попытки до первого правильного пароля. Для каждой неправильной печатайте отказ, затем сообщение об открытии.
 
 **Формат данных**
 
 | Входные данные | Выходные данные |
 |---|---|
 | Несколько строк с попытками. | На каждую ошибку «Неверно»; при первом совпадении «Открыто». Дальше ввод не читается. |
+
+**Ожидаемый результат.** На каждую ошибку «Неверно»; при первом совпадении «Открыто». Дальше ввод не читается.
 
 **Ограничения.** Успешная попытка есть не позднее десятой строки; регистр важен.
 
@@ -1312,13 +1533,15 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-032ce84e4b960f5a','while-and-random',NULL,NULL,'Выбор отсека · обязательная','code','**Сюжет.** Допустимые номера отсека — от 1 до 20 включительно.
 
-**Условие.** Читайте числа до первого допустимого. Для отклонённых чисел сообщайте об ошибке диапазона.
+**Задача.** Читайте числа до первого допустимого. Для отклонённых чисел сообщайте об ошибке диапазона.
 
 **Формат данных**
 
 | Входные данные | Выходные данные |
 |---|---|
 | По одному целому числу на строку. | «Вне диапазона» для каждой ошибки и «Отсек N» при успехе. |
+
+**Ожидаемый результат.** «Вне диапазона» для каждой ошибки и «Отсек N» при успехе.
 
 **Ограничения.** −100 ≤ число ≤ 100; допустимое появится за первые 10 строк.
 
@@ -1333,13 +1556,15 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-9da24ee54abc2e3f','while-and-random',NULL,NULL,'Безопасные показания · повторение','code','**Сюжет.** Перед пуском диспетчер проверяет датчики.
 
-**Условие.** Получите n показаний и посчитайте, сколько лежат от 10 до 20 включительно.
+**Задача.** Получите n показаний и посчитайте, сколько лежат от 10 до 20 включительно.
 
 **Формат данных**
 
 | Входные данные | Выходные данные |
 |---|---|
 | Сначала n, затем n целых чисел по одному на строку. | Одно целое количество. |
+
+**Ожидаемый результат.** Одно целое количество.
 
 **Ограничения.** 0 ≤ n ≤ 100; −100 ≤ показание ≤ 100.
 
@@ -1354,13 +1579,15 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-453c224c4ca3fbbf','while-and-random',NULL,NULL,'Запасы до сигнала · по выбору','code','**Сюжет.** Склад принимает партии, пока не придёт завершающий ноль.
 
-**Условие.** Сложите размеры партий и посчитайте их. Ноль в расчёт не входит.
+**Задача.** Сложите размеры партий и посчитайте их. Ноль в расчёт не входит.
 
 **Формат данных**
 
 | Входные данные | Выходные данные |
 |---|---|
 | Положительные целые числа по одному на строку, затем 0. | Количество и сумма через пробел. |
+
+**Ожидаемый результат.** Количество и сумма через пробел.
 
 **Ограничения.** Не более 100 партий, каждая до 1000; ноль обязательно присутствует.
 
@@ -1375,13 +1602,15 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-558e7551e56db89f','while-and-random',NULL,NULL,'Тренажёр угадывания · по выбору','code','**Сюжет.** Тестовый тренажёр сообщает, больше или меньше догадка загаданного числа.
 
-**Условие.** Первая строка задаёт секрет для проверки. Читайте догадки до совпадения; выведите число всех догадок, включая верную.
+**Задача.** Первая строка задаёт секрет для проверки. Читайте догадки до совпадения; выведите число всех догадок, включая верную.
 
 **Формат данных**
 
 | Входные данные | Выходные данные |
 |---|---|
 | Секрет, затем догадки по одному целому на строку. | Для неверной догадки «Больше», если секрет больше, иначе «Меньше». При совпадении «Угадано: K». |
+
+**Ожидаемый результат.** Для неверной догадки «Больше», если секрет больше, иначе «Меньше». При совпадении «Угадано: K».
 
 **Ограничения.** Все числа от 1 до 20; совпадение есть за первые 10 догадок.
 
@@ -1396,15 +1625,17 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-5d88d5cc6392d551','while-and-random',NULL,NULL,'Пять запросов · по выбору','code','**Сюжет.** У поискового робота есть не больше пяти попыток назвать секрет.
 
-**Условие.** Повторите правила тренажёра, но завершите после пятой неверной догадки. После поражения выведите секрет.
+**Задача.** Первая строка ввода задаёт секретное целое число `S`. Затем программа читает до пяти догадок. Для каждой неверной догадки выведи `Больше`, если секрет больше догадки, иначе `Меньше`. Если число угадано, сразу выведи `Победа: K`, где `K` — номер догадки, и прекрати чтение ввода. Если все пять догадок неверны, на пятой попытке выведи `Проигрыш: S` вместо подсказки.
 
 **Формат данных**
 
 | Входные данные | Выходные данные |
 |---|---|
-| Сначала секрет, затем не более пяти догадок; после успеха ввод прекращается. | Подсказки как в предыдущей задаче. При успехе «Победа: K»; после последней ошибки вместо подсказки «Проигрыш: S». |
+| Секрет, затем не более пяти догадок; после успеха ввод прекращается. | Подсказка для каждой неверной догадки, кроме последней при поражении; затем `Победа: K` или `Проигрыш: S`. |
 
-**Ограничения.** Секрет и догадки от 1 до 20; при отсутствии успеха дано ровно 5 догадок.
+**Ожидаемый результат.** При успехе выводится `Победа: K`, где учитывается и верная догадка. После пяти неверных догадок выводится `Проигрыш: S`; перед этим для первых четырёх ошибок показаны подсказки.
+
+**Ограничения.** Секрет и догадки от 1 до 20; если игрок не угадывает, во входе есть ровно пять догадок.
 
 **Примеры**
 
@@ -1417,13 +1648,15 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-2e9130096dc8daa2','while-and-random',NULL,NULL,'Игровой автомат · по выбору','code','**Сюжет.** Автомат предлагает случайное занятие: A — рисунок, B — чтение, C — прогулка.
 
-**Условие.** Для команды «да» выбирайте код через random.choice("ABC") и печатайте соответствующее занятие. При «нет» завершите работу, для другого ответа напечатайте «Повторите команду».
+**Задача.** Для команды «да» выбирайте код через random.choice("ABC") и печатайте соответствующее занятие. При «нет» завершите работу, для другого ответа напечатайте «Повторите команду».
 
 **Формат данных**
 
 | Входные данные | Выходные данные |
 |---|---|
 | Команды по одной на строку. | Для «да» ровно одна строка из «Рисунок», «Чтение», «Прогулка»; для «нет» — «До встречи». В примерах показаны возможные результаты, они могут отличаться при запуске. |
+
+**Ожидаемый результат.** Для «да» ровно одна строка из «Рисунок», «Чтение», «Прогулка»; для «нет» — «До встречи». В примерах показаны возможные результаты, они могут отличаться при запуске.
 
 **Ограничения.** Не более 10 команд, последняя — «нет»; код случайный.
 
@@ -1438,86 +1671,94 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 
 **Источник.** Авторская задача курса.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-2882e4ef64116951','while-practice',NULL,NULL,'Задание 1. Максимум до нуля','code','1. «Максимум до нуля»
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-2882e4ef64116951','while-practice',NULL,NULL,'Задание 1. Максимум до нуля','code','**Задача.** Считывай целые числа по одному, пока не встретится `0`. Ноль является признаком окончания ввода и не участвует в расчёте. Выведи максимальное из введённых до него чисел. Если первым введено `0`, выведи `Нет данных`.
 
-Справка: не требуется. Просто сравнение чисел.
-Условие: Программа считывает целые числа (по одному). Ввод заканчивается числом 0 (не входит в расчёт). Выведите максимальное из всех введённых чисел. Если чисел не было (сразу введён 0), выведите "Нет данных".
-Пример: Ввод: 7 -3 12 5 0 → Вывод: 12',NULL,NULL,NULL);
+**Ожидаемый результат.** Для ввода `7 -3 12 5 0` программа выводит `12`; если ввод сразу заканчивается на `0`, выводит `Нет данных`.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-098bb3297814316c','while-practice',NULL,NULL,'Задание 2. Факториал числа','code','2. «Факториал числа»
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-098bb3297814316c','while-practice',NULL,NULL,'Задание 2. Факториал числа','code','**Задача.** Для натурального `n > 0` вычисли `n!` с помощью цикла `while` и выведи результат целым числом. Факториал — произведение натуральных чисел от 1 до `n` включительно; например, `5! = 1·2·3·4·5 = 120`. По определению `0! = 1`, но в этой задаче рассматривается `n > 0`.
 
-Справка: Факториал числа n (обозначается n!) — это произведение всех натуральных чисел от 1 до n включительно. Например, 5! = 1·2·3·4·5 = 120. По определению 0! = 1, но мы берём n > 0.
-Условие: Дано натуральное n. Вычислите n! с помощью цикла while. Результат выведите как целое число.
-Пример: n = 5 → Вывод: 120',NULL,NULL,NULL);
+**Ожидаемый результат.** Для `n = 5` программа выводит целое число `120`.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-f04435ceccc17918','while-practice',NULL,NULL,'Задание 3. Проверка на простоту','code','3. «Проверка на простоту»
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-f04435ceccc17918','while-practice',NULL,NULL,'Задание 3. Проверка на простоту','code','**Задача.** Для натурального числа `n > 1` определи, является ли оно простым. Простое число имеет ровно два различных делителя: 1 и само себя. Используй `while` для проверки делителей; достаточно проверять делители до `√n`.
 
-Справка: Простое число — это натуральное число больше 1, которое имеет ровно два различных делителя: 1 и само себя. Например, 2, 3, 5, 7, 11 — простые. 4 — нет (делится на 2). Для проверки достаточно искать делители до √n, так как если есть делитель больше корня, то есть и меньший.
-Условие: Дано натуральное n > 1. Определите, является ли оно простым. Выведите "Да" или "Нет". Используйте while для проверки делителей.
-Пример: n = 17 → "Да"; n = 18 → "Нет"',NULL,NULL,NULL);
+**Ожидаемый результат.** Выведи `Да`, если число простое, и `Нет` в противном случае: например, для 17 — `Да`, для 18 — `Нет`.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-ca8d98b8024f119b','while-practice',NULL,NULL,'Задание 4. Числа Фибоначчи до N','code','4. «Числа Фибоначчи до N»
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-ca8d98b8024f119b','while-practice',NULL,NULL,'Задание 4. Числа Фибоначчи до N','code','**Задача.** Для натурального `N` выведи все числа Фибоначчи, которые не превосходят `N`, используя цикл `while`. В последовательности первые два числа равны 1, а каждое следующее является суммой двух предыдущих: `1, 1, 2, 3, 5, 8, 13, ...`.
 
-Справка: Числа Фибоначчи — последовательность, где первые два числа равны 1, а каждое следующее равно сумме двух предыдущих: 1, 1, 2, 3, 5, 8, 13, ....
-Условие: Дано натуральное N. Выведите все числа Фибоначчи, не превосходящие N, каждое на новой строке. Используйте цикл while.
-Пример: N = 10 → Вывод: 1 1 2 3 5 8 (каждое с новой строки)',NULL,NULL,NULL);
+**Ожидаемый результат.** Каждое подходящее число выводится на новой строке. При `N = 10` последовательность вывода: `1`, `1`, `2`, `3`, `5`, `8`.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-4feced0bfbbb3348','while-practice',NULL,NULL,'Задание 5. Сумма цифр числа','code','5. «Сумма цифр числа»
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-4feced0bfbbb3348','while-practice',NULL,NULL,'Задание 5. Сумма цифр числа','code','**Задача.** Для натурального `n` вычисли и выведи сумму его цифр с помощью арифметических операций, не превращая число в строку. Последнюю цифру можно получить через `% 10`, а последнюю цифру отбросить целочисленным делением на 10 (`// 10`). Повторяй действия, пока число не станет 0.
 
-Справка: Чтобы получить последнюю цифру числа, используйте операцию % 10, чтобы отбросить последнюю цифру — целочисленное деление на 10 (// 10). Повторяйте, пока число не станет 0.
-Условие: Дано натуральное n. Выведите сумму всех его цифр. Используйте арифметические операции (без строк).
-Пример: n = 1234 → Вывод: 10',NULL,NULL,NULL);
+**Ожидаемый результат.** Для `n = 1234` программа выводит `10`.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-9d53a61eb96a9587','while-practice',NULL,NULL,'Задание 6. Алгоритм Евклида (НОД)','code','6. «Алгоритм Евклида (НОД)»
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-9d53a61eb96a9587','while-practice',NULL,NULL,'Задание 6. Алгоритм Евклида (НОД)','code','**Задача.** Для двух натуральных чисел `a` и `b` найди наибольший общий делитель (НОД) алгоритмом Евклида с циклом `while`. НОД — наибольшее число, на которое делятся оба числа без остатка; алгоритм повторяет замену большего числа остатком от деления на меньшее, пока одно из чисел не станет нулём.
 
-Справка: НОД (наибольший общий делитель) двух чисел — это самое большое число, на которое делятся оба без остатка. Алгоритм Евклида: пока одно из чисел не станет нулём, заменяем большее на остаток от деления на меньшее. Когда одно стало 0, другое и есть НОД.
-Условие: Даны два натуральных числа a и b. Найдите их НОД, используя алгоритм Евклида с циклом while.
-Пример: Ввод: 48 18 → Вывод: 6',NULL,NULL,NULL);
+**Ожидаемый результат.** Выведи НОД введённых чисел. Например, для `48` и `18` результат — `6`.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-d4cf1594cdeb0d72','while-practice',NULL,NULL,'Задание 7. Обратный отсчёт с шагом','code','7. «Обратный отсчёт с шагом»
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-d4cf1594cdeb0d72','while-practice',NULL,NULL,'Задание 7. Обратный отсчёт с шагом','code','**Задача.** Даны целые `start` и `step`, причём `step > 0`. Используя `while`, выведи последовательность, начиная с `start` и каждый раз уменьшая число на `step`; выводи значения, пока они не станут меньше 1. Если в последовательность попадает 1, включи его.
 
-Справка: не требуется, чисто арифметика.
-Условие: Даны целые числа start и step (step > 0). Выведите числа от start до 1 включительно, уменьшая каждый раз на step. Например, start=10, step=3 → 10, 7, 4, 1. Используйте while.
-Пример: Ввод: 20 6 → Вывод: 20 14 8 2 (каждое с новой строки)',NULL,NULL,NULL);
+**Ожидаемый результат.** Каждое значение выводится на новой строке. Для `start = 20`, `step = 6` получаются `20`, `14`, `8`, `2`; для `start = 10`, `step = 3` — `10`, `7`, `4`, `1`.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-cfeb69bf87e89037','while-practice',NULL,NULL,'Задание 8. Количество чётных до нуля','code','8. «Количество чётных до нуля»
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-cfeb69bf87e89037','while-practice',NULL,NULL,'Задание 8. Количество чётных до нуля','code','**Задача.** Считывай целые числа, пока не встретится `0`. Посчитай, сколько среди введённых до нуля чисел чётные; сам `0` не учитывай. Чётное число делится на 2 без остатка (`n % 2 == 0`).
 
-Справка: чётное число делится на 2 без остатка (n % 2 == 0).
-Условие: Программа считывает целые числа до тех пор, пока не встретит 0. Подсчитайте, сколько среди введённых чисел было чётных (0 не учитывается). Выведите это количество.
-Пример: Ввод: 4 7 2 9 0 → Вывод: 2 (чётные: 4 и 2)',NULL,NULL,NULL);
+**Ожидаемый результат.** Выведи количество чётных чисел. Для ввода `4 7 2 9 0` результат — `2` (числа 4 и 2).',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-0045fe0a09f2a5a0','while-practice',NULL,NULL,'Задание 9. Бесконечный ввод с суммой','code','9. «Бесконечный ввод с суммой»
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-0045fe0a09f2a5a0','while-practice',NULL,NULL,'Задание 9. Бесконечный ввод с суммой','code','**Задача.** Считывай числа и складывай их, пока сумма не станет больше 100. Затем выведи итоговую сумму и количество введённых чисел.
 
-Справка: не требуется.
-Условие: Пользователь вводит числа. Цикл продолжается, пока сумма введённых чисел не станет больше 100. Выведите итоговую сумму и количество введённых чисел.
-Пример: Ввод: 30 20 60 → Вывод: Сумма: 110, чисел: 3 (после 60 сумма стала 110, цикл остановился)',NULL,NULL,NULL);
+**Ожидаемый результат.** Для последовательности `30, 20, 60` программа останавливается после числа 60 и выводит сумму `110` и количество `3`.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-88f79579001172fb','while-practice',NULL,NULL,'Задание 10. Золотая середина','code','10. «Золотая середина»
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-88f79579001172fb','while-practice',NULL,NULL,'Задание 10. Золотая середина','code','**Задача.** Для натурального `n` найди минимальное целое `k`, при котором сумма `1 + 2 + … + k` не меньше `n`. Выведи найденные `k` и сумму. Используй накопление суммы в цикле.
 
-Справка: нужно найти такое целое k, чтобы сумма 1+2+...+k была не меньше заданного n. Это классическая задача на накопление суммы в цикле.
-Условие: Дано натуральное n. Найдите минимальное целое k, такое, что сумма чисел от 1 до k (т.е. 1+2+...+k) будет больше или равна n. Выведите k и саму сумму.
-Пример: n = 10 → Вывод: k = 4, сумма = 10 (1+2+3+4=10)
-n = 11 → Вывод: k = 5, сумма = 15 (1+2+3+4+5=15 ≥ 11)',NULL,NULL,NULL);
+**Ожидаемый результат.** Для `n = 10` получаются `k = 4`, сумма `10`; для `n = 11` — `k = 5`, сумма `15`.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-372fbd113301e0b6','nested-loops',NULL,NULL,'Задание на чтение','code','Сколько значений напечатает программа? Для каждого результата назови пару множителей. Затем измени внутренний цикл так, чтобы вывести только пары, в которых второй множитель не меньше первого. Используй знакомый `if`; не создавай пока список пар.',NULL,NULL,NULL);
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-372fbd113301e0b6','nested-loops',NULL,NULL,'Задание на чтение','code','**Задача.** Проследи показанный вложенный цикл: посчитай напечатанные произведения и назови для каждого пару множителей. Затем измени внутренний цикл, оставив только пары, где второй множитель не меньше первого. Используй `if`, не создавай список.
+
+```python
+for first in range(1, 4):
+    for second in range(1, 4):
+        print(first * second, end=" ")
+    print()
+```
+
+**Ожидаемый результат.** Для исходного цикла указаны все произведения с их парами множителей и общее число значений; изменённый код выводит только пары, удовлетворяющие условию `second >= first`.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-2644e0839fe36b4f','nested-loops',NULL,NULL,'Нарисуй прямоугольник шириной 2 и высотой 4 из символов @.','code','Нарисуй прямоугольник шириной 2 и высотой 4 из символов `@`. Напиши словами, за что отвечает каждый цикл.',NULL,NULL,NULL);
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-2644e0839fe36b4f','nested-loops',NULL,NULL,'Нарисуй прямоугольник шириной 2 и высотой 4 из символов @.','code','**Задача.** Нарисуй прямоугольник шириной 2 и высотой 4 из символов `@`. Напиши словами, за что отвечает каждый цикл.
+
+**Ожидаемый результат.** Получается прямоугольник из четырёх строк по два символа `@`; в объяснении указана роль каждого цикла.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-0a7820727de3432d','nested-loops',NULL,NULL,'Напечатай лестницу из чисел: для высоты 3 строки должны содержать 1, затем 1 2, затем 1 2 3.','code','Напечатай лестницу из чисел: для высоты 3 строки должны содержать `1`, затем `1 2`, затем `1 2 3`. Подсказка: при каждом значении внешнего счётчика внутренний цикл идёт от 1 до текущего номера строки включительно.',NULL,NULL,NULL);
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-0a7820727de3432d','nested-loops',NULL,NULL,'Напечатай лестницу из чисел: для высоты 3 строки должны содержать 1, затем 1 2, затем 1 2 3.','code','**Задача.** Напечатай лестницу из чисел: для высоты 3 строки должны содержать `1`, затем `1 2`, затем `1 2 3`. Подсказка: при каждом значении внешнего счётчика внутренний цикл идёт от 1 до текущего номера строки включительно.
+
+**Ожидаемый результат.** Вывод содержит три строки: `1`, затем `1 2`, затем `1 2 3`.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-d45f23674add6f06','nested-loops',NULL,NULL,'Напечатай сетку из 3 строк и 4 точек.','code','Напечатай сетку из 3 строк и 4 точек. Поэкспериментируй с `row` и `column`, чтобы вывести их координаты.',NULL,NULL,NULL);
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-d45f23674add6f06','nested-loops',NULL,NULL,'Напечатай сетку из 3 строк и 4 точек.','code','**Задача.** Напечатай сетку из 3 строк и 4 точек. Поэкспериментируй с `row` и `column`, чтобы вывести их координаты.
+
+**Ожидаемый результат.** Сетка содержит 3 строки по 4 точки; при добавлении координат каждая точка связана с текущими значениями `row` и `column`.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-1328bea1eba45aa4','nested-loops',NULL,NULL,'Вручную проследи циклы на height = 0 и width = 0.','code','Вручную проследи циклы на `height = 0` и `width = 0`. Напиши, что напечатается в каждом случае.',NULL,NULL,NULL);
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-1328bea1eba45aa4','nested-loops',NULL,NULL,'Вручную проследи циклы на height = 0 и width = 0.','code','**Задача.** Рассмотри два случая отдельно, изменяя только одно измерение в исходной программе: сначала `height = 0`, затем `width = 0`.
+
+```python
+height = 3
+width = 5
+
+for row in range(height):
+    for column in range(width):
+        print("*", end="")
+    print()
+```
+
+**Ожидаемый результат.** Для обоих случаев указано, какие циклы выполняются и что выводит программа; объяснение учитывает, где расположен `print()` после внутреннего цикла.',NULL,NULL,NULL);
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-780f5b74283d8482','nested-loops',NULL,NULL,'Схема мест в зале · обязательная','code','**Сюжет.** Места в зале нумеруются слева направо по рядам, следующий ряд продолжает нумерацию.
 
-**Условие.** Выведите таблицу номеров от 1. Используйте внешний цикл по рядам и внутренний по местам.
+**Задача.** Выведите таблицу номеров от 1. Используйте внешний цикл по рядам и внутренний по местам.
 
 **Формат данных**
 
 | Входные данные | Выходные данные |
 |---|---|
 | Две строки: r — число рядов, c — мест в ряду. | r строк по c номеров через один пробел, без пробела в конце строки. |
+
+**Ожидаемый результат.** r строк по c номеров через один пробел, без пробела в конце строки.
 
 **Ограничения.** 1 ≤ r ≤ 8; 1 ≤ c ≤ 9.
 
@@ -1532,13 +1773,15 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-506a9c2c4d9b6e95','nested-loops',NULL,NULL,'Экран табло · обязательная','code','**Сюжет.** На табло показывают прямоугольный значок.
 
-**Условие.** Нарисуйте h строк по w символов @.
+**Задача.** Нарисуйте h строк по w символов @.
 
 **Формат данных**
 
 | Входные данные | Выходные данные |
 |---|---|
 | Две строки: h, затем w. | Ровно h строк заданной ширины. |
+
+**Ожидаемый результат.** Ровно h строк заданной ширины.
 
 **Ограничения.** 0 ≤ h,w ≤ 10. При h=0 нет строк, при w=0 каждая строка пустая.
 
@@ -1553,13 +1796,15 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-735f14d1754474ba','nested-loops',NULL,NULL,'Ступени трибуны · обязательная','code','**Сюжет.** На ступени i нужно поместить номера от 1 до i.
 
-**Условие.** Выведите числовую лестницу высотой n.
+**Задача.** Выведите числовую лестницу высотой n.
 
 **Формат данных**
 
 | Входные данные | Выходные данные |
 |---|---|
 | Одно целое n. | n строк; на строке i числа 1…i через пробел. При n=0 вывод пустой. |
+
+**Ожидаемый результат.** n строк; на строке i числа 1…i через пробел. При n=0 вывод пустой.
 
 **Ограничения.** 0 ≤ n ≤ 10.
 
@@ -1574,13 +1819,15 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-dacfeb22a661ac30','nested-loops',NULL,NULL,'Таблица заказов · повторение','code','**Сюжет.** Производитель рассчитывает стоимость наборов: строки задают число изделий, столбцы — цену одного изделия.
 
-**Условие.** Постройте таблицу произведений чисел 1…r и 1…c.
+**Задача.** Постройте таблицу произведений чисел 1…r и 1…c.
 
 **Формат данных**
 
 | Входные данные | Выходные данные |
 |---|---|
 | Две строки: r и c. | r строк по c произведений через пробел. |
+
+**Ожидаемый результат.** r строк по c произведений через пробел.
 
 **Ограничения.** 1 ≤ r,c ≤ 5.
 
@@ -1593,61 +1840,65 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 
 **Источник.** Авторская задача курса.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-83f6612bef3c4582','algorithm-design',NULL,NULL,'Практикум 1. Сумма и количество после изучения `for`','code','**Сюжет.** В списке записано число посылок, доставленных курьером в каждый из `n` дней. Нужно узнать общее число посылок и сколько дней было с доставкой не меньше пяти.
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-83f6612bef3c4582','algorithm-design',NULL,NULL,'Практикум 1. Сумма и количество после изучения `for`','code','**Задача.** Для `n` дней известны числа доставленных посылок. Найди их общую сумму и количество дней, когда доставили не меньше пяти посылок.
 
-**Вход:** сначала `n`, затем `n` целых чисел по одному на строку. Гарантируется `1 ≤ n ≤ 100`, `0 ≤ deliveries ≤ 20`.
+**Вход:** сначала `n`, затем `n` целых значений `deliveries`, по одному на строку. Ограничения: `1 ≤ n ≤ 100`, `0 ≤ deliveries ≤ 20`.
 
-**Выход:** общая сумма и число подходящих дней через пробел.
+**Выход:** сумма и количество подходящих дней через пробел.
 
-До кода заполни таблицу для `n = 4` и значений `2, 5, 0, 7`. Нарисуй две независимые переменные состояния: сумма начинает с нуля и изменяется каждый день; счётчик начинается с нуля и растёт только при выполнении условия. Затем напиши пошаговый план.
+До написания кода заполни таблицу состояния для значений `2, 5, 0, 7` (`n = 4`): сумма начинается с нуля и меняется каждый день, счётчик начинается с нуля и увеличивается только при выполнении условия. Затем запиши пошаговый план.
 
-**Проверки:** четыре дня дают `14 2`; одно значение `4` даёт `4 0`; одно значение `5` даёт `5 1`.
+**Ожидаемый результат.** Для четырёх значений `2, 5, 0, 7` вывод равен `14 2`; для одного значения `4` — `4 0`; для одного значения `5` — `5 1`. При переносе измени условие на «строго больше пяти» и укажи пример, который отличает его от исходного условия.
 
-**Перенос:** измени условие на «строго больше пяти». Скажи, какой пример различает старую и новую версию.',NULL,NULL,NULL);
+**Что сдать.** Программу, таблицу состояния и пошаговый план; также укажи пример, различающий условия «не меньше пяти» и «строго больше пяти».',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-33907b23983c97a2','algorithm-design',NULL,NULL,'Практикум 2. Выбор и частоты после изучения коллекций','code','**Сюжет.** В списке времени доставки в минутах нужно найти самое быстрое время и посчитать, сколько доставок были не дольше 30 минут.
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-33907b23983c97a2','algorithm-design',NULL,NULL,'Практикум 2. Выбор и частоты после изучения коллекций','code','**Задача.** Рассмотри непустой список времени доставки в минутах. Найди минимальное время и количество доставок, занявших не больше 30 минут. Вручную проследи, как меняется минимум при обработке каждого значения, сколько значений проходит условие и как учитывается равенство минимума.
 
-Гарантируется, что список непустой, поэтому первое время можно временно принять за лучшее. Для нового значения сравни его с лучшим и замени лучший, только если новое значение меньше. Для количества отдельно используй счётчик.
+**Ожидаемый результат.** Для `42, 30, 30, 51` минимум равен `30`, подходящих доставок `2`; для единственного значения `8` минимум `8`, подходящих `1`. Объясни, почему нельзя начинать поиск минимума с `0`, и перенеси идею счётчика на подсчёт появлений заданного числа без таблицы частот.
 
-Вручную разберись со значениями `42, 30, 30, 51` и `8`. Запиши, как меняется лучший ответ после каждого элемента, сколько элементов прошло ограничение, и что произойдёт при равенстве.
+**Что сдать.** Ручную трассировку примеров, объяснение начального значения минимума и краткий план переноса на подсчёт появлений заданного числа.',NULL,NULL,NULL);
+--> statement-breakpoint
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-b64f988dbac4c87f','algorithm-design',NULL,NULL,'Практикум 3. Разделение задачи на функции после изучения функций','code','**Задача.** Напиши программу, которая принимает непустой список оценок команды и порог, а затем выводит среднюю оценку и количество оценок не ниже порога. Раздели работу на три функции: одна считает сумму, вторая — число оценок, прошедших порог, третья объединяет вычисления и печатает результат. До написания кода укажи для каждой функции аргументы, возвращаемое значение и то, меняет ли она список. Функция, которая должна вернуть число, не должна вместо этого печатать его.
 
-**Тесты:** `42, 30, 30, 51` → минимум `30`, подходящих `2`; `8` → минимум `8`, подходящих `1`.
+**Ожидаемый результат.** Для оценок `3, 4, 5` и порога `4` среднее равно `4.0`, порог прошли `2` человека. Проверь также одну оценку и случай, когда порог не прошёл никто. При изменении порога объясни, какие функции меняются и почему; вычисление среднего оставь прежним.
 
-**Граница:** отдельно обсуди, почему алгоритм с начальным минимумом `0` не подходит для положительных времён.
+**Что сдать.** Код трёх функций и описание их аргументов, результатов и влияния на список.',NULL,NULL,NULL);
+--> statement-breakpoint
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-7448d81ab12d8ebe','lists',NULL,NULL,'Создай список из четырёх любимых игр, книг или блюд.','code','**Задача.** Создай список из четырёх любимых игр, книг или блюд. Выведи первый, второй и последний элементы. Для списка из `n` элементов последний положительный индекс равен `n - 1`, а последний отрицательный — всегда `-1`.
 
-**Перенос:** посчитай количество появлений заданного числа. Не создавай таблицу частот, если достаточно одного счётчика.',NULL,NULL,NULL);
+**Ожидаемый результат.** Показаны первый, второй и последний элементы выбранного списка именно в этом порядке.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-b64f988dbac4c87f','algorithm-design',NULL,NULL,'Практикум 3. Разделение задачи на функции после изучения функций','code','**Сюжет.** Программа принимает оценки команды и выводит среднюю оценку и количество оценок не ниже заданного порога. Раздели ответственность на функции: одна считает сумму, другая — число прошедших порог, третья объединяет вычисления и печатает результат.
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-ad00e1397ad8ee37','lists',NULL,NULL,'Возьми срез списка numbers, чтобы получить [2, 3, 4].','code','**Задача.** Используй список `numbers = [0, 1, 2, 3, 4, 5, 6]`. Возьми срез, который даёт `[2, 3, 4]`, и затем выведи элементы этого списка через один. Подумай, какие значения поставить в `start` и `stop`.
 
-Пока вход непустой. Реши пример `3, 4, 5` с порогом `4`: среднее `4.0`, прошли `2` человека. Затем отдельно проверь одну оценку и случай, когда никто не прошёл.
+**Ожидаемый результат.** На экране показаны срез `[2, 3, 4]` и элементы исходного списка через один: `[0, 2, 4, 6]`.',NULL,NULL,NULL);
+--> statement-breakpoint
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-c0374dae1b1f5104','lists',NULL,NULL,'Создай список покупок и отдельную копию для друга.','code','**Задача.** Создай список покупок и отдельную копию для друга. Замени первый товар только в копии друга по индексу. Покажи оба списка и объясни, какой командой получена копия.
 
-До кода запиши для каждой функции: что она получает, что возвращает, меняет ли список. Не печатай результат внутри функции, которая по условию должна вернуть число.
+**Ожидаемый результат.** Исходный список покупок не изменился; в отдельной копии изменён только первый товар. Показаны оба списка.',NULL,NULL,NULL);
+--> statement-breakpoint
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-3b74c15e71750f93','lists',NULL,NULL,'Задание 1. Индексы','code','**Задача.** Создай строку с названием города. Выведи первый и последний символ, количество символов и срез из первых трёх символов.
 
-**Перенос:** замени проходной порог, не меняя вычисление среднего. Объясни, какие функции пришлось изменить и почему.',NULL,NULL,NULL);
+**Ожидаемый результат.** Выведены первый символ города, последний символ, количество символов и срез из первых трёх символов — в указанном порядке.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-7448d81ab12d8ebe','lists',NULL,NULL,'Создай список из четырёх любимых игр, книг или блюд.','code','Создай список из четырёх любимых игр, книг или блюд. Выведи первый, второй и последний элементы. Для списка из `n` элементов последний положительный индекс равен `n - 1`, а последний отрицательный — всегда `-1`.',NULL,NULL,NULL);
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-72ed3e7ffa7d8a0d','lists',NULL,NULL,'Задание 2. Список покупок','code','**Задача.** Создай список из четырёх продуктов. Выведи второй продукт, последний продукт и количество продуктов. Замени один продукт по индексу.
+
+**Ожидаемый результат.** Получены второй и последний продукты и количество элементов; в списке заменён выбранный продукт.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-ad00e1397ad8ee37','lists',NULL,NULL,'Возьми срез списка numbers, чтобы получить [2, 3, 4].','code','Возьми срез списка `numbers`, чтобы получить `[2, 3, 4]`. Подумай, какой индекс поставить в `start` и какой — в `stop`. Затем возьми элементы через один.',NULL,NULL,NULL);
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-40b071df6534b243','lists',NULL,NULL,'Задание 3. План дня','code','**Задача.** Создай список из трёх дел. Добавь дело в конец через `append()`, вставь дело в начало через `insert()`, затем удали одно дело через `remove()`. После каждого действия печатай список.
+
+**Ожидаемый результат.** Показаны три последовательных состояния списка: после добавления в конец, вставки в начало и удаления элемента.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-c0374dae1b1f5104','lists',NULL,NULL,'Создай список покупок и отдельную копию для друга.','code','Создай список покупок и отдельную копию для друга. Замени первый товар только в копии друга по индексу. Покажи оба списка и объясни, какой командой получена копия.',NULL,NULL,NULL);
---> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-3b74c15e71750f93','lists',NULL,NULL,'Задание 1. Индексы','code','Создай строку с названием города. Выведи первый и последний символ, количество символов и срез из первых трёх символов.',NULL,NULL,NULL);
---> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-72ed3e7ffa7d8a0d','lists',NULL,NULL,'Задание 2. Список покупок','code','Создай список из четырёх продуктов. Выведи второй продукт, последний продукт и количество продуктов. Замени один продукт по индексу.',NULL,NULL,NULL);
---> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-40b071df6534b243','lists',NULL,NULL,'Задание 3. План дня','code','Создай список из трёх дел. Добавь дело в конец через `append()`, вставь дело в начало через `insert()`, затем удали одно дело через `remove()`. После каждого действия печатай список.',NULL,NULL,NULL);
---> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-b8fa0505e438ebd8','lists',NULL,NULL,'Задание 4. Два списка','code','Создай список с двумя именами и второй список с тремя именами. Добавь второй список в первый двумя способами: сначала через `append()`, потом через `extend()`. Объясни разницу.',NULL,NULL,NULL);
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-b8fa0505e438ebd8','lists',NULL,NULL,'Задание 4. Два списка','code','**Задача.** Создай список с двумя именами и второй список с тремя именами. Возьми две копии первого списка. Добавь второй список к одной копии через `append()`, ко второй — через `extend()`. Объясни разницу.
+
+**Ожидаемый результат.** В одном результате второй список добавлен как один элемент через `append()`, в другом его элементы добавлены отдельно через `extend()`; разница объяснена.',NULL,NULL,NULL);
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-0262a5efa523931c','lists',NULL,NULL,'Карточка названия · обязательная','code','**Сюжет.** Музей показывает короткие сведения о названии экспоната.
 
-**Условие.** Прочитайте название, выведите первый символ, последний символ и длину, каждое значение на своей строке.
+**Задача.** Прочитайте название, выведите первый символ, последний символ и длину, каждое значение на своей строке.
 
-**Формат данных**
+**Формат данных.** Одна непустая строка.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Одна непустая строка. | Три строки в указанном порядке. |
+**Ожидаемый результат.** Три строки в указанном порядке.
 
 **Ограничения.** Длина от 1 до 50 символов; регистр и пробелы сохраняются.
 
@@ -1662,13 +1913,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-f582abad04f93154','lists',NULL,NULL,'Контрольные грузы · обязательная','code','**Сюжет.** На ленте стоят ровно пять грузов. Проверить нужно первый, третий и последний.
 
-**Условие.** Соберите введённые числа в список и выведите выбранные значения.
+**Задача.** Соберите введённые числа в список и выведите выбранные значения.
 
-**Формат данных**
+**Формат данных.** Пять целых чисел по одному на строку.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Пять целых чисел по одному на строку. | Три числа на отдельных строках. |
+**Ожидаемый результат.** Три числа на отдельных строках.
 
 **Ограничения.** 0 ≤ масса ≤ 100. В этом уроке числа читаются отдельно; split ещё не нужен.
 
@@ -1683,13 +1932,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-4d1e5bed08b049fc','lists',NULL,NULL,'Архив измерений · обязательная','code','**Сюжет.** Архив хранит фиксированные измерения [10, 20, 30, 40, 50, 60].
 
-**Условие.** Создайте этот список. Выведите срез со второго по четвёртый элемент, первые три, элементы начиная с четвёртого и элементы через один с начала.
+**Задача.** Создайте этот список. Выведите срез со второго по четвёртый элемент, первые три, элементы начиная с четвёртого и элементы через один с начала.
 
-**Формат данных**
+**Формат данных.** Ввода нет: используйте заданный список.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Ввода нет: используйте заданный список. | Четыре строки, каждая — представление списка Python. |
+**Ожидаемый результат.** Четыре строки, каждая — представление списка Python.
 
 **Ограничения.** Исходный список не изменяется.
 
@@ -1703,13 +1950,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-a7e3e75ae4661f1c','lists',NULL,NULL,'Сигнальные огни · повторение','code','**Сюжет.** Оператор меняет второй из трёх сигнальных огней и добавляет запасной четвёртый.
 
-**Условие.** Получите три цвета, новый цвет второго огня и цвет запасного. Замените второй элемент списка и добавьте запасной в конец.
+**Задача.** Получите три цвета, новый цвет второго огня и цвет запасного. Замените второй элемент списка и добавьте запасной в конец.
 
-**Формат данных**
+**Формат данных.** Пять строк в указанном порядке.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Пять строк в указанном порядке. | Первая строка — список Python из четырёх цветов, вторая — его длина. |
+**Ожидаемый результат.** Первая строка — список Python из четырёх цветов, вторая — его длина.
 
 **Ограничения.** Строки непустые, до 20 символов; повторы разрешены.
 
@@ -1724,13 +1969,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-252cfaebaeec9df7','lists',NULL,NULL,'Меню буфета · по выбору','code','**Сюжет.** В меню ["чай", "сок", "вода"] нужно добавить напиток перед соком, а сок убрать.
 
-**Условие.** Прочитайте новый напиток, вставьте его на индекс 1 и удалите первое вхождение «сок» по значению.
+**Задача.** Прочитайте новый напиток, вставьте его на индекс 1 и удалите первое вхождение «сок» по значению.
 
-**Формат данных**
+**Формат данных.** Одна строка — новый напиток.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Одна строка — новый напиток. | Обновлённый список Python. |
+**Ожидаемый результат.** Обновлённый список Python.
 
 **Ограничения.** Название непустое, до 30 символов и не равно «сок».
 
@@ -1745,13 +1988,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-5295de993e19e640','lists',NULL,NULL,'Багажные метки · по выбору','code','**Сюжет.** В списке ["мяч", "книга", "мяч"] повторяется метка.
 
-**Условие.** Выведите индекс первого мяча; затем удалите элемент с индексом 1 и выведите список.
+**Задача.** Выведите индекс первого мяча; затем удалите элемент с индексом 1 и выведите список.
 
-**Формат данных**
+**Формат данных.** Ввода нет, список дан в условии.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Ввода нет, список дан в условии. | Индекс и список на разных строках. |
+**Ожидаемый результат.** Индекс и список на разных строках.
 
 **Ограничения.** Индексы начинаются с нуля.
 
@@ -1765,13 +2006,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-7adc744233d3c177','lists',NULL,NULL,'Два способа упаковки · по выбору','code','**Сюжет.** Поставку [3, 4] можно добавить в список [1, 2] как одну упаковку или как два отдельных предмета.
 
-**Условие.** На двух независимых копиях [1, 2] примените append([3, 4]) и extend([3, 4]). Выведите обе копии и исходный список.
+**Задача.** На двух независимых копиях [1, 2] примените append([3, 4]) и extend([3, 4]). Выведите обе копии и исходный список.
 
-**Формат данных**
+**Формат данных.** Ввода нет.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Ввода нет. | Три представления списков на отдельных строках. |
+**Ожидаемый результат.** Три представления списков на отдельных строках.
 
 **Ограничения.** Исходный список должен остаться [1, 2].
 
@@ -1785,13 +2024,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-e919e8aa8f34248d','lists',NULL,NULL,'Маршрут обратно · по выбору','code','**Сюжет.** Навигатор показывает название маршрута в обратном порядке букв.
 
-**Условие.** Получите строку и создайте её перевёрнутую копию срезом. Выведите копию, затем исходную строку.
+**Задача.** Получите строку и создайте её перевёрнутую копию срезом. Выведите копию, затем исходную строку.
 
-**Формат данных**
+**Формат данных.** Одна строка.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Одна строка. | Две строки: обратная и исходная. Для пустого ввода обе строки пустые. |
+**Ожидаемый результат.** Две строки: обратная и исходная. Для пустого ввода обе строки пустые.
 
 **Ограничения.** От 0 до 50 символов.
 
@@ -1804,29 +2041,52 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 
 **Источник.** Авторская задача курса.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-8c310eff0b9f24e7','lists-in-loops',NULL,NULL,'Измени список оценок.','code','Измени список оценок. Проверь, правильно ли цикл считает количество пятёрок. Затем замени условие так, чтобы считать оценки меньше `4`.',NULL,NULL,NULL);
---> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-5eb2711bc83cfc3c','lists-in-loops',NULL,NULL,'Создай таблицу 3 × 3, измени только центральную клетку на 1.','code','Создай таблицу 3 × 3, измени только центральную клетку на 1. Ожидается `[[0, 0, 0], [0, 1, 0], [0, 0, 0]]`. Объясни, почему изменение не затронуло другие строки.
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-8c310eff0b9f24e7','lists-in-loops',NULL,NULL,'Измени список оценок.','code','**Задача.** Используй список оценок и цикл из примера:
 
-Списковое включение создаёт готовый список. С выражениями-генераторами в круглых скобках познакомишься в [дополнительном уроке об итераторах](https://github.com/gwinell/proglang-courses/blob/codetogether/python-course/python/03_collections/04_iterators/lesson_iterators_generators.ipynb).',NULL,NULL,NULL);
+```python
+scores = [5, 3, 5, 4, 2, 5]
+count = 0
+
+for score in scores:
+    if score == 5:
+        count = count + 1
+
+print("Пятёрок:", count)
+```
+
+Проверь, что цикл считает пятёрки. Затем замени условие так, чтобы считать оценки меньше `4`.
+
+**Ожидаемый результат.** С исходным условием выводится `Пятёрок: 3`. После замены условия выводится количество оценок меньше `4`: `2`.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-edabd46f0ac023c3','lists-in-loops',NULL,NULL,'Задание 1. Выводим элементы','code','Создай список из пяти любимых фильмов, книг или игр. С помощью `for` выведи каждый элемент на отдельной строке. Добавь шестой элемент и проверь, нужно ли менять цикл.',NULL,NULL,NULL);
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-5eb2711bc83cfc3c','lists-in-loops',NULL,NULL,'Создай таблицу 3 × 3, измени только центральную клетку на 1.','code','**Задача.** Создай таблицу 3 × 3, измени только центральную клетку на 1. Объясни, почему изменение не затронуло другие строки.
+
+Списковое включение создаёт готовый список. С выражениями-генераторами в круглых скобках познакомишься в [дополнительном уроке об итераторах](https://github.com/gwinell/proglang-courses/blob/codetogether/python-course/python/03_collections/04_iterators/lesson_iterators_generators.ipynb).
+
+**Ожидаемый результат.** Получена таблица `[[0, 0, 0], [0, 1, 0], [0, 0, 0]]`; изменена только центральная клетка, остальные строки независимы.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-03fa41ee00163494','lists-in-loops',NULL,NULL,'Задание 2. Числа больше десяти','code','Дан список `[4, 15, 8, 23, 10, 17]`. С помощью `for` и `if` выведи числа больше `10`. Измени границу и сравни результат.',NULL,NULL,NULL);
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-edabd46f0ac023c3','lists-in-loops',NULL,NULL,'Задание 1. Выводим элементы','code','**Задача.** Создай список из пяти любимых фильмов, книг или игр. С помощью `for` выведи каждый элемент на отдельной строке. Добавь шестой элемент и проверь, нужно ли менять цикл.
+
+**Ожидаемый результат.** Каждый элемент списка выводится на отдельной строке; после добавления шестого элемента цикл выводит и его без изменения кода цикла.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-8c17c8a1005a1091','lists-in-loops',NULL,NULL,'Задание 3. Изменяем значения','code','Дан список `[3, 6, 9, 12]`. Перебери его по индексам и замени каждый элемент числом, увеличенным в три раза. Выведи список после цикла.',NULL,NULL,NULL);
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-03fa41ee00163494','lists-in-loops',NULL,NULL,'Задание 2. Числа больше десяти','code','**Задача.** Дан список `[4, 15, 8, 23, 10, 17]`. С помощью `for` и `if` выведи числа больше `10`. Измени границу и сравни результат.
+
+**Ожидаемый результат.** Для исходной границы выведены `15`, `23` и `17` — по одному числу на строке. После изменения границы вывод отражает новое условие.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-9b7bb868d4530ea9','lists-in-loops',NULL,NULL,'Задание 4. Перебираем список через `while`','code','Создай список из четырёх городов. Начни с `index = 0`, пока индекс меньше длины списка печатай элемент и увеличивай индекс. Проверь, что цикл завершится.',NULL,NULL,NULL);
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-8c17c8a1005a1091','lists-in-loops',NULL,NULL,'Задание 3. Изменяем значения','code','**Задача.** Дан список `[3, 6, 9, 12]`. Перебери его по индексам и замени каждый элемент числом, увеличенным в три раза. Выведи список после цикла.
+
+**Ожидаемый результат.** После цикла список равен `[9, 18, 27, 36]`.',NULL,NULL,NULL);
+--> statement-breakpoint
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-9b7bb868d4530ea9','lists-in-loops',NULL,NULL,'Задание 4. Перебираем список через `while`','code','**Задача.** Создай список из четырёх городов. Начни с `index = 0`, пока индекс меньше длины списка печатай элемент и увеличивай индекс. Проверь, что цикл завершится.
+
+**Ожидаемый результат.** Каждый из четырёх выбранных городов выведен один раз; цикл завершается после последнего элемента.',NULL,NULL,NULL);
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-73acfa5fb0f2f6bf','lists-in-loops',NULL,NULL,'Посылки для робота · обязательная','code','**Сюжет.** Подъёмник принимает только посылки легче 5 кг.
 
-**Условие.** Соберите новый список подходящих масс, сохранив порядок, и выведите его длину и содержимое.
+**Задача.** Соберите новый список подходящих масс, сохранив порядок, и выведите его длину и содержимое.
 
-**Формат данных**
+**Формат данных.** Сначала n, затем n целых масс по одной на строку.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Сначала n, затем n целых масс по одной на строку. | Количество, затем список Python на следующей строке. Исходные данные не меняйте. |
+**Ожидаемый результат.** Количество, затем список Python на следующей строке. Исходные данные не меняйте.
 
 **Ограничения.** 0 ≤ n ≤ 100; 0 ≤ масса ≤ 100.
 
@@ -1841,13 +2101,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-c3fabdea2267afaa','lists-in-loops',NULL,NULL,'Длинные названия · обязательная','code','**Сюжет.** Для широких этикеток подходят названия длиннее четырёх символов.
 
-**Условие.** Получите n названий и выведите подходящие в порядке ввода.
+**Задача.** Получите n названий и выведите подходящие в порядке ввода.
 
-**Формат данных**
+**Формат данных.** n, затем n строк.
 
-| Входные данные | Выходные данные |
-|---|---|
-| n, затем n строк. | По названию на строке; при отсутствии совпадений вывод пустой. |
+**Ожидаемый результат.** По названию на строке; при отсутствии совпадений вывод пустой.
 
 **Ограничения.** 0 ≤ n ≤ 20; длина названия от 1 до 30.
 
@@ -1862,13 +2120,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-0cdecce729b4a173','lists-in-loops',NULL,NULL,'План обхода · обязательная','code','**Сюжет.** Робот читает список дел от начала к концу.
 
-**Условие.** Получите дела и выведите каждое через while со счётчиком индекса.
+**Задача.** Получите дела и выведите каждое через while со счётчиком индекса.
 
-**Формат данных**
+**Формат данных.** n, затем n непустых строк.
 
-| Входные данные | Выходные данные |
-|---|---|
-| n, затем n непустых строк. | Дела по одному на строке. |
+**Ожидаемый результат.** Дела по одному на строке.
 
 **Ограничения.** 0 ≤ n ≤ 20; до 40 символов на дело.
 
@@ -1883,13 +2139,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-2ee252cf4043c85a','lists-in-loops',NULL,NULL,'Обратная выгрузка · повторение','code','**Сюжет.** Грузы снимают с ленты с конца.
 
-**Условие.** Получите числа и выведите их от последнего к первому через while.
+**Задача.** Получите числа и выведите их от последнего к первому через while.
 
-**Формат данных**
+**Формат данных.** n, затем n целых чисел по одному на строку.
 
-| Входные данные | Выходные данные |
-|---|---|
-| n, затем n целых чисел по одному на строку. | По числу на строке; при n=0 вывод пустой. |
+**Ожидаемый результат.** По числу на строке; при n=0 вывод пустой.
 
 **Ограничения.** 0 ≤ n ≤ 20; −100 ≤ число ≤ 100.
 
@@ -1904,13 +2158,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-578e851906d9c27b','lists-in-loops',NULL,NULL,'Поправка термометра · по выбору','code','**Сюжет.** Каждый датчик занижает температуру на два градуса.
 
-**Условие.** Создайте новый список, увеличив каждое измерение на 2, и сохраните исходный. Первый вариант решите через for/append, затем запишите равнозначное списковое включение.
+**Задача.** Создайте новый список, увеличив каждое измерение на 2, и сохраните исходный. Первый вариант решите через for/append, затем запишите равнозначное списковое включение.
 
-**Формат данных**
+**Формат данных.** n, затем n целых температур.
 
-| Входные данные | Выходные данные |
-|---|---|
-| n, затем n целых температур. | Две строки: исправленный список Python и исходный список. |
+**Ожидаемый результат.** Две строки: исправленный список Python и исходный список.
 
 **Ограничения.** 0 ≤ n ≤ 20; −100 ≤ температура ≤ 100.
 
@@ -1925,13 +2177,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-9502708bd7020ad5','lists-in-loops',NULL,NULL,'Подсчёт премий · по выбору','code','**Сюжет.** Премию дают за результаты, кратные трём.
 
-**Условие.** Посчитайте подходящие элементы списка, включая повторные значения и ноль.
+**Задача.** Посчитайте подходящие элементы списка, включая повторные значения и ноль.
 
-**Формат данных**
+**Формат данных.** n, затем n целых чисел.
 
-| Входные данные | Выходные данные |
-|---|---|
-| n, затем n целых чисел. | Одно целое количество. |
+**Ожидаемый результат.** Одно целое количество.
 
 **Ограничения.** 0 ≤ n ≤ 100; −100 ≤ число ≤ 100.
 
@@ -1946,13 +2196,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-94e0ba9655c7533d','lists-in-loops',NULL,NULL,'Подписи к плакатам · по выбору','code','**Сюжет.** Дизайнер добавляет восклицательный знак к каждой подписи.
 
-**Условие.** Постройте новый список подписей с добавленным знаком !; исходный список сохраните. Сделайте обычный и сокращённый варианты.
+**Задача.** Постройте новый список подписей с добавленным знаком !; исходный список сохраните. Сделайте обычный и сокращённый варианты.
 
-**Формат данных**
+**Формат данных.** n, затем n строк, возможно пустых.
 
-| Входные данные | Выходные данные |
-|---|---|
-| n, затем n строк, возможно пустых. | Новый список Python и исходный на разных строках. |
+**Ожидаемый результат.** Новый список Python и исходный на разных строках.
 
 **Ограничения.** 0 ≤ n ≤ 20; до 30 символов в строке.
 
@@ -1967,13 +2215,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-15c8665856823b0c','lists-in-loops',NULL,NULL,'Подходящие оценки · по выбору','code','**Сюжет.** Для витрины достижений нужны оценки 4 и 5.
 
-**Условие.** Из введённого списка оставьте только 4 и 5. Сохраните порядок и повторы.
+**Задача.** Из введённого списка оставьте только 4 и 5. Сохраните порядок и повторы.
 
-**Формат данных**
+**Формат данных.** n, затем n оценок.
 
-| Входные данные | Выходные данные |
-|---|---|
-| n, затем n оценок. | Список Python. |
+**Ожидаемый результат.** Список Python.
 
 **Ограничения.** 0 ≤ n ≤ 100; каждая оценка от 2 до 5.
 
@@ -1988,13 +2234,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-2dbea7a199fe4ad0','lists-in-loops',NULL,NULL,'Крупные расходы · по выбору','code','**Сюжет.** Бухгалтеру нужна сумма только расходов строго больше 500 рублей.
 
-**Условие.** Найдите эту сумму, не меняя список.
+**Задача.** Найдите эту сумму, не меняя список.
 
-**Формат данных**
+**Формат данных.** n, затем n целых расходов.
 
-| Входные данные | Выходные данные |
-|---|---|
-| n, затем n целых расходов. | Одно целое число. |
+**Ожидаемый результат.** Одно целое число.
 
 **Ограничения.** 0 ≤ n ≤ 100; 0 ≤ расход ≤ 10000.
 
@@ -2009,13 +2253,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-76997beeae56cb9f','lists-in-loops',NULL,NULL,'Изменение ресурсов · по выбору','code','**Сюжет.** Положительные запасы удваиваются, нулевые и отрицательные остаются как есть.
 
-**Условие.** Создайте новый список по этому правилу. Первое решение напишите обычным циклом и условием; затем попробуйте включение с if/else.
+**Задача.** Создайте новый список по этому правилу. Первое решение напишите обычным циклом и условием; затем попробуйте включение с if/else.
 
-**Формат данных**
+**Формат данных.** n, затем n целых чисел.
 
-| Входные данные | Выходные данные |
-|---|---|
-| n, затем n целых чисел. | Новый список Python. |
+**Ожидаемый результат.** Новый список Python.
 
 **Ограничения.** 0 ≤ n ≤ 100; −100 ≤ число ≤ 100.
 
@@ -2030,13 +2272,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-5c08cfa31e8f25ed','lists-in-loops',NULL,NULL,'Ответы на приглашение · по выбору','code','**Сюжет.** Организатор получил ответы «да», «нет» или «не знаю».
 
-**Условие.** Посчитайте ответы «да» и создайте новый список без ответов «нет».
+**Задача.** Посчитайте ответы «да» и создайте новый список без ответов «нет».
 
-**Формат данных**
+**Формат данных.** n, затем n ответов по одному на строку.
 
-| Входные данные | Выходные данные |
-|---|---|
-| n, затем n ответов по одному на строку. | Количество согласий, затем список оставшихся ответов Python. |
+**Ожидаемый результат.** Количество согласий, затем список оставшихся ответов Python.
 
 **Ограничения.** 0 ≤ n ≤ 30; ответы только из трёх указанных вариантов.
 
@@ -2049,28 +2289,34 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 
 **Источник.** Авторская задача курса.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-a7ecc49e7e8047e1','string-methods',NULL,NULL,'Убери пробелы вокруг имени, а затем выведи приветствие с этим именем.','code','Убери пробелы вокруг имени, а затем выведи приветствие с этим именем.',NULL,NULL,NULL);
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-a7ecc49e7e8047e1','string-methods',NULL,NULL,'Приветствие с очищенным именем','code','**Задача.** Убери пробелы вокруг имени, а затем выведи приветствие с этим именем.
+
+**Ожидаемый результат.** Выведено приветствие с именем без пробелов по краям.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-fc0c9cd0009a851f','string-methods',NULL,NULL,'Исправь название города, заменив Питер на Санкт-Петербург.','code','Исправь название города, заменив `Питер` на `Санкт-Петербург`.',NULL,NULL,NULL);
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-fc0c9cd0009a851f','string-methods',NULL,NULL,'Исправь название города, заменив Питер на Санкт-Петербург.','code','**Задача.** Исправь название города, заменив `Питер` на `Санкт-Петербург`.
+
+**Ожидаемый результат.** В обновлённой строке название `Питер` заменено на `Санкт-Петербург`.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-948d3a3159e4cffc','string-methods',NULL,NULL,'Раздели строку по запятым, а затем собери список обратно, поставив между элементами " / ".','code','Раздели строку по запятым, а затем собери список обратно, поставив между элементами `" / "`.',NULL,NULL,NULL);
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-948d3a3159e4cffc','string-methods',NULL,NULL,'Раздели строку по запятым, а затем собери список обратно, поставив между элементами " / ".','code','**Задача.** Раздели строку по запятым, а затем собери список обратно, поставив между элементами `" / "`.
+
+**Ожидаемый результат.** Строка разделена на элементы по запятым, а затем элементы собраны в одну строку с разделителем ` / `.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-cb9f22a378413b51','string-methods',NULL,NULL,'Практика: аккуратная анкета','code','Сделай небольшую программу:
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-cb9f22a378413b51','string-methods',NULL,NULL,'Практика: аккуратная анкета','code','**Задача.** Сделай небольшую программу:
 
 1. Попроси пользователя ввести имя и город.
 2. Убери пробелы по краям с помощью `strip()`.
 3. Сделай имя с заглавной буквы с помощью `title()`.
-4. Выведи сообщение: `Привет, <имя>! Ты живёшь в городе <город>.`',NULL,NULL,NULL);
+4. Выведи сообщение: `Привет, <имя>! Ты живёшь в городе <город>.`
+
+**Ожидаемый результат.** Выведено сообщение `Привет, <имя>! Ты живёшь в городе <город>.`: имя без краевых пробелов приведено к форме `title()`, у города убраны краевые пробелы.',NULL,NULL,NULL);
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-0ff327c922bbd6d6','string-methods',NULL,NULL,'Две этикетки · обязательная','code','**Сюжет.** На упаковку печатают крупную и обычную подпись.
 
-**Условие.** Получите строку, выведите её в верхнем, затем в нижнем регистре.
+**Задача.** Получите строку, выведите её в верхнем, затем в нижнем регистре.
 
-**Формат данных**
+**Формат данных.** Одна строка.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Одна строка. | Две строки в указанном порядке. |
+**Ожидаемый результат.** Две строки в указанном порядке.
 
 **Ограничения.** До 80 символов; строка может быть пустой.
 
@@ -2085,13 +2331,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-9ffa501ca6c50c70','string-methods',NULL,NULL,'Счётчик букв · обязательная','code','**Сюжет.** Редактор считает строчную кириллическую букву «а» в сообщении.
 
-**Условие.** Выведите число вхождений именно символа «а»; заглавная «А» не учитывается.
+**Задача.** Выведите число вхождений именно символа «а»; заглавная «А» не учитывается.
 
-**Формат данных**
+**Формат данных.** Одна строка.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Одна строка. | Одно целое число. |
+**Ожидаемый результат.** Одно целое число.
 
 **Ограничения.** До 100 символов; пустая строка допустима.
 
@@ -2106,13 +2350,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-2d2ca52ee34cfbb5','string-methods',NULL,NULL,'Проверка вложения · обязательная','code','**Сюжет.** Каталог принимает изображения с суффиксом .png.
 
-**Условие.** Проверьте, заканчивается ли имя файла на .png без учёта регистра.
+**Задача.** Проверьте, заканчивается ли имя файла на .png без учёта регистра.
 
-**Формат данных**
+**Формат данных.** Одна непустая строка — имя файла.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Одна непустая строка — имя файла. | YES при совпадении, иначе NO. |
+**Ожидаемый результат.** YES при совпадении, иначе NO.
 
 **Ограничения.** До 80 символов; пробелов по краям нет.
 
@@ -2127,13 +2369,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-df04ce626ba60b60','string-methods',NULL,NULL,'Сообщение афиши · повторение','code','**Сюжет.** Для афиши нужно убрать пробелы по краям и заменить точки на восклицательные знаки.
 
-**Условие.** Выполните оба преобразования, внутренние пробелы сохраните.
+**Задача.** Выполните оба преобразования, внутренние пробелы сохраните.
 
-**Формат данных**
+**Формат данных.** Одна строка.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Одна строка. | Одна обработанная строка, возможно пустая. |
+**Ожидаемый результат.** Одна обработанная строка, возможно пустая.
 
 **Ограничения.** До 100 символов; может состоять только из пробелов.
 
@@ -2148,13 +2388,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-63d311bfba47f06e','string-methods',NULL,NULL,'Имена в списке · по выбору','code','**Сюжет.** Сервис получает имена, разделённые любым числом пробелов.
 
-**Условие.** Разделите строку на слова и выведите каждое слово с новой строки.
+**Задача.** Разделите строку на слова и выведите каждое слово с новой строки.
 
-**Формат данных**
+**Формат данных.** Одна строка.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Одна строка. | По слову на строке; для пустой строки вывода нет. |
+**Ожидаемый результат.** По слову на строке; для пустой строки вывода нет.
 
 **Ограничения.** До 100 символов; пустая строка допустима.
 
@@ -2169,13 +2407,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-a5ebe4c03f1bc7b6','string-methods',NULL,NULL,'Меню через запятую · по выбору','code','**Сюжет.** Повар перечисляет три блюда через запятые.
 
-**Условие.** Разделите ввод, уберите пробелы по краям каждого названия и соедините названия разделителем «; ».
+**Задача.** Разделите ввод, уберите пробелы по краям каждого названия и соедините названия разделителем «; ».
 
-**Формат данных**
+**Формат данных.** Одна строка с ровно двумя запятыми.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Одна строка с ровно двумя запятыми. | Одна строка с тремя очищенными названиями. |
+**Ожидаемый результат.** Одна строка с тремя очищенными названиями.
 
 **Ограничения.** Три названия непустые после удаления краевых пробелов; запятых внутри названий нет.
 
@@ -2190,13 +2426,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-daead81fbb8081b8','string-methods',NULL,NULL,'Подпись с заглавной буквы · по выбору','code','**Сюжет.** Каталог меняет только первую букву заголовка.
 
-**Условие.** Сделайте первый символ заглавным, остальные оставьте без изменений.
+**Задача.** Сделайте первый символ заглавным, остальные оставьте без изменений.
 
-**Формат данных**
+**Формат данных.** Одно непустое слово.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Одно непустое слово. | Преобразованное слово. |
+**Ожидаемый результат.** Преобразованное слово.
 
 **Ограничения.** От 1 до 1000 английских букв.
 
@@ -2211,13 +2445,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-46deb87867eaa9ee','string-methods',NULL,NULL,'Короткие подписи · по выбору','code','**Сюжет.** Очень длинные слова не помещаются на карточках.
 
-**Условие.** Слова длиной больше 10 замените первой буквой, числом внутренних букв и последней буквой; остальные сохраните.
+**Задача.** Слова длиной больше 10 замените первой буквой, числом внутренних букв и последней буквой; остальные сохраните.
 
-**Формат данных**
+**Формат данных.** n, затем n слов по одному на строку.
 
-| Входные данные | Выходные данные |
-|---|---|
-| n, затем n слов по одному на строку. | По результату на слово, в том же порядке. |
+**Ожидаемый результат.** По результату на слово, в том же порядке.
 
 **Ограничения.** 1 ≤ n ≤ 100; слова из 1–100 строчных латинских букв.
 
@@ -2232,13 +2464,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-a2f31b8e03845c12','string-methods',NULL,NULL,'Поиск курса · по выбору','code','**Сюжет.** Поисковик ищет отдельное слово python среди слов запроса.
 
-**Условие.** Посчитайте слова, определите наличие слова python без учёта регистра и соедините исходные слова знаком ★.
+**Задача.** Посчитайте слова, определите наличие слова python без учёта регистра и соедините исходные слова знаком ★.
 
-**Формат данных**
+**Формат данных.** Одна строка; слова разделены пробельными символами.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Одна строка; слова разделены пробельными символами. | Три строки: число слов; YES/NO; слова через ★, с исходным регистром. Для пустого ввода третья строка пустая. |
+**Ожидаемый результат.** Три строки: число слов; YES/NO; слова через ★, с исходным регистром. Для пустого ввода третья строка пустая.
 
 **Ограничения.** До 100 символов; знаков препинания нет; пустая строка допустима.
 
@@ -2251,35 +2481,45 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 
 **Источник.** Авторская задача курса.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-8ae98c73f219c5b0','tuples-dicts-sets',NULL,NULL,'Создай словарь book с ключами "title", "author" и "year".','code','Создай словарь `book` с ключами `"title"`, `"author"` и `"year"`. Выведи название книги и добавь ключ `"pages"`.
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-8ae98c73f219c5b0','tuples-dicts-sets',NULL,NULL,'Создай словарь book с ключами "title", "author" и "year".','code','**Задача.** Создай словарь `book` с ключами `"title"`, `"author"` и `"year"`. Выведи название книги и добавь ключ `"pages"`.
 
-План: создай три пары; прочитай название по ключу title; добавь pages; выведи весь словарь и проверь изменения.',NULL,NULL,NULL);
---> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-62b4d922da2e38e7','tuples-dicts-sets',NULL,NULL,'Посчитай слова в строке "дом лес дом" через split().','code','Посчитай слова в строке `"дом лес дом"` через `split()`. Ожидается `{''дом'': 2, ''лес'': 1}`. Для пустой строки — `{}`. Если нужны только разные слова, выбери `set`; если число повторений — `dict`.',NULL,NULL,NULL);
---> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-4f32bf4143a1d9ed','tuples-dicts-sets',NULL,NULL,'Задание 1. Координаты','code','Создай кортеж с координатами `x` и `y`, распакуй его в две переменные и выведи каждую координату.
+План: создай три пары; прочитай название по ключу title; добавь pages; выведи весь словарь и проверь изменения.
 
-Для каждого задания выбери коллекцию и объясни выбор, предскажи результат, а затем запускай код. При ошибке проверь скобки, кавычки, двоеточия и отступы.',NULL,NULL,NULL);
+**Ожидаемый результат.** Сначала выведено название книги; затем выведен словарь `book` с добавленным ключом `pages`.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-b5fd08acf1c45c0f','tuples-dicts-sets',NULL,NULL,'Задание 2. Словарь оценок','code','Создай словарь с тремя именами и оценками. Выведи имя и оценку каждого ученика. Измени одну оценку и добавь ещё одного ученика.',NULL,NULL,NULL);
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-62b4d922da2e38e7','tuples-dicts-sets',NULL,NULL,'Посчитай слова в строке "дом лес дом" через split().','code','**Задача.** Посчитай слова в строке `"дом лес дом"` через `split()`. Если нужны только разные слова, выбери `set`; если число повторений — `dict`.
+
+**Ожидаемый результат.** Для строки `"дом лес дом"` получен словарь `{"дом": 2, "лес": 1}`; для пустой строки — `{}`.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-ba3272c3334db57e','tuples-dicts-sets',NULL,NULL,'Задание 3. Уникальные слова','code','Дан список слов с повторами. Получи множество уникальных слов и проверь, есть ли в нём слово `"Python"`.',NULL,NULL,NULL);
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-4f32bf4143a1d9ed','tuples-dicts-sets',NULL,NULL,'Задание 1. Координаты','code','**Задача.** Создай кортеж с координатами `x` и `y`, распакуй его в две переменные и выведи каждую координату.
+
+Для каждого задания выбери коллекцию и объясни выбор, предскажи результат, а затем запускай код. При ошибке проверь скобки, кавычки, двоеточия и отступы.
+
+**Ожидаемый результат.** Координаты выведены отдельно и в том же порядке, что при распаковке: сначала `x`, затем `y`.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-a55fb74730ed4275','tuples-dicts-sets',NULL,NULL,'Задание 4. Общие увлечения','code','Даны два множества друзей: кто ходит на рисование и кто ходит на шахматы. Выведи:
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-b5fd08acf1c45c0f','tuples-dicts-sets',NULL,NULL,'Задание 2. Словарь оценок','code','**Задача.** Создай словарь с тремя именами и оценками. Выведи имя и оценку каждого ученика. Измени одну оценку и добавь ещё одного ученика.
+
+**Ожидаемый результат.** Показаны имена и оценки; после изменений в словаре обновлена одна оценка и добавлен четвёртый ученик.',NULL,NULL,NULL);
+--> statement-breakpoint
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-ba3272c3334db57e','tuples-dicts-sets',NULL,NULL,'Задание 3. Уникальные слова','code','**Задача.** Дан список слов с повторами. Получи множество уникальных слов и проверь, есть ли в нём слово `"Python"`.
+
+**Ожидаемый результат.** В множестве каждое слово представлено один раз; показан результат проверки наличия `"Python"`.',NULL,NULL,NULL);
+--> statement-breakpoint
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-a55fb74730ed4275','tuples-dicts-sets',NULL,NULL,'Задание 4. Общие увлечения','code','**Задача.** Даны два множества друзей: кто ходит на рисование и кто ходит на шахматы. Выведи:
 
 - тех, кто ходит на оба занятия;
 - тех, кто ходит хотя бы на одно;
-- тех, кто ходит на рисование, но не на шахматы.',NULL,NULL,NULL);
+- тех, кто ходит на рисование, но не на шахматы.
+
+**Ожидаемый результат.** Выведены три множества: общие увлечения, все увлечения вместе и увлечения рисованием без шахмат. Порядок элементов множества не фиксирован.',NULL,NULL,NULL);
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-e102af4658b8064c','tuples-dicts-sets',NULL,NULL,'Полка фильмов · обязательная','code','**Сюжет.** Киноклуб хранит неизменяемую четвёрку названий.
 
-**Условие.** Прочитайте четыре названия, создайте кортеж и выведите первое и последнее.
+**Задача.** Прочитайте четыре названия, создайте кортеж и выведите первое и последнее.
 
-**Формат данных**
+**Формат данных.** Четыре строки.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Четыре строки. | Два названия на отдельных строках. |
+**Ожидаемый результат.** Два названия на отдельных строках.
 
 **Ограничения.** Названия непустые, до 80 символов.
 
@@ -2294,13 +2534,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-68bab1495d1097d6','tuples-dicts-sets',NULL,NULL,'Паспорт питомца · обязательная','code','**Сюжет.** Приют собирает имя, вид и возраст питомца в одной записи.
 
-**Условие.** Создайте словарь с ключами name, species, age и выведите карточку.
+**Задача.** Создайте словарь с ключами name, species, age и выведите карточку.
 
-**Формат данных**
+**Формат данных.** Три строки: имя, вид, целый возраст.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Три строки: имя, вид, целый возраст. | Строки «Имя: ...», «Вид: ...», «Возраст: ...». |
+**Ожидаемый результат.** Строки «Имя: ...», «Вид: ...», «Возраст: ...».
 
 **Ограничения.** Имя/вид непустые до 40 символов; 0 ≤ возраст ≤ 30.
 
@@ -2315,13 +2553,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-7815eb6b12db950c','tuples-dicts-sets',NULL,NULL,'Уникальные жетоны · обязательная','code','**Сюжет.** Сканер несколько раз считывает одни и те же номера.
 
-**Условие.** Посчитайте число различных номеров.
+**Задача.** Посчитайте число различных номеров.
 
-**Формат данных**
+**Формат данных.** n, затем n целых чисел по одному на строку.
 
-| Входные данные | Выходные данные |
-|---|---|
-| n, затем n целых чисел по одному на строку. | Одно целое количество. |
+**Ожидаемый результат.** Одно целое количество.
 
 **Ограничения.** 0 ≤ n ≤ 100; 0 ≤ номер ≤ 1000.
 
@@ -2336,13 +2572,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-1ba9bef93480388c','tuples-dicts-sets',NULL,NULL,'Список гостей · повторение','code','**Сюжет.** Организатор получил имена через запятые, некоторые повторяются.
 
-**Условие.** Уберите пробелы по краям имён, исключите повторы и выведите число разных гостей. Регистр важен.
+**Задача.** Уберите пробелы по краям имён, исключите повторы и выведите число разных гостей. Регистр важен.
 
-**Формат данных**
+**Формат данных.** Одна строка, либо пустая, либо список непустых имён через запятую.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Одна строка, либо пустая, либо список непустых имён через запятую. | Одно целое количество. |
+**Ожидаемый результат.** Одно целое количество.
 
 **Ограничения.** До 50 имён, до 30 символов в имени; пустых элементов в непустом списке нет.
 
@@ -2357,13 +2591,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-46e347b9776f5e0c','tuples-dicts-sets',NULL,NULL,'Покупки команды · по выбору','code','**Сюжет.** Записи о товаре могут повторяться.
 
-**Условие.** Сложите количества одинаковых товаров в словаре. Выведите товары в порядке первого появления.
+**Задача.** Сложите количества одинаковых товаров в словаре. Выведите товары в порядке первого появления.
 
-**Формат данных**
+**Формат данных.** n, затем для каждой записи две строки: название, количество.
 
-| Входные данные | Выходные данные |
-|---|---|
-| n, затем для каждой записи две строки: название, количество. | По записи «название количество» на строке; при n=0 вывод пустой. |
+**Ожидаемый результат.** По записи «название количество» на строке; при n=0 вывод пустой.
 
 **Ограничения.** 0 ≤ n ≤ 50; название непустое до 30 символов; 0 ≤ количество ≤ 100.
 
@@ -2380,13 +2612,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-50c7a67dff112c44','tuples-dicts-sets',NULL,NULL,'Читательские встречи · по выбору','code','**Сюжет.** Два друга отмечают номера прочитанных книг.
 
-**Условие.** Выведите число общих книг и число книг, прочитанных только первым другом. Повторы в одном списке не считаются.
+**Задача.** Выведите число общих книг и число книг, прочитанных только первым другом. Повторы в одном списке не считаются.
 
-**Формат данных**
+**Формат данных.** n, затем n номеров первого друга; затем m и m номеров второго. Все значения на отдельных строках.
 
-| Входные данные | Выходные данные |
-|---|---|
-| n, затем n номеров первого друга; затем m и m номеров второго. Все значения на отдельных строках. | Два целых числа через пробел: общие, только у первого. |
+**Ожидаемый результат.** Два целых числа через пробел: общие, только у первого.
 
 **Ограничения.** 0 ≤ n,m ≤ 50; номера от 1 до 1000.
 
@@ -2401,13 +2631,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-c856d7bbad64833b','tuples-dicts-sets',NULL,NULL,'Сигналы станции · по выбору','code','**Сюжет.** Станция записывает слова с названиями сигналов.
 
-**Условие.** Без учёта регистра посчитайте частоты слов. Выведите пары в порядке первого появления.
+**Задача.** Без учёта регистра посчитайте частоты слов. Выведите пары в порядке первого появления.
 
-**Формат данных**
+**Формат данных.** Одна строка слов, разделённых пробелами.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Одна строка слов, разделённых пробелами. | По строке «слово количество», слова в нижнем регистре; пустой ввод даёт пустой вывод. |
+**Ожидаемый результат.** По строке «слово количество», слова в нижнем регистре; пустой ввод даёт пустой вывод.
 
 **Ограничения.** До 100 слов из английских букв; пустая строка допустима.
 
@@ -2422,13 +2650,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-c7f6254e2fba5994','tuples-dicts-sets',NULL,NULL,'Алфавит сообщения · по выбору','code','**Сюжет.** Радиооператор считает символы в кодовом слове.
 
-**Условие.** Постройте частоты букв и выведите буквы в порядке первого появления.
+**Задача.** Постройте частоты букв и выведите буквы в порядке первого появления.
 
-**Формат данных**
+**Формат данных.** Одна строка.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Одна строка. | По строке «буква количество»; при пустом слове вывод пустой. |
+**Ожидаемый результат.** По строке «буква количество»; при пустом слове вывод пустой.
 
 **Ограничения.** От 0 до 30 строчных латинских букв.
 
@@ -2443,13 +2669,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-38a9047924c585d7','records-practice',NULL,NULL,'Поиск участника · обязательная','code','**Сюжет.** Организатору нужно быстро проверить, записан ли участник на кружок.
 
-**Условие.** Напиши функцию `find_student(students, student_id)`. Она возвращает словарь записи с таким `id`. Если участника нет, функция возвращает `None`. Не изменяй исходный список.
+**Задача.** Напиши функцию `find_student(students, student_id)`. Она возвращает словарь записи с таким `id`. Если участника нет, функция возвращает `None`. Не изменяй исходный список.
 
-**Формат данных**
+**Формат данных.** Список словарей с целочисленными `id` и строковыми `name`; искомый целый `student_id`.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Список словарей с целочисленными `id` и строковыми `name`; искомый целый `student_id`. | Словарь найденной записи либо `None`. |
+**Ожидаемый результат.** Словарь найденной записи либо `None`.
 
 **Ограничения.** `id` уникален; список содержит от 0 до 100 записей.
 
@@ -2464,13 +2688,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-f98bf8a427fd6275','records-practice',NULL,NULL,'Пересчёт оценок · обязательная','code','**Сюжет.** Учитель исправляет оценку в журнале по номеру ученика.
 
-**Условие.** Напиши `update_score(students, student_id, new_score)`. Если запись найдена, замени её `score` и верни `True`. Если нет — верни `False`. Изменение должно быть видно в исходном списке.
+**Задача.** Напиши `update_score(students, student_id, new_score)`. Если запись найдена, замени её `score` и верни `True`. Если нет — верни `False`. Изменение должно быть видно в исходном списке.
 
-**Формат данных**
+**Формат данных.** Список словарей `{id, score}`, целые `student_id` и `new_score`.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Список словарей `{id, score}`, целые `student_id` и `new_score`. | `True`, если запись изменена; иначе `False`. |
+**Ожидаемый результат.** `True`, если запись изменена; иначе `False`.
 
 **Ограничения.** `id` уникален; `0 ≤ new_score ≤ 100`.
 
@@ -2485,13 +2707,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-acc724def5c260c1','records-practice',NULL,NULL,'Корзина покупок · обязательная','code','**Сюжет.** Магазину нужен итог по товарам, которые покупатель добавил в корзину.
 
-**Условие.** Напиши функцию `cart_total(cart)`, которая возвращает сумму `price * quantity` для каждой записи корзины. Если корзина пуста, верни 0.
+**Задача.** Напиши функцию `cart_total(cart)`, которая возвращает сумму `price * quantity` для каждой записи корзины. Если корзина пуста, верни 0.
 
-**Формат данных**
+**Формат данных.** Список словарей с целыми полями `price` и `quantity`.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Список словарей с целыми полями `price` и `quantity`. | Целое число — общая стоимость. |
+**Ожидаемый результат.** Целое число — общая стоимость.
 
 **Ограничения.** От 0 до 50 товаров; цена и количество неотрицательны.
 
@@ -2506,13 +2726,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-6c3a663ff496993e','records-practice',NULL,NULL,'Любимые жанры · повторение','code','**Сюжет.** Библиотекарь выясняет, сколько книг относится к выбранному жанру.
 
-**Условие.** Напиши `count_genre(library, genre)`. `library` — словарь с ключом `books`, значение которого — список записей. У каждой записи есть список строк `genres`. Верни количество книг, в которых жанр встречается хотя бы один раз.
+**Задача.** Напиши `count_genre(library, genre)`. `library` — словарь с ключом `books`, значение которого — список записей. У каждой записи есть список строк `genres`. Верни количество книг, в которых жанр встречается хотя бы один раз.
 
-**Формат данных**
+**Формат данных.** Словарь `library` со списком словарей в `books`; строка `genre`.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Словарь `library` со списком словарей в `books`; строка `genre`. | Неотрицательное целое количество книг. |
+**Ожидаемый результат.** Неотрицательное целое количество книг.
 
 **Ограничения.** В одной записи жанр не повторяется; поле `books` всегда есть.
 
@@ -2527,13 +2745,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-bb02a15fb6abaf12','iterators-generators',NULL,NULL,'Очередь результатов · обязательная','code','**Сюжет.** Прибор выдаёт квадраты по запросу и не начинает очередь заново.
 
-**Условие.** Создайте генератор квадратов чисел 1…n; получите первый элемент через next с запасным значением None. Выведите первый результат, остаток списком и результат повторного list на том же генераторе.
+**Задача.** Создайте генератор квадратов чисел 1…n; получите первый элемент через next с запасным значением None. Выведите первый результат, остаток списком и результат повторного list на том же генераторе.
 
-**Формат данных**
+**Формат данных.** Аргумент n для функции consume_squares(n), которая возвращает кортеж из трёх результатов. input не требуется.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Аргумент n для функции consume_squares(n), которая возвращает кортеж из трёх результатов. input не требуется. | Возвращаемое значение: (первый элемент или None, список остатка, пустой список). |
+**Ожидаемый результат.** Возвращаемое значение: (первый элемент или None, список остатка, пустой список).
 
 **Ограничения.** 0 ≤ n ≤ 10.
 
@@ -2548,13 +2764,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-31975a3676b82da2','iterators-generators',NULL,NULL,'Два подсчёта · обязательная','code','**Сюжет.** Аналитик дважды запрашивает сумму одной и той же очереди квадратов.
 
-**Условие.** Функция square_sums(n) создаёт один генератор 1²…n² и возвращает сумму первого и второго проходов по нему.
+**Задача.** Функция square_sums(n) создаёт один генератор 1²…n² и возвращает сумму первого и второго проходов по нему.
 
-**Формат данных**
+**Формат данных.** Целый аргумент n; без input.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Целый аргумент n; без input. | Кортеж (первая сумма, вторая сумма). |
+**Ожидаемый результат.** Кортеж (первая сумма, вторая сумма).
 
 **Ограничения.** 0 ≤ n ≤ 20.
 
@@ -2569,13 +2783,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-e21977a0bb048934','iterators-generators',NULL,NULL,'Оценки напротив имён · обязательная','code','**Сюжет.** Сервис соединяет имена и оценки по порядку.
 
-**Условие.** pair_scores(names, scores) возвращает list(zip(names, scores)). Если длины различаются, верните также текст «Неполные данные», иначе «Полные данные».
+**Задача.** pair_scores(names, scores) возвращает list(zip(names, scores)). Если длины различаются, верните также текст «Неполные данные», иначе «Полные данные».
 
-**Формат данных**
+**Формат данных.** Два списка аргументов; элементы names — строки, scores — целые числа.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Два списка аргументов; элементы names — строки, scores — целые числа. | Кортеж из списка пар и строки статуса. В этой задаче сокращение zip намеренно допускается. |
+**Ожидаемый результат.** Кортеж из списка пар и строки статуса. В этой задаче сокращение zip намеренно допускается.
 
 **Ограничения.** До 10 элементов в каждом списке; имена непустые.
 
@@ -2590,13 +2802,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-099a177c302fd9c3','iterators-generators',NULL,NULL,'Допуск оценок · повторение','code','**Сюжет.** Электронный журнал принимает непустую последовательность оценок от 2 до 5.
 
-**Условие.** Функция valid_scores(scores) возвращает True, только если список непустой и все значения в диапазоне.
+**Задача.** Функция valid_scores(scores) возвращает True, только если список непустой и все значения в диапазоне.
 
-**Формат данных**
+**Формат данных.** Список целых чисел — аргумент функции.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Список целых чисел — аргумент функции. | Логическое возвращаемое значение. |
+**Ожидаемый результат.** Логическое возвращаемое значение.
 
 **Ограничения.** До 30 элементов; числа от −10 до 10.
 
@@ -2610,17 +2820,17 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 
 **Источник.** Авторская задача курса.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-0f79f8f8589132be','text-bytes-utf8',NULL,NULL,'Закодируй фразу с именем ученика в UTF-8, выведи длину строки и байтов, затем восстанови строку через decode.','code','Закодируй фразу с именем ученика в UTF-8, выведи длину строки и байтов, затем восстанови строку через decode. Сверь, что восстановленный текст совпадает с исходным. Отдельно проверь байты ASCII-строки и кириллической строки.',NULL,NULL,NULL);
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-0f79f8f8589132be','text-bytes-utf8',NULL,NULL,'Закодируй фразу с именем ученика в UTF-8, выведи длину строки и байтов, затем восстанови строку через decode.','code','**Задача.** Закодируй фразу с именем ученика в UTF-8, выведи длину строки и байтов, затем восстанови строку через decode. Сверь, что восстановленный текст совпадает с исходным. Отдельно проверь байты ASCII-строки и кириллической строки.
+
+**Ожидаемый результат.** Выведены длины исходной строки и её UTF-8-представления в байтах; после `decode()` восстановлен исходный текст. Для ASCII- и кириллической строк длины байтов сопоставлены отдельно.',NULL,NULL,NULL);
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-d8f3fad7894f1efd','text-bytes-utf8',NULL,NULL,'Письмо, которое потерялось · обязательная','code','**Сюжет.** Робот получил текстовое сообщение как байты и должен показать его человеку.
 
-**Условие.** Функция restore_message(data) декодирует байты data как UTF-8 и возвращает строку. Если данные некорректны, функция должна позволить возникнуть UnicodeDecodeError, не заменяя байты молча.
+**Задача.** Функция restore_message(data) декодирует байты data как UTF-8 и возвращает строку. Если данные некорректны, функция должна позволить возникнуть UnicodeDecodeError, не заменяя байты молча.
 
-**Формат данных**
+**Формат данных.** Один объект bytes, содержащий корректный UTF-8.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Один объект bytes, содержащий корректный UTF-8. | Строка типа str с восстановленным текстом. |
+**Ожидаемый результат.** Строка типа str с восстановленным текстом.
 
 **Ограничения.** В основном тесте передаются корректные UTF-8-байты. Отдельно проверь некорректные байты и запиши имя возникшего исключения.
 
@@ -2635,13 +2845,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-9923462c16c80015','text-bytes-utf8',NULL,NULL,'Размер послания · обязательная','code','**Сюжет.** Почтовый робот должен узнать, сколько места займёт текстовое сообщение при отправке.
 
-**Условие.** Напиши функцию `utf8_size(text)`, которая возвращает число байтов в строке при кодировании UTF-8. Исходную строку не меняй.
+**Задача.** Напиши функцию `utf8_size(text)`, которая возвращает число байтов в строке при кодировании UTF-8. Исходную строку не меняй.
 
-**Формат данных**
+**Формат данных.** Один аргумент `text`: строка Python.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Один аргумент `text`: строка Python. | Целое число байтов UTF-8. |
+**Ожидаемый результат.** Целое число байтов UTF-8.
 
 **Ограничения.** Длина строки — от 0 до 100 символов; разрешены латинские и кириллические буквы, пробелы и цифры.
 
@@ -2656,13 +2864,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-9965d84ed57ee85a','text-bytes-utf8',NULL,NULL,'Повреждённая записка · обязательная','code','**Сюжет.** Архивариус получает байты из старого устройства. Иногда текст повреждён, и программа должна сообщить об этом без аварийного завершения.
 
-**Условие.** Напиши функцию `safe_decode(data)`. Для корректного UTF-8 верни кортеж `(True, текст)`. Если возникает `UnicodeDecodeError`, верни `(False, "")`. Другие ошибки не перехватывай.
+**Задача.** Напиши функцию `safe_decode(data)`. Для корректного UTF-8 верни кортеж `(True, текст)`. Если возникает `UnicodeDecodeError`, верни `(False, "")`. Другие ошибки не перехватывай.
 
-**Формат данных**
+**Формат данных.** Один аргумент `data`: объект `bytes`.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Один аргумент `data`: объект `bytes`. | Кортеж из логического значения и строки; для некорректных байтов — `(False, "")`. |
+**Ожидаемый результат.** Кортеж из логического значения и строки; для некорректных байтов — `(False, "")`.
 
 **Ограничения.** Длина данных — до 1000 байтов.
 
@@ -2677,13 +2883,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-8aa0f4094e1d3880','text-bytes-utf8',NULL,NULL,'Архив коротких сообщений · повторение','code','**Сюжет.** Робот передаёт несколько коротких сообщений одним байтовым блоком и затем восстанавливает их.
 
-**Условие.** Напиши функцию `pack_messages(messages)`, которая объединяет непустые строки одним символом перевода строки и кодирует результат в UTF-8. Пустые строки в списке пропускаются. Функция возвращает `bytes`; исходный список не меняет.
+**Задача.** Напиши функцию `pack_messages(messages)`, которая объединяет непустые строки одним символом перевода строки и кодирует результат в UTF-8. Пустые строки в списке пропускаются. Функция возвращает `bytes`; исходный список не меняет.
 
-**Формат данных**
+**Формат данных.** Один аргумент `messages`: список строк.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Один аргумент `messages`: список строк. | Один объект `bytes`, содержащий оставшиеся сообщения через перевод строки в UTF-8. |
+**Ожидаемый результат.** Один объект `bytes`, содержащий оставшиеся сообщения через перевод строки в UTF-8.
 
 **Ограничения.** От 0 до 100 строк; каждая строка не содержит переводов строки.
 
@@ -2696,41 +2900,65 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 
 **Источник.** Авторская задача курса.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-5fb04f1040f3db45','functions-modules',NULL,NULL,'Добавь в show_menu() ещё один пункт.','code','Добавь в `show_menu()` ещё один пункт. Вызови функцию второй раз в конце ячейки.',NULL,NULL,NULL);
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-5fb04f1040f3db45','functions-modules',NULL,NULL,'Добавь в show_menu() ещё один пункт.','code','**Задача.** Добавь в `show_menu()` ещё один пункт. Вызови функцию второй раз в конце ячейки.
+
+**Ожидаемый результат.** В обоих вызовах `show_menu()` напечатано меню с добавленным пунктом.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-14b22c94ed334f52','functions-modules',NULL,NULL,'Создай функцию show_difference(first, second), которая печатает разность first - second.','code','Создай функцию `show_difference(first, second)`, которая печатает разность `first - second`. Проверь на двух парах чисел.',NULL,NULL,NULL);
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-14b22c94ed334f52','functions-modules',NULL,NULL,'Создай функцию show_difference(first, second), которая печатает разность first - second.','code','**Задача.** Создай функцию `show_difference(first, second)`, которая печатает разность `first - second`. Проверь на двух парах чисел.
+
+**Ожидаемый результат.** Для каждой из двух проверенных пар напечатана разность `first - second`.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-5cf405d4fe72d614','functions-modules',NULL,NULL,'Напиши multiply(first, second), которая возвращает произведение.','code','Напиши `multiply(first, second)`, которая возвращает произведение. Сохрани результат в переменную и выведи сообщение с f-строкой.',NULL,NULL,NULL);
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-5cf405d4fe72d614','functions-modules',NULL,NULL,'Напиши multiply(first, second), которая возвращает произведение.','code','**Задача.** Напиши `multiply(first, second)`, которая возвращает произведение. Сохрани результат в переменную и выведи сообщение с f-строкой.
+
+**Ожидаемый результат.** Функция возвращает произведение аргументов; оно сохранено в переменной и показано в сообщении с f-строкой.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-53bd103214a30647','functions-modules',NULL,NULL,'Напиши count_even(numbers), которая возвращает число чётных элементов и ничего не печатает.','code','Напиши `count_even(numbers)`, которая возвращает число чётных элементов и ничего не печатает. Для `[1, 2, 4]` ожидается 2, для `[]` — 0. Вывод добавь отдельно, после вызова функции.',NULL,NULL,NULL);
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-53bd103214a30647','functions-modules',NULL,NULL,'Напиши count_even(numbers), которая возвращает число чётных элементов и ничего не печатает.','code','**Задача.** Напиши `count_even(numbers)`, которая возвращает число чётных элементов и ничего не печатает. Вывод добавь отдельно, после вызова функции.
+
+**Ожидаемый результат.** `count_even([1, 2, 4])` возвращает `2`, а `count_even([])` — `0`; сама функция ничего не печатает.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-c2ce8432354dcd3a','functions-modules',NULL,NULL,'Добавь ветку elif, чтобы отдельно описать возраст 13 лет.','code','Добавь ветку `elif`, чтобы отдельно описать возраст 13 лет. Выбери порядок условий так, чтобы каждое значение попадало в нужную ветку.',NULL,NULL,NULL);
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-c2ce8432354dcd3a','functions-modules',NULL,NULL,'Добавь ветку elif, чтобы отдельно описать возраст 13 лет.','code','**Задача.** Добавь ветку `elif`, чтобы отдельно описать возраст 13 лет. Выбери порядок условий так, чтобы каждое значение попадало в нужную ветку.
+
+**Ожидаемый результат.** Возраст `13` попадает в отдельную ветку `elif`; остальные значения продолжают попадать в предусмотренные для них ветки.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-dacc81f60cb7782d','functions-modules',NULL,NULL,'Измени список и проверь подсчёт.','code','Измени список и проверь подсчёт. Измени условие так, чтобы считать оценки меньше четырёх.',NULL,NULL,NULL);
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-dacc81f60cb7782d','functions-modules',NULL,NULL,'Измени список и проверь подсчёт.','code','**Задача.** Измени список и проверь подсчёт. Измени условие так, чтобы считать оценки меньше четырёх.
+
+**Ожидаемый результат.** После изменения списка посчитаны оценки меньше четырёх; условие подсчёта соответствует именно этой границе.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-fba4b9ece58a1099','functions-modules',NULL,NULL,'Измени условие на number % 2 == 0, чтобы функция собирала чётные числа.','code','Измени условие на `number % 2 == 0`, чтобы функция собирала чётные числа. Для нуля это условие тоже верно.',NULL,NULL,NULL);
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-fba4b9ece58a1099','functions-modules',NULL,NULL,'Измени условие на number % 2 == 0, чтобы функция собирала чётные числа.','code','**Задача.** Измени условие на `number % 2 == 0`, чтобы функция собирала чётные числа. Для нуля это условие тоже верно.
+
+**Ожидаемый результат.** Функция собирает значения, для которых `number % 2 == 0`; ноль также попадает в результат.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-5f00e683c0e07786','functions-modules',NULL,NULL,'Добавь ученика в список и ещё одно слово.','code','Добавь ученика в список и ещё одно слово. Поменяй минимальную длину в вызове `count_long_words()`.',NULL,NULL,NULL);
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-5f00e683c0e07786','functions-modules',NULL,NULL,'Добавь ученика в список и ещё одно слово.','code','**Задача.** Добавь ученика в список и ещё одно слово. Поменяй минимальную длину в вызове `count_long_words()`.
+
+**Ожидаемый результат.** Новый ученик также выводится в списке приветствий; `count_long_words()` пересчитан по обновлённому списку слов с новым значением минимальной длины.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-3a190d127f954a1a','functions-modules',NULL,NULL,'Задание 1. Приветствие','code','Создай функцию `welcome()`, которая печатает две строки: приветствие и напоминание повторить код. Вызови её два раза.',NULL,NULL,NULL);
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-3a190d127f954a1a','functions-modules',NULL,NULL,'Задание 1. Приветствие','code','**Задача.** Создай функцию `welcome()`, которая печатает две строки: приветствие и напоминание повторить код. Вызови её два раза.
+
+**Ожидаемый результат.** Каждый вызов `welcome()` печатает две строки: приветствие и напоминание повторить код.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-9c889f322a95efe2','functions-modules',NULL,NULL,'Задание 2. Прямоугольник из символов','code','Создай функцию с параметрами `symbol` и `count`. Она должна напечатать символ `count` раз. Используй цикл `for` или умножение строки на число.',NULL,NULL,NULL);
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-9c889f322a95efe2','functions-modules',NULL,NULL,'Задание 2. Прямоугольник из символов','code','**Задача.** Создай функцию с параметрами `symbol` и `count`. Она должна напечатать символ `count` раз. Используй цикл `for` или умножение строки на число.
+
+**Ожидаемый результат.** Функция печатает символ ровно `count` раз; результат можно получить циклом или умножением строки.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-4a6818352f179176','functions-modules',NULL,NULL,'Задание 3. Больше ли число?','code','Создай функцию `is_bigger(number, border)`, которая возвращает `True`, если число больше границы, и `False` в противном случае. Используй её результат в `if`.',NULL,NULL,NULL);
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-4a6818352f179176','functions-modules',NULL,NULL,'Задание 3. Больше ли число?','code','**Задача.** Создай функцию `is_bigger(number, border)`, которая возвращает `True`, если число больше границы, и `False` в противном случае. Используй её результат в `if`.
+
+**Ожидаемый результат.** Функция возвращает `True`, только если `number > border`, иначе `False`; результат используется в ветвлении `if`.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-515f971dead5a4d3','functions-modules',NULL,NULL,'Задание 4. Сумма списка','code','Напиши функцию, которая принимает список чисел и возвращает их сумму. Не используй `sum()`: заведи переменную-сумму и сложи элементы циклом `for`.',NULL,NULL,NULL);
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-515f971dead5a4d3','functions-modules',NULL,NULL,'Задание 4. Сумма списка','code','**Задача.** Напиши функцию, которая принимает список чисел и возвращает их сумму. Не используй `sum()`: заведи переменную-сумму и сложи элементы циклом `for`.
+
+**Ожидаемый результат.** Функция возвращает сумму всех чисел списка, вычисленную циклом `for` без вызова `sum()`.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-22bc1c4d86d8d366','functions-modules',NULL,NULL,'Задание 5. Перенеси функции в модуль','code','Создай в `student_tools.py` две функции из предыдущих заданий. Импортируй их в ноутбук и проверь на новых значениях.',NULL,NULL,NULL);
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-22bc1c4d86d8d366','functions-modules',NULL,NULL,'Задание 5. Перенеси функции в модуль','code','**Задача.** Создай в `student_tools.py` любые две функции из заданий 1–4 этого же урока. Импортируй их в ноутбук и проверь на новых значениях.
+
+**Ожидаемый результат.** Обе выбранные функции находятся в `student_tools.py`, импортированы в ноутбук и успешно проверены на новых значениях.',NULL,NULL,NULL);
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-11b6b3cd7fc7b4ba','functions-modules',NULL,NULL,'Заставка клуба · обязательная','code','**Сюжет.** Терминал клуба показывает неизменную заставку.
 
-**Условие.** Напишите show_title() без параметров: она печатает «Клуб исследователей». Вызовите дважды.
+**Задача.** Напишите show_title() без параметров: она печатает «Клуб исследователей». Вызовите дважды.
 
-**Формат данных**
+**Формат данных.** Два последовательных вызова show_title(); input не нужен.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Два последовательных вызова show_title(); input не нужен. | Каждый вызов печатает одну строку. |
+**Ожидаемый результат.** Каждый вызов печатает одну строку.
 
 **Ограничения.** Функция не принимает аргументы и возвращает None.
 
@@ -2745,13 +2973,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-b1571abfe82cef85','functions-modules',NULL,NULL,'Меню терминала · обязательная','code','**Сюжет.** Посетитель выбирает действие по текстовому меню.
 
-**Условие.** show_menu() печатает три строки: «1. Каталог», «2. Помощь», «3. Выход».
+**Задача.** show_menu() печатает три строки: «1. Каталог», «2. Помощь», «3. Выход».
 
-**Формат данных**
+**Формат данных.** Вызов функции без аргументов.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Вызов функции без аргументов. | Три строки текста. |
+**Ожидаемый результат.** Три строки текста.
 
 **Ограничения.** Меню не спрашивает выбор и не запускает другие действия.
 
@@ -2766,13 +2992,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-ce88c04ad5c7c86b','functions-modules',NULL,NULL,'Приветствие участника · обязательная','code','**Сюжет.** Организатор готовит персональное приветствие.
 
-**Условие.** greet(name) возвращает строку «Привет, ИМЯ!», не печатая её.
+**Задача.** greet(name) возвращает строку «Привет, ИМЯ!», не печатая её.
 
-**Формат данных**
+**Формат данных.** Аргумент name — непустая строка.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Аргумент name — непустая строка. | Возвращаемая строка. |
+**Ожидаемый результат.** Возвращаемая строка.
 
 **Ограничения.** От 1 до 40 символов.
 
@@ -2787,13 +3011,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-4b8f850e96221277','functions-modules',NULL,NULL,'Экран из звёзд · повторение','code','**Сюжет.** На табло нужна прямоугольная заставка.
 
-**Условие.** show_rectangle(width, height) печатает прямоугольник из *. Используйте вложенные циклы.
+**Задача.** show_rectangle(width, height) печатает прямоугольник из *. Используйте вложенные циклы.
 
-**Формат данных**
+**Формат данных.** Два целых аргумента: ширина и высота.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Два целых аргумента: ширина и высота. | height строк шириной width. При нулевой высоте вывод пустой; при нулевой ширине строки пустые. |
+**Ожидаемый результат.** height строк шириной width. При нулевой высоте вывод пустой; при нулевой ширине строки пустые.
 
 **Ограничения.** 0 ≤ width,height ≤ 10; тему вложенных циклов нужно пройти до этой задачи.
 
@@ -2808,13 +3030,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-bccacb2bdc26e0c6','functions-modules',NULL,NULL,'Карточка занятия · по выбору','code','**Сюжет.** Учебный сервис собирает имя ученика и предмет.
 
-**Условие.** lesson_card(name, subject) возвращает строку «ИМЯ изучает ПРЕДМЕТ».
+**Задача.** lesson_card(name, subject) возвращает строку «ИМЯ изучает ПРЕДМЕТ».
 
-**Формат данных**
+**Формат данных.** Две непустые строки-аргумента.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Две непустые строки-аргумента. | Возвращаемая строка. |
+**Ожидаемый результат.** Возвращаемая строка.
 
 **Ограничения.** До 40 символов в каждой.
 
@@ -2829,13 +3049,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-789b60c2d7bc0340','functions-modules',NULL,NULL,'Площадь участка · по выбору','code','**Сюжет.** Квадратный участок описывается длиной стороны.
 
-**Условие.** square(side) возвращает квадрат стороны. Результат вызова используйте в f-строке «Площадь: X» при демонстрации.
+**Задача.** square(side) возвращает квадрат стороны. Результат вызова используйте в f-строке «Площадь: X» при демонстрации.
 
-**Формат данных**
+**Формат данных.** Целый аргумент side.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Целый аргумент side. | Функция возвращает целое число; в таблице приведены возвращаемые значения. |
+**Ожидаемый результат.** Функция возвращает целое число; в таблице приведены возвращаемые значения.
 
 **Ограничения.** 0 ≤ side ≤ 1000.
 
@@ -2850,13 +3068,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-84a4fdddbbcfacc6','functions-modules',NULL,NULL,'Парные наборы · по выбору','code','**Сюжет.** Склад хочет узнать, делится ли число изделий на пары.
 
-**Условие.** is_even(number) возвращает True для чётного целого, иначе False. Ноль считается чётным.
+**Задача.** is_even(number) возвращает True для чётного целого, иначе False. Ноль считается чётным.
 
-**Формат данных**
+**Формат данных.** Целый аргумент number.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Целый аргумент number. | Логическое значение. |
+**Ожидаемый результат.** Логическое значение.
 
 **Ограничения.** −1000 ≤ number ≤ 1000.
 
@@ -2872,13 +3088,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-e27bf17607a5a665','functions-modules',NULL,NULL,'Фамилия на пропуске · по выбору','code','**Сюжет.** Охрана объединяет имя и фамилию посетителя.
 
-**Условие.** make_full_name(first_name, last_name) возвращает имя, пробел и фамилию.
+**Задача.** make_full_name(first_name, last_name) возвращает имя, пробел и фамилию.
 
-**Формат данных**
+**Формат данных.** Две непустые строки-аргумента, без пробелов по краям.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Две непустые строки-аргумента, без пробелов по краям. | Возвращаемая строка. |
+**Ожидаемый результат.** Возвращаемая строка.
 
 **Ограничения.** До 40 символов в каждой.
 
@@ -2893,13 +3107,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-394d1f99f8c40a0f','functions-modules',NULL,NULL,'Режим теплицы · по выбору','code','**Сюжет.** До десяти градусов теплица работает в холодном режиме.
 
-**Условие.** describe_temperature(temp) возвращает «холодно», если температура меньше 10, иначе «тепло».
+**Задача.** describe_temperature(temp) возвращает «холодно», если температура меньше 10, иначе «тепло».
 
-**Формат данных**
+**Формат данных.** Целый аргумент temp.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Целый аргумент temp. | Возвращаемая строка. |
+**Ожидаемый результат.** Возвращаемая строка.
 
 **Ограничения.** −50 ≤ temp ≤ 50.
 
@@ -2914,13 +3126,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-708ae40bee73a628','functions-modules',NULL,NULL,'Короткие подписи · по выбору','code','**Сюжет.** На компактную этикетку помещаются слова короче пяти букв.
 
-**Условие.** count_short_words(words) возвращает количество подходящих слов. Пустые строки допустимы и считаются короткими.
+**Задача.** count_short_words(words) возвращает количество подходящих слов. Пустые строки допустимы и считаются короткими.
 
-**Формат данных**
+**Формат данных.** Список строк — аргумент функции.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Список строк — аргумент функции. | Целое число. Исходный список не изменяется. |
+**Ожидаемый результат.** Целое число. Исходный список не изменяется.
 
 **Ограничения.** До 50 строк, до 30 символов в каждой.
 
@@ -2935,13 +3145,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-f64b846501481ffb','functions-modules',NULL,NULL,'Выборка номеров · по выбору','code','**Сюжет.** Из списка номеров нужно получить отдельный список чётных.
 
-**Условие.** get_even_numbers(numbers) возвращает новый список чётных значений в исходном порядке; исходный список сохраняется.
+**Задача.** get_even_numbers(numbers) возвращает новый список чётных значений в исходном порядке; исходный список сохраняется.
 
-**Формат данных**
+**Формат данных.** Список целых чисел.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Список целых чисел. | Новый список, в том числе отдельный пустой при отсутствии элементов. |
+**Ожидаемый результат.** Новый список, в том числе отдельный пустой при отсутствии элементов.
 
 **Ограничения.** До 100 элементов от −100 до 100; повторы разрешены.
 
@@ -2956,13 +3164,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-2bb9230bdc9d9f4f','functions-modules',NULL,NULL,'Лучший результат · по выбору','code','**Сюжет.** Тренер выбирает самый высокий результат команды, в том числе при отрицательных значениях.
 
-**Условие.** best_result(numbers) возвращает максимум непустого списка. Используйте цикл и сравнения без max.
+**Задача.** best_result(numbers) возвращает максимум непустого списка. Используйте цикл и сравнения без max.
 
-**Формат данных**
+**Формат данных.** Непустой список целых чисел.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Непустой список целых чисел. | Одно возвращаемое целое число. |
+**Ожидаемый результат.** Одно возвращаемое целое число.
 
 **Ограничения.** 1–100 элементов от −1000 до 1000.
 
@@ -2977,13 +3183,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-a24417d5bccbbbb0','functions-modules',NULL,NULL,'Список на букву а · по выбору','code','**Сюжет.** Указатель выбирает названия, начинающиеся со строчной кириллической «а».
 
-**Условие.** starts_with_a(words) возвращает новый список подходящих строк. Пустая строка не подходит; регистр важен.
+**Задача.** starts_with_a(words) возвращает новый список подходящих строк. Пустая строка не подходит; регистр важен.
 
-**Формат данных**
+**Формат данных.** Список строк.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Список строк. | Список строк в исходном порядке. |
+**Ожидаемый результат.** Список строк в исходном порядке.
 
 **Ограничения.** До 30 строк длиной 0–40 символов.
 
@@ -2998,13 +3202,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-050a48ae366d8cd1','functions-modules',NULL,NULL,'Отчёт в модуле · по выбору','code','**Сюжет.** Журнал повторно использует одну функцию в разных программах.
 
-**Условие.** Создайте student_report.py с make_report(name, scores), возвращающей три строки: имя, количество оценок, число пятёрок. Импортируйте её в ячейке блокнота; модуль при импорте не должен печатать текст.
+**Задача.** Создайте student_report.py с make_report(name, scores), возвращающей три строки: имя, количество оценок, число пятёрок. Импортируйте её в ячейке блокнота; модуль при импорте не должен печатать текст.
 
-**Формат данных**
+**Формат данных.** Имя и список оценок — аргументы функции; модуль лежит рядом с рабочим блокнотом.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Имя и список оценок — аргументы функции; модуль лежит рядом с рабочим блокнотом. | Возвращаемая строка без перевода строки в конце. В таблице показан её текст, а не repr. |
+**Ожидаемый результат.** Возвращаемая строка без перевода строки в конце. В таблице показан её текст, а не repr.
 
 **Ограничения.** Имя непустое; до 30 целых оценок от 2 до 5.
 
@@ -3017,25 +3219,33 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 
 **Источник.** Авторская задача курса.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-15c2b37810681934','function-arguments-scope',NULL,NULL,'Напиши функцию, возвращающую новый список с добавленным предметом.','code','Напиши функцию, возвращающую новый список с добавленным предметом. После вызова исходный список должен остаться прежним. Используй `.copy()` и `return`; проверь также пустой список.',NULL,NULL,NULL);
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-15c2b37810681934','function-arguments-scope',NULL,NULL,'Напиши функцию, возвращающую новый список с добавленным предметом.','code','**Задача.** Напиши функцию, возвращающую новый список с добавленным предметом. После вызова исходный список должен остаться прежним. Используй `.copy()` и `return`; проверь также пустой список.
+
+**Ожидаемый результат.** Функция возвращает новый список с добавленным предметом, а переданный список остаётся без изменений; это работает и для пустого списка.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-cb1a0f013b2fb5cd','function-arguments-scope',NULL,NULL,'Задание 1. Площадь прямоугольника','code','Напиши функцию `rectangle_area(width, height)`, которая возвращает площадь. Добавь аннотации типов и docstring. Проверь функцию для двух разных прямоугольников.',NULL,NULL,NULL);
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-cb1a0f013b2fb5cd','function-arguments-scope',NULL,NULL,'Задание 1. Площадь прямоугольника','code','**Задача.** Напиши функцию `rectangle_area(width, height)`, которая возвращает площадь. Добавь аннотации типов и docstring. Проверь функцию для двух разных прямоугольников.
+
+**Ожидаемый результат.** Для двух прямоугольников функция возвращает произведение ширины на высоту; у функции есть аннотации типов и docstring.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-110a4f54edc37ccb','function-arguments-scope',NULL,NULL,'Задание 2. Приветствие с настройкой','code','Напиши функцию `greet(name, greeting="Привет")`. Она должна возвращать приветствие. Проверь вызов со значением по умолчанию и с другим приветствием.',NULL,NULL,NULL);
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-110a4f54edc37ccb','function-arguments-scope',NULL,NULL,'Задание 2. Приветствие с настройкой','code','**Задача.** Напиши функцию `greet(name, greeting="Привет")`. Она должна возвращать приветствие. Проверь вызов со значением по умолчанию и с другим приветствием.
+
+**Ожидаемый результат.** Вызов без второго аргумента использует `"Привет"`, а вызов с другим значением использует заданное приветствие; оба вызова возвращают строки.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-0202829cdcabae5e','function-arguments-scope',NULL,NULL,'Задание 3. Среднее значение','code','Напиши функцию `average(*numbers)`, которая возвращает среднее арифметическое переданных чисел. Подумай, что вернуть, если чисел нет.',NULL,NULL,NULL);
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-0202829cdcabae5e','function-arguments-scope',NULL,NULL,'Задание 3. Среднее значение','code','**Задача.** Напиши функцию `average(*numbers)`, которая возвращает среднее арифметическое переданных чисел. Подумай, что вернуть, если чисел нет.
+
+**Ожидаемый результат.** Для непустого набора функция возвращает среднее арифметическое. Поведение при отсутствии аргументов выбрано и явно отражено в реализации.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-41268a007728690b','function-arguments-scope',NULL,NULL,'Задание 4. Карточка ученика','code','Напиши функцию `print_student(name, **details)`. Она должна вывести имя ученика, а затем все дополнительные сведения из словаря `details`.',NULL,NULL,NULL);
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-41268a007728690b','function-arguments-scope',NULL,NULL,'Задание 4. Карточка ученика','code','**Задача.** Напиши функцию `print_student(name, **details)`. Она должна вывести имя ученика, а затем все дополнительные сведения из словаря `details`.
+
+**Ожидаемый результат.** Сначала напечатано имя ученика, затем — все переданные в `details` сведения.',NULL,NULL,NULL);
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-61aed5fa9ea1b98c','function-arguments-scope',NULL,NULL,'Ценник магазина · обязательная','code','**Сюжет.** Одинаковая функция печати цены должна поддерживать разные валюты.
 
-**Условие.** format_price(price, currency="₽") возвращает строку с двумя знаками после точки и валютой через пробел. Добавьте docstring и аннотации типов.
+**Задача.** format_price(price, currency="₽") возвращает строку с двумя знаками после точки и валютой через пробел. Добавьте docstring и аннотации типов.
 
-**Формат данных**
+**Формат данных.** price — int или float, currency — непустая строка; параметры можно передать по имени.
 
-| Входные данные | Выходные данные |
-|---|---|
-| price — int или float, currency — непустая строка; параметры можно передать по имени. | Возвращаемая строка, input и print внутри функции не нужны. |
+**Ожидаемый результат.** Возвращаемая строка, input и print внутри функции не нужны.
 
 **Ограничения.** 0 ≤ price ≤ 1000000; currency до 10 символов.
 
@@ -3050,13 +3260,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-5209441a17b02192','function-arguments-scope',NULL,NULL,'Кассовый расчёт · обязательная','code','**Сюжет.** Касса поддерживает сложение и вычитание двух целых сумм.
 
-**Условие.** calculate(a, b, *, operation="сложение") возвращает a+b либо a−b для operation="вычитание". Параметр operation только именованный.
+**Задача.** calculate(a, b, *, operation="сложение") возвращает a+b либо a−b для operation="вычитание". Параметр operation только именованный.
 
-**Формат данных**
+**Формат данных.** Два целых аргумента и необязательный именованный operation.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Два целых аргумента и необязательный именованный operation. | Возвращаемое целое число. |
+**Ожидаемый результат.** Возвращаемое целое число.
 
 **Ограничения.** −1000 ≤ a,b ≤ 1000; допустимы только две указанные операции.
 
@@ -3071,13 +3279,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-76d349d461531574','function-arguments-scope',NULL,NULL,'Самая длинная подпись · обязательная','code','**Сюжет.** Дизайнер передаёт функции произвольное число подписей.
 
-**Условие.** find_longest_word(*words) возвращает первую из самых длинных строк. При отсутствии аргументов возвращает пустую строку.
+**Задача.** find_longest_word(*words) возвращает первую из самых длинных строк. При отсутствии аргументов возвращает пустую строку.
 
-**Формат данных**
+**Формат данных.** Позиционные аргументы-строки.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Позиционные аргументы-строки. | Возвращаемая строка. |
+**Ожидаемый результат.** Возвращаемая строка.
 
 **Ограничения.** От 0 до 20 строк длиной до 40 символов.
 
@@ -3092,13 +3298,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-7f60d1dbe2836259','function-arguments-scope',NULL,NULL,'Паспорт экспоната · повторение','code','**Сюжет.** У каждого экспоната может быть свой набор характеристик.
 
-**Условие.** describe(title, **features) возвращает заголовок, затем строки «ключ: значение» в порядке передачи характеристик.
+**Задача.** describe(title, **features) возвращает заголовок, затем строки «ключ: значение» в порядке передачи характеристик.
 
-**Формат данных**
+**Формат данных.** Непустой title и дополнительные именованные значения-строки.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Непустой title и дополнительные именованные значения-строки. | Одна строка с переводами строк внутри; последнего перевода строки нет. |
+**Ожидаемый результат.** Одна строка с переводами строк внутри; последнего перевода строки нет.
 
 **Ограничения.** До 10 характеристик; ключи — латинские идентификаторы, строки без переводов строк.
 
@@ -3113,13 +3317,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-b9140958379ce061','function-arguments-scope',NULL,NULL,'Пароль хранилища · по выбору','code','**Сюжет.** Хранилищу нужен пароль минимум из восьми символов с хотя бы одной ASCII-цифрой.
 
-**Условие.** valid_password(password) возвращает True при выполнении обоих требований. Остальные символы разрешены.
+**Задача.** valid_password(password) возвращает True при выполнении обоих требований. Остальные символы разрешены.
 
-**Формат данных**
+**Формат данных.** Аргумент-строка.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Аргумент-строка. | Логическое значение. |
+**Ожидаемый результат.** Логическое значение.
 
 **Ограничения.** От 0 до 100 символов; цифры в этой задаче только 0–9, символ ² не считается цифрой.
 
@@ -3135,13 +3337,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-ab1cd02c21cd8fd3','function-arguments-scope',NULL,NULL,'Независимый прогноз · по выбору','code','**Сюжет.** Аналитику нужна удвоенная копия измерений без изменения исходника.
 
-**Условие.** double_values(values) возвращает новый список удвоенных чисел. Исходник не меняется. Добавьте docstring и аннотации.
+**Задача.** double_values(values) возвращает новый список удвоенных чисел. Исходник не меняется. Добавьте docstring и аннотации.
 
-**Формат данных**
+**Формат данных.** Список целых чисел — аргумент.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Список целых чисел — аргумент. | Новый список. Повторные вызовы независимы. |
+**Ожидаемый результат.** Новый список. Повторные вызовы независимы.
 
 **Ограничения.** До 100 элементов от −100 до 100.
 
@@ -3156,13 +3356,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-4d2282a339848101','function-arguments-scope',NULL,NULL,'История запросов · по выбору','code','**Сюжет.** У каждого нового запроса без переданной истории должна быть собственная запись.
 
-**Условие.** remember(item, history=None) возвращает список с добавленным item. Если history передан, изменяет и возвращает именно этот список; если нет — создаёт новый.
+**Задача.** remember(item, history=None) возвращает список с добавленным item. Если history передан, изменяет и возвращает именно этот список; если нет — создаёт новый.
 
-**Формат данных**
+**Формат данных.** item — строка; history — список строк или None.
 
-| Входные данные | Выходные данные |
-|---|---|
-| item — строка; history — список строк или None. | Список истории; два вызова без history не должны делить общий список. |
+**Ожидаемый результат.** Список истории; два вызова без history не должны делить общий список.
 
 **Ограничения.** До 30 записей; строки до 40 символов.
 
@@ -3175,17 +3373,17 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 
 **Источник.** Авторская задача курса.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-a530f77a159646ba','sorting-callbacks',NULL,NULL,'Практика перед выполнением ДЗ','text','Перед сортировкой письменно ответь: что является одним элементом? Какой ключ вернёт функция для него? Что происходит при равенстве ключей?',NULL,NULL,NULL);
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-a530f77a159646ba','sorting-callbacks',NULL,NULL,'Практика перед выполнением ДЗ','text','**Задача.** Перед сортировкой письменно ответь: что является одним элементом? Какой ключ вернёт функция для него? Что происходит при равенстве ключей?
+
+**Ожидаемый результат.** В письменном ответе указаны сортируемый элемент, значение ключа для него и поведение стабильной сортировки при равных ключах.',NULL,NULL,NULL);
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-3db9aab5aac9b8e5','sorting-callbacks',NULL,NULL,'Короткие названия · обязательная','code','**Сюжет.** Редактор списка вывесок хочет сначала показать самые короткие названия.
 
-**Условие.** Напиши `sort_by_length(words)`, которая возвращает новый список слов в порядке увеличения длины. Если длины совпали, слова должны идти в исходном взаимном порядке. Исходный список не меняй.
+**Задача.** Напиши `sort_by_length(words)`, которая возвращает новый список слов в порядке увеличения длины. Если длины совпали, слова должны идти в исходном взаимном порядке. Исходный список не меняй.
 
-**Формат данных**
+**Формат данных.** Список строк `words`.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Список строк `words`. | Новый список строк, отсортированный по длине. |
+**Ожидаемый результат.** Новый список строк, отсортированный по длине.
 
 **Ограничения.** От 0 до 100 строк; строка может быть пустой.
 
@@ -3200,13 +3398,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-e0338140200b0811','sorting-callbacks',NULL,NULL,'Рейтинг игроков · обязательная','code','**Сюжет.** После турнира ведущий публикует список участников по убыванию баллов.
 
-**Условие.** Напиши `rank_players(players)`. Верни новый список записей по убыванию `score`. При равных баллах порядок игроков из исходных данных сохраняется.
+**Задача.** Напиши `rank_players(players)`. Верни новый список записей по убыванию `score`. При равных баллах порядок игроков из исходных данных сохраняется.
 
-**Формат данных**
+**Формат данных.** Список словарей с полями `name` (строка) и `score` (целое).
 
-| Входные данные | Выходные данные |
-|---|---|
-| Список словарей с полями `name` (строка) и `score` (целое). | Новый список словарей в порядке рейтинга. |
+**Ожидаемый результат.** Новый список словарей в порядке рейтинга.
 
 **Ограничения.** От 0 до 100 игроков; имена могут повторяться; баллы от 0 до 1000.
 
@@ -3221,13 +3417,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-01f5041e174b58fe','sorting-callbacks',NULL,NULL,'Каталог кружков · обязательная','code','**Сюжет.** Секретарь школы сортирует кружки по дню недели, а внутри одного дня — по названию.
 
-**Условие.** Напиши `sort_clubs(clubs)`, которая возвращает новый список записей по порядку дней недели: понедельник, вторник, среда, четверг, пятница; внутри дня — по алфавиту `name`. Для сравнения дня используй список `day_order = ["понедельник", "вторник", "среда", "четверг", "пятница"]`. Исходный список не меняй.
+**Задача.** Напиши `sort_clubs(clubs)`, которая возвращает новый список записей по порядку дней недели: понедельник, вторник, среда, четверг, пятница; внутри дня — по алфавиту `name`. Для сравнения дня используй список `day_order = ["понедельник", "вторник", "среда", "четверг", "пятница"]`. Исходный список не меняй.
 
-**Формат данных**
+**Формат данных.** Список словарей `{day, name}`; `day` — одна из пяти строк `day_order`.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Список словарей `{day, name}`; `day` — одна из пяти строк `day_order`. | Новый список записей, отсортированный по дню и названию. |
+**Ожидаемый результат.** Новый список записей, отсортированный по дню и названию.
 
 **Ограничения.** Не более 50 кружков; названия непустые; регистр учитывается обычным образом Python.
 
@@ -3242,13 +3436,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-96e2d8d76f6f98ef','sorting-callbacks',NULL,NULL,'Сроки сдачи · повторение','code','**Сюжет.** Классный руководитель сортирует список дел по оставшимся дням.
 
-**Условие.** Напиши `urgent_tasks(tasks)`, возвращающую новый список названий задач с количеством дней `days` меньше либо равным `limit`. Сохрани исходный порядок выбранных задач.
+**Задача.** Напиши `urgent_tasks(tasks)`, возвращающую новый список названий задач с количеством дней `days` меньше либо равным `limit`. Сохрани исходный порядок выбранных задач.
 
-**Формат данных**
+**Формат данных.** Список словарей `{name, days}` и целое `limit`.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Список словарей `{name, days}` и целое `limit`. | Список строк `name` для задач, срок которых не превышает `limit`. |
+**Ожидаемый результат.** Список строк `name` для задач, срок которых не превышает `limit`.
 
 **Ограничения.** Список может быть пустым; `days` и `limit` неотрицательны.
 
@@ -3261,25 +3453,31 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 
 **Источник.** Авторская задача курса.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-62c510a36b70e810','oop-basics',NULL,NULL,'Создай третий объект hero3 с собственным именем и здоровьем.','code','Создай третий объект `hero3` с собственным именем и здоровьем.',NULL,NULL,NULL);
---> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-f678ae85565b601d','oop-basics',NULL,NULL,'Добавь атрибут level в __init__, передай уровень при создании двух героев и выведи его.','code','Добавь атрибут `level` в `__init__`, передай уровень при создании двух героев и выведи его.',NULL,NULL,NULL);
---> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-ab0cd5fde096b350','oop-basics',NULL,NULL,'Практика: Объектно-ориентированное программирование · 2','code','Добавь метод `status()`, который возвращает строку `"Готов к игре"`, если здоровье больше нуля, и `"Нужна помощь"` в противном случае.',NULL,NULL,NULL);
---> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-17818009e00b3dec','oop-basics',NULL,NULL,'Добавь в класс метод add_item(self, item), который добавляет предмет в self.items через append().','code','Добавь в класс метод `add_item(self, item)`, который добавляет предмет в `self.items` через `append()`. Вызови метод для одного героя и проверь список методом `show_items()`.
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-62c510a36b70e810','oop-basics',NULL,NULL,'Создай третий объект hero3 с собственным именем и здоровьем.','code','**Задача.** Создай третий объект `hero3` с собственным именем и здоровьем.
 
-Пример вызова должен выглядеть так: `hero2.add_item("карта")`.',NULL,NULL,NULL);
+**Ожидаемый результат.** Создан и выведен объект `hero3` с собственными значениями имени и здоровья; данные `hero1` и `hero2` не подменяют его атрибуты.',NULL,NULL,NULL);
+--> statement-breakpoint
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-f678ae85565b601d','oop-basics',NULL,NULL,'Добавь атрибут level в __init__, передай уровень при создании двух героев и выведи его.','code','**Задача.** Добавь атрибут `level` в `__init__`, передай уровень при создании двух героев и выведи его.
+
+**Ожидаемый результат.** У двух героев есть атрибут `level` со значениями, переданными при создании; значения выведены.',NULL,NULL,NULL);
+--> statement-breakpoint
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-ab0cd5fde096b350','oop-basics',NULL,NULL,'Практика: Объектно-ориентированное программирование · 2','code','**Задача.** Добавь метод `status()`, который возвращает строку `"Готов к игре"`, если здоровье больше нуля, и `"Нужна помощь"` в противном случае.
+
+**Ожидаемый результат.** `status()` возвращает `"Готов к игре"` при здоровье больше нуля и `"Нужна помощь"` при нулевом или отрицательном здоровье.',NULL,NULL,NULL);
+--> statement-breakpoint
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-17818009e00b3dec','oop-basics',NULL,NULL,'Добавь в класс метод add_item(self, item), который добавляет предмет в self.items через append().','code','**Задача.** Добавь в класс метод `add_item(self, item)`, который добавляет предмет в `self.items` через `append()`. Вызови метод для одного героя и проверь список методом `show_items()`.
+
+Пример вызова должен выглядеть так: `hero2.add_item("карта")`.
+
+**Ожидаемый результат.** Вызов `hero2.add_item("карта")` добавляет предмет в конец `hero2.items`; `show_items()` показывает обновлённый список. В примере `карта` уже была в инвентаре, поэтому после добавления она встречается дважды.',NULL,NULL,NULL);
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-42f501e6da6382fd','oop-basics',NULL,NULL,'Журнал ученика · обязательная','code','**Сюжет.** Электронный журнал хранит отдельную оценку каждого ученика.
 
-**Условие.** Создайте Student(name, grade), метод show_info() печатает «ИМЯ: ОЦЕНКА», change_grade(new_grade) меняет только текущего ученика.
+**Задача.** Создайте Student(name, grade), метод show_info() печатает «ИМЯ: ОЦЕНКА», change_grade(new_grade) меняет только текущего ученика.
 
-**Формат данных**
+**Формат данных.** Создание объектов и вызовы методов из примеров; input не нужен.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Создание объектов и вызовы методов из примеров; input не нужен. | Вывод show_info(); данные одного объекта не влияют на другой. |
+**Ожидаемый результат.** Вывод show_info(); данные одного объекта не влияют на другой.
 
 **Ограничения.** Имя непустое; оценки целые от 2 до 5. Методы изменения возвращают None.
 
@@ -3294,13 +3492,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-2e85c372b1fc9869','oop-basics',NULL,NULL,'Баллы игроков · обязательная','code','**Сюжет.** В игре каждому участнику начисляют собственные баллы.
 
-**Условие.** Player(name, score=0) хранит имя и баллы; add_points(amount) прибавляет баллы данному объекту.
+**Задача.** Player(name, score=0) хранит имя и баллы; add_points(amount) прибавляет баллы данному объекту.
 
-**Формат данных**
+**Формат данных.** Создание объектов и вызовы; после них напечатайте name и score через пробел.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Создание объектов и вызовы; после них напечатайте name и score через пробел. | Одна строка на игрока в порядке создания. |
+**Ожидаемый результат.** Одна строка на игрока в порядке создания.
 
 **Ограничения.** 0 ≤ исходные баллы ≤ 1000; 1 ≤ amount ≤ 100.
 
@@ -3315,13 +3511,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-1e249f80787d5802','oop-basics',NULL,NULL,'Игра с питомцем · обязательная','code','**Сюжет.** У каждого питомца есть запас энергии для игр.
 
-**Условие.** Pet(name, energy) и play(amount) уменьшают энергию, но не ниже нуля. has_energy() возвращает, осталась ли энергия.
+**Задача.** Pet(name, energy) и play(amount) уменьшают энергию, но не ниже нуля. has_energy() возвращает, осталась ли энергия.
 
-**Формат данных**
+**Формат данных.** Начальная энергия и затраты целые.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Начальная энергия и затраты целые. | В примерах показаны energy и результат has_energy() после вызовов. |
+**Ожидаемый результат.** В примерах показаны energy и результат has_energy() после вызовов.
 
 **Ограничения.** 0 ≤ energy ≤ 100; 0 ≤ amount ≤ 100; name непустой.
 
@@ -3334,17 +3528,25 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 
 **Источник.** Авторская задача курса.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-0d847b1dc3a09e20','oop-basics',NULL,NULL,'Перекличка класса · повторение','code','**Сюжет.** Учитель хранит несколько учеников в одном списке.
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-0d847b1dc3a09e20','oop-basics',NULL,NULL,'Перекличка класса · повторение','code','**Сюжет.** Учитель хранит нескольких учеников в одном списке.
 
-**Условие.** Используйте Student из первой задачи. Создайте список по записям и вызовите show_info() у каждого через цикл.
+**Задача.** Реализуй `print_class(records)`. Каждый элемент `records` — пара `(имя, оценка)`. Для каждой пары создай объект `Student` и вызови его метод `show_info()`. Используй этот интерфейс класса:
 
-**Формат данных**
+```python
+class Student:
+    def __init__(self, name, grade):
+        self.name = name
+        self.grade = grade
 
-| Входные данные | Выходные данные |
-|---|---|
-| Аргумент records — список пар (имя, оценка) для функции print_class(records). | Карточки по одной на строке, порядок сохраняется; пустой список даёт пустой вывод. |
+    def show_info(self):
+        print(f"{self.name}: {self.grade}")
+```
 
-**Ограничения.** До 30 записей; оценки 2–5.
+**Формат данных.** `records` — список пар `(имя, оценка)`.
+
+**Ожидаемый результат.** Для каждой записи печатается одна строка в исходном порядке, например для `[(''Аня'', 5), (''Ян'', 4)]` выводится `Аня: 5` и `Ян: 4`. Для пустого списка ничего не выводится.
+
+**Ограничения.** До 30 записей; оценки — целые числа от 2 до 5.
 
 **Примеры**
 
@@ -3357,13 +3559,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-a2d182603290a17a','oop-basics',NULL,NULL,'Лечение героя · по выбору','code','**Сюжет.** Здоровье героя не должно превышать максимальный запас.
 
-**Условие.** Создайте Hero(name, health, max_health) и heal(amount). Метод увеличивает здоровье до max_health, но не выше.
+**Задача.** Создайте Hero(name, health, max_health) и heal(amount). Метод увеличивает здоровье до max_health, но не выше.
 
-**Формат данных**
+**Формат данных.** Параметры конструктора и вызов heal.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Параметры конструктора и вызов heal. | В примерах выводится атрибут health после лечения. |
+**Ожидаемый результат.** В примерах выводится атрибут health после лечения.
 
 **Ограничения.** 0 ≤ health ≤ max_health ≤ 1000; amount ≥ 0.
 
@@ -3378,13 +3578,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-bc2b6ed47b9d5a50','oop-basics',NULL,NULL,'Чтение книги · по выбору','code','**Сюжет.** Приложение считает непрочитанные страницы каждой книги.
 
-**Условие.** Book(title, pages) хранит remaining=pages. read(pages) уменьшает remaining, но не ниже нуля; две книги независимы.
+**Задача.** Book(title, pages) хранит remaining=pages. read(pages) уменьшает remaining, но не ниже нуля; две книги независимы.
 
-**Формат данных**
+**Формат данных.** Создание книги и вызовы read.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Создание книги и вызовы read. | В таблице показано remaining после чтения. |
+**Ожидаемый результат.** В таблице показано remaining после чтения.
 
 **Ограничения.** Название непустое; 0 ≤ начальные pages ≤ 10000; за один вызов читают неотрицательное целое число страниц.
 
@@ -3397,17 +3595,27 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 
 **Источник.** Авторская задача курса.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-0b464cc57d7b8ef7','oop-basics',NULL,NULL,'Готовые к игре · по выбору','code','**Сюжет.** Приют показывает имена питомцев, у которых ещё есть энергия.
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-0b464cc57d7b8ef7','oop-basics',NULL,NULL,'Готовые к игре · по выбору','code','**Сюжет.** Приют показывает имена питомцев, у которых осталась энергия.
 
-**Условие.** Используйте Pet из третьей задачи. active_pets(pets) возвращает список имён с положительной энергией.
+**Задача.** Реализуй `active_pets(pets)`, которая возвращает новый список имён питомцев с положительной энергией. Для проверки используй объекты с таким интерфейсом:
 
-**Формат данных**
+```python
+class Pet:
+    def __init__(self, name, energy):
+        self.name = name
+        self.energy = energy
 
-| Входные данные | Выходные данные |
-|---|---|
-| Список объектов Pet. | Новый список имён; объекты не меняются. |
+    def has_energy(self):
+        return self.energy > 0
+```
 
-**Ограничения.** До 20 объектов; порядок сохраняется.
+Добавь в результат имя каждого питомца, для которого `has_energy()` возвращает `True`. Не изменяй исходные объекты.
+
+**Формат данных.** `pets` — список объектов `Pet`.
+
+**Ожидаемый результат.** Возвращается список имён питомцев с положительной энергией в исходном порядке. Например, `active_pets([Pet(''Кот'', 0), Pet(''Пёс'', 3)])` возвращает `[''Пёс'']`; для пустого списка возвращается `[]`.
+
+**Ограничения.** До 20 объектов. Питомец с `energy == 0` не включается в результат.
 
 **Примеры**
 
@@ -3418,17 +3626,17 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 
 **Источник.** Авторская задача курса.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-b31b29a35c98ce38','oop-composition-inheritance',NULL,NULL,'Добавь __str__ классу Player, чтобы он возвращал Имя: N очков.','code','Добавь `__str__` классу `Player`, чтобы он возвращал `Имя: N очков`. Затем добавь `__repr__`, содержащий название класса и аргументы, нужные для описания игрока.',NULL,NULL,NULL);
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-b31b29a35c98ce38','oop-composition-inheritance',NULL,NULL,'Добавь __str__ классу Player, чтобы он возвращал Имя: N очков.','code','**Задача.** Добавь `__str__` классу `Player`, чтобы он возвращал `Имя: N очков`. Затем добавь `__repr__`, содержащий название класса и аргументы, нужные для описания игрока.
+
+**Ожидаемый результат.** `str(player)` возвращает строку вида `Имя: N очков`; `repr(player)` показывает класс `Player` и значения `name` и `score` в форме, полезной для описания объекта.',NULL,NULL,NULL);
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-8276f511fd4ec002','oop-composition-inheritance',NULL,NULL,'Состав команды · обязательная','code','**Сюжет.** Тренер ведёт список участников и хочет получить общий счёт команды.
 
-**Условие.** Создайте `Player(name, score)` и `Team(name, players)`. Метод `total_score()` возвращает сумму очков. Конструктор команды сохраняет отдельную копию контейнера списка, но не копирует объекты игроков.
+**Задача.** Создайте `Player(name, score)` и `Team(name, players)`. Метод `total_score()` возвращает сумму очков. Конструктор команды сохраняет отдельную копию контейнера списка, но не копирует объекты игроков.
 
-**Формат данных**
+**Формат данных.** Строка имени команды и список объектов `Player`.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Строка имени команды и список объектов `Player`. | Объект `Team`; `total_score()` возвращает целое число. |
+**Ожидаемый результат.** Объект `Team`; `total_score()` возвращает целое число.
 
 **Ограничения.** До 20 игроков; очки неотрицательные целые. Для пустой команды сумма равна 0.
 
@@ -3443,13 +3651,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-9a48c0b76a7f186d','oop-composition-inheritance',NULL,NULL,'Безопасный кошелёк · обязательная','code','**Сюжет.** Приложение не должно разрешать снять больше денег, чем есть на счёте.
 
-**Условие.** Создайте `Wallet(balance)`, метод `withdraw(amount)` возвращает `True` и списывает сумму при успешном снятии. Иначе возвращает `False`, не меняя баланс.
+**Задача.** Создайте `Wallet(balance)`, метод `withdraw(amount)` возвращает `True` и списывает сумму при успешном снятии. Иначе возвращает `False`, не меняя баланс.
 
-**Формат данных**
+**Формат данных.** Начальный баланс и последовательность сумм для снятия.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Начальный баланс и последовательность сумм для снятия. | Для каждого снятия — результат `True`/`False` и текущий баланс. |
+**Ожидаемый результат.** Для каждого снятия — результат `True`/`False` и текущий баланс.
 
 **Ограничения.** Начальный баланс и суммы — неотрицательные целые; сумма 0 считается недопустимой.
 
@@ -3464,13 +3670,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-c0383d1222f0d364','oop-composition-inheritance',NULL,NULL,'Карточка книги · обязательная','code','**Сюжет.** Библиотекарь хочет видеть короткую карточку книги и подробную запись для отладки.
 
-**Условие.** Для `Book(title, pages)` реализуйте `__str__`, возвращающий `Название — N стр.`, и `__repr__`, возвращающий строку вида `Book(title=''...'', pages=N)`. Не вызывайте `print()` внутри специальных методов.
+**Задача.** Для `Book(title, pages)` реализуйте `__str__`, возвращающий `Название — N стр.`, и `__repr__`, возвращающий строку вида `Book(title=''...'', pages=N)`. Не вызывайте `print()` внутри специальных методов.
 
-**Формат данных**
+**Формат данных.** Название книги и целое число страниц.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Название книги и целое число страниц. | `str(book)` — короткая карточка; `repr(book)` — подробное представление. |
+**Ожидаемый результат.** `str(book)` — короткая карточка; `repr(book)` — подробное представление.
 
 **Ограничения.** Название непустое, страницы положительные; в названии нет кавычки `''`.
 
@@ -3485,13 +3689,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-0619d5f240627bfa','oop-composition-inheritance',NULL,NULL,'Уведомления · повторение','code','**Сюжет.** Сервис отправляет обычные сообщения и письма с адресом получателя.
 
-**Условие.** Реализуйте базовый класс `Message(text)` с методом `deliver()`, затем `EmailMessage(text, address)`, который наследуется от `Message` и переопределяет `deliver()`. Используйте `super().__init__(text)`.
+**Задача.** Реализуйте базовый класс `Message(text)` с методом `deliver()`, затем `EmailMessage(text, address)`, который наследуется от `Message` и переопределяет `deliver()`. Используйте `super().__init__(text)`.
 
-**Формат данных**
+**Формат данных.** Текст сообщения; для письма — также адрес.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Текст сообщения; для письма — также адрес. | `Message.deliver()` возвращает `Сообщение: ТЕКСТ`; `EmailMessage.deliver()` — `Письмо для АДРЕС: ТЕКСТ`. |
+**Ожидаемый результат.** `Message.deliver()` возвращает `Сообщение: ТЕКСТ`; `EmailMessage.deliver()` — `Письмо для АДРЕС: ТЕКСТ`.
 
 **Ограничения.** Текст и адрес непустые строки.
 
@@ -3506,23 +3708,29 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 
 **Источник.** Авторская задача курса.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-c3b7b504b655f4a7','errors-debugging',NULL,NULL,'Задание 1. Безопасное преобразование','code','Попроси пользователя ввести целое число. Перехвати `ValueError` и покажи понятную подсказку, если ввод не удалось преобразовать.',NULL,NULL,NULL);
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-c3b7b504b655f4a7','errors-debugging',NULL,NULL,'Задание 1. Безопасное преобразование','code','**Задача.** Попроси пользователя ввести целое число. Перехвати `ValueError` и покажи понятную подсказку, если ввод не удалось преобразовать.
+
+**Ожидаемый результат.** Целое число преобразуется и принимается; при вводе, который нельзя преобразовать, обработчик `ValueError` показывает понятную подсказку без необработанного traceback.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-d430056eba93d1fb','errors-debugging',NULL,NULL,'Задание 2. Деление двух чисел','code','Попроси ввести делимое и делитель. Обработай отдельно неверный числовой ввод и деление на ноль. Если всё получилось, выведи частное.',NULL,NULL,NULL);
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-d430056eba93d1fb','errors-debugging',NULL,NULL,'Задание 2. Деление двух чисел','code','**Задача.** Попроси ввести делимое и делитель. Обработай отдельно неверный числовой ввод и деление на ноль. Если всё получилось, выведи частное.
+
+**Ожидаемый результат.** Неверный числовой ввод и деление на ноль обрабатываются раздельно; при корректных числах на экран выводится частное.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-6f4d3289d097e7d3','errors-debugging',NULL,NULL,'Задание 3. Найди логическую ошибку','code','Функция должна возвращать количество положительных чисел. Сейчас в ней есть ошибка: программа выполняется, но ответ неверный. Исправь её и проверь на нескольких списках.',NULL,NULL,NULL);
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-6f4d3289d097e7d3','errors-debugging',NULL,NULL,'Задание 3. Найди логическую ошибку','code','**Задача.** Функция должна возвращать количество положительных чисел. Сейчас в ней есть ошибка: программа выполняется, но ответ неверный. Исправь её и проверь на нескольких списках.
+
+**Ожидаемый результат.** `count_positive([-2, 0, 5, 7])` возвращает `2`, и функция правильно считает положительные числа в других проверенных списках.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-4597626e975bc91f','errors-debugging',NULL,NULL,'Задание 4. Проверка возраста','code','Напиши функцию `check_age(age)`. Если возраст отрицательный, подними `ValueError`. Иначе верни `True`, если человеку не меньше 18 лет, и `False` в остальных случаях. Вызови функцию внутри `try` и обработай ошибку.',NULL,NULL,NULL);
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-4597626e975bc91f','errors-debugging',NULL,NULL,'Задание 4. Проверка возраста','code','**Задача.** Напиши функцию `check_age(age)`. Если возраст отрицательный, подними `ValueError`. Иначе верни `True`, если человеку не меньше 18 лет, и `False` в остальных случаях. Вызови функцию внутри `try` и обработай ошибку.
+
+**Ожидаемый результат.** Для отрицательного возраста возникает и обрабатывается `ValueError`; для неотрицательного функция возвращает `True` при возрасте от 18 лет и `False` при меньшем возрасте.',NULL,NULL,NULL);
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-2bc2418a2339d1e1','errors-debugging',NULL,NULL,'Возраст для заявки · обязательная','code','**Сюжет.** Оператор может ошибиться при вводе года рождения.
 
-**Условие.** Прочитайте год. Если int не может преобразовать строку, выведите ошибку. Иначе выведите возраст к концу 2026 года. Повторного ввода нет.
+**Задача.** Прочитайте год. Если int не может преобразовать строку, выведите ошибку. Иначе выведите возраст к концу 2026 года. Повторного ввода нет.
 
-**Формат данных**
+**Формат данных.** Одна строка.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Одна строка. | Целый возраст либо «Ошибка ввода». |
+**Ожидаемый результат.** Целый возраст либо «Ошибка ввода».
 
 **Ограничения.** Корректное число находится в 1900…2026; остальные строки не преобразуются в int.
 
@@ -3537,13 +3745,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-48db32a56136f77f','errors-debugging',NULL,NULL,'Ячейка склада · обязательная','code','**Сюжет.** На складе хранится список ["чай", "сок", "вода"].
 
-**Условие.** Прочитайте индекс и выведите элемент. Обработайте ValueError и IndexError разными сообщениями.
+**Задача.** Прочитайте индекс и выведите элемент. Обработайте ValueError и IndexError разными сообщениями.
 
-**Формат данных**
+**Формат данных.** Одна строка индекса.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Одна строка индекса. | Название; при неверном числе «Не число»; при выходе за границы «Нет ячейки». |
+**Ожидаемый результат.** Название; при неверном числе «Не число»; при выходе за границы «Нет ячейки».
 
 **Ограничения.** Если число целое, оно от −10 до 10; отрицательная индексация Python разрешена.
 
@@ -3559,13 +3765,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-34a547e237c8e48d','errors-debugging',NULL,NULL,'Поиск участника · обязательная','code','**Сюжет.** Справочник содержит {"a1": "Аня", "b2": "Борис"}.
 
-**Условие.** Найдите имя по введённому ключу. Если ключа нет, обработайте KeyError и напечатайте отказ.
+**Задача.** Найдите имя по введённому ключу. Если ключа нет, обработайте KeyError и напечатайте отказ.
 
-**Формат данных**
+**Формат данных.** Одна строка ключа.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Одна строка ключа. | Имя либо «Участник не найден». |
+**Ожидаемый результат.** Имя либо «Участник не найден».
 
 **Ограничения.** От 0 до 20 символов; регистр важен.
 
@@ -3580,13 +3784,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-482e23bdb191b5f3','errors-debugging',NULL,NULL,'Деление ресурса · повторение','code','**Сюжет.** Сервис не разрешает делить ресурс на ноль.
 
-**Условие.** safe_divide(a, b) возвращает a/b. При b=0 поднимите ValueError с текстом «Нулевой делитель». Напишите отдельно демонстрацию перехвата этого исключения.
+**Задача.** safe_divide(a, b) возвращает a/b. При b=0 поднимите ValueError с текстом «Нулевой делитель». Напишите отдельно демонстрацию перехвата этого исключения.
 
-**Формат данных**
+**Формат данных.** Два целых аргумента.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Два целых аргумента. | Функция возвращает float либо поднимает указанное исключение. Таблица описывает результат вызова, не вывод traceback. |
+**Ожидаемый результат.** Функция возвращает float либо поднимает указанное исключение. Таблица описывает результат вызова, не вывод traceback.
 
 **Ограничения.** −100 ≤ a,b ≤ 100.
 
@@ -3601,7 +3803,7 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-94fe0d0eeff5c2e7','errors-debugging',NULL,NULL,'Потерянная сумма · по выбору','code','**Сюжет.** Прибор ошибочно сбрасывает накопитель на каждом измерении.
 
-**Условие.** Исправьте total_values(values), чтобы она возвращала сумму, в том числе 0 для пустого списка. Найдите первую строку неверного изменения состояния с помощью отладчика. Исходный фрагмент:
+**Задача.** Исправьте total_values(values), чтобы она возвращала сумму, в том числе 0 для пустого списка. Найдите первую строку неверного изменения состояния с помощью отладчика. Исходный фрагмент:
 
 ```python
 def total_values(values):
@@ -3611,11 +3813,9 @@ def total_values(values):
     return total
 ```
 
-**Формат данных**
+**Формат данных.** Список целых чисел — аргумент функции.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Список целых чисел — аргумент функции. | Возвращаемая сумма. При сдаче дополнительно укажите причину ошибки отдельным Markdown-комментарием. |
+**Ожидаемый результат.** Возвращаемая сумма. При сдаче дополнительно укажите причину ошибки отдельным Markdown-комментарием.
 
 **Ограничения.** До 20 элементов от −100 до 100.
 
@@ -3630,13 +3830,11 @@ def total_values(values):
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-784f9d6f82c2c852','errors-debugging',NULL,NULL,'Завершение операции · по выбору','code','**Сюжет.** Терминал всегда сообщает об окончании операции, даже если ввод неверен.
 
-**Условие.** В try преобразуйте ввод в int; при ValueError печатайте «Ошибка», при успехе в else печатайте «Принято: N». В finally всегда печатайте «Готово».
+**Задача.** В try преобразуйте ввод в int; при ValueError печатайте «Ошибка», при успехе в else печатайте «Принято: N». В finally всегда печатайте «Готово».
 
-**Формат данных**
+**Формат данных.** Одна строка.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Одна строка. | Две строки согласно правилам. |
+**Ожидаемый результат.** Две строки согласно правилам.
 
 **Ограничения.** До 30 символов; если int может преобразовать строку, значение от −100 до 100.
 
@@ -3651,13 +3849,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-10e255a110e0c6c2','errors-debugging',NULL,NULL,'Три вопроса · по выбору','code','**Сюжет.** Викторина задаёт три заранее известных вопроса и считает ответы.
 
-**Условие.** Правильные ответы по порядку: «4», «python», «москва». Сравнивайте после strip/lower, пустой ответ считается неверным, но игра продолжается.
+**Задача.** Правильные ответы по порядку: «4», «python», «москва». Сравнивайте после strip/lower, пустой ответ считается неверным, но игра продолжается.
 
-**Формат данных**
+**Формат данных.** Три строки ответов, возможно пустых.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Три строки ответов, возможно пустых. | Одна строка «Верно: K из 3». |
+**Ожидаемый результат.** Одна строка «Верно: K из 3».
 
 **Ограничения.** До 40 символов в строке.
 
@@ -3670,7 +3866,7 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 
 **Источник.** Авторская задача курса.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-d1345a8c7c245d5f','pdb-debugger',NULL,NULL,'Найди строку, где появляется ошибка','code','Предположим, ученик случайно написал:
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-d1345a8c7c245d5f','pdb-debugger',NULL,NULL,'Найди строку, где появляется ошибка','code','**Задача.** Найди и исправь ошибку в функции:
 
 ```python
 def calculate_total(numbers):
@@ -3680,9 +3876,13 @@ def calculate_total(numbers):
     return total
 ```
 
-Файл запускается, но результат неверен: `total` сбрасывается на каждом повторе. Поставь `breakpoint()` перед строкой `total = 0`, запусти функцию с `[4, 5, 3]` и сравни `total` перед каждой итерацией. Если имя ещё не создано, отладчик покажет, что оно не определено — это подсказывает, что накопитель должен появиться до цикла. Исправь программу и проверь те же входные данные.',NULL,NULL,NULL);
+Функция сбрасывает `total` на каждом повторе цикла. Поставь `breakpoint()` перед `total = 0`, запусти функцию со списком `[4, 5, 3]` и сравни состояние `total` перед каждой итерацией. Если переменная ещё не создана и отладчик показывает, что она не определена, учти это при поиске места для накопителя. После исправления повтори запуск с теми же данными.
+
+**Ожидаемый результат.** Исправленная функция на `[4, 5, 3]` возвращает `12`; накопитель сохраняет сумму предыдущих элементов, а не сбрасывается на каждой итерации.
+
+**Что сдать.** Исправленный код и краткую трассировку `total`, показывающую, где появлялась ошибка.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-4d53c0cade48434d','pdb-debugger',NULL,NULL,'Проследи выполнение внутри функции','code','Оставь точку остановки до вызова функции:
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-4d53c0cade48434d','pdb-debugger',NULL,NULL,'Проследи выполнение внутри функции','code','**Задача.** Оставь точку остановки до вызова функции и проследи её выполнение в отладчике:
 
 ```python
 scores = [4, 5, 3]
@@ -3691,35 +3891,34 @@ answer = calculate_total(scores)
 print(answer)
 ```
 
-При остановке выполни `p scores`, затем `n`. Для входа внутрь функции используй `s` на строке вызова. Посмотри аргумент функции, её локальную переменную `total`, а затем возвращаемое значение. Обычная команда `n` выполнит функцию целиком и остановится после вызова; `s` позволяет следить за строками функции.',NULL,NULL,NULL);
---> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-775dfbe81740276f','pdb-debugger',NULL,NULL,'Разбери и исправь ошибку','code','1. Запиши входные данные, на которых результат неверен.
-2. Предскажи, что должно произойти.
-3. Поставь `breakpoint()` перед первым подозрительным изменением.
-4. Посмотри значения переменных с помощью `p имя`.
-5. Иди по строкам командой `n`; используй `s`, чтобы войти в функцию.
-6. Найди первую строку, после которой состояние отличается от ожидаемого.
-7. Исправь причину, запусти исходный пример и добавь ещё одну проверку.
-8. Удали временные точки остановки, если они больше не нужны.
+При остановке выполни `p scores`, затем `n`. На строке вызова используй `s`, чтобы войти в функцию. Посмотри аргумент, локальную переменную `total` и возвращаемое значение. Команда `n` выполнит функцию целиком и остановится после вызова; `s` позволяет просматривать её строки.
 
-Не ставь точки остановки повсюду: лучше проверять конкретную гипотезу. Например: «Я предполагаю, что `total` обнуляется внутри цикла».',NULL,NULL,NULL);
+**Ожидаемый результат.** Ты видишь `scores` со значениями `[4, 5, 3]`, ход вычисления суммы внутри функции и возвращённое значение `12`; программа печатает `12`.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-eac35e56cd8f8387','files-csv-json',NULL,NULL,'Запиши две строки, прочитай файл дважды в одном with, затем повтори после seek(0).','code','Запиши две строки, прочитай файл дважды в одном `with`, затем повтори после `seek(0)`. Объясни разницу. Помни: `"w"` очищает существующее содержимое уже при открытии, даже если затем ничего не записать.',NULL,NULL,NULL);
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-775dfbe81740276f','pdb-debugger',NULL,NULL,'Разбери и исправь ошибку','code','**Задача.** Разбери и исправь ошибку в программе по шагам: выбери вход, на котором результат неверен; запиши ожидаемое поведение; поставь `breakpoint()` перед первым подозрительным изменением; смотри значения командой `p имя`; проходи строки через `n`, а для входа в функцию используй `s`. Найди первую строку, после которой состояние отличается от ожидаемого, исправь причину, повтори исходный пример и добавь ещё одну проверку. Удали временные точки остановки, если они больше не нужны. Проверяй конкретную гипотезу, а не расставляй точки остановки повсюду.
+
+**Ожидаемый результат.** Ты определяешь первое расхождение между ожидаемым и фактическим состоянием, исправляешь его и подтверждаешь исправление на исходном и ещё одном входе.
+
+**Что сдать.** Входные данные, ожидаемый результат, найденную строку/состояние, исправление и результаты двух проверок.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-9887d02ff779e965','files-csv-json',NULL,NULL,'1.','code','1. Добавь в список дел новую задачу.
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-eac35e56cd8f8387','files-csv-json',NULL,NULL,'Запиши две строки, прочитай файл дважды в одном with, затем повтори после seek(0).','code','**Задача.** Запиши две строки, прочитай файл дважды в одном `with`, затем повтори после `seek(0)`. Объясни разницу. Помни: `"w"` очищает существующее содержимое уже при открытии, даже если затем ничего не записать.
+
+**Ожидаемый результат.** Первое чтение получает обе записанные строки, второе чтение без перемещения позиции возвращает пустую строку; после `seek(0)` содержимое снова читается с начала.',NULL,NULL,NULL);
+--> statement-breakpoint
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-9887d02ff779e965','files-csv-json',NULL,NULL,'Список дел в JSON','code','**Задача.** 1. Добавь в список дел новую задачу.
 2. Сохрани обновлённый список в `tasks.json`.
 3. Прочитай файл ещё раз и выведи все задачи.
-4. Добавь проверку на отсутствие файла при чтении.',NULL,NULL,NULL);
+4. Добавь проверку на отсутствие файла при чтении.
+
+**Ожидаемый результат.** После повторного чтения в `tasks.json` есть новая задача и остальные задачи списка; все они выведены. Отсутствующий файл обрабатывается через `FileNotFoundError`.',NULL,NULL,NULL);
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-084cd80428380303','files-csv-json',NULL,NULL,'Библиотечный список · обязательная','code','**Сюжет.** Библиотекарь сохраняет выбранные книги между запусками.
 
-**Условие.** Прочитайте три названия, запишите каждое отдельной строкой в books.txt, затем перечитайте файл и выведите строки с номерами.
+**Задача.** Прочитайте три названия, запишите каждое отдельной строкой в books.txt, затем перечитайте файл и выведите строки с номерами.
 
-**Формат данных**
+**Формат данных.** Три строки стандартного ввода. Файл books.txt создаётся или перезаписывается в текущей рабочей папке.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Три строки стандартного ввода. Файл books.txt создаётся или перезаписывается в текущей рабочей папке. | Файл содержит три названия, каждое с переводом строки. В stdout — три строки «номер. название». |
+**Ожидаемый результат.** Файл содержит три названия, каждое с переводом строки. В stdout — три строки «номер. название».
 
 **Ограничения.** Названия непустые до 80 символов; UTF-8; используйте with при записи и чтении.
 
@@ -3734,13 +3933,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-5aa5e767e2a26574','files-csv-json',NULL,NULL,'Новый участник списка · обязательная','code','**Сюжет.** К уже сохранённым книгам добавляют ещё одну, не стирая предыдущие.
 
-**Условие.** Добавьте введённое название в books.txt через режим a. Затем выведите полное содержимое файла.
+**Задача.** Добавьте введённое название в books.txt через режим a. Затем выведите полное содержимое файла.
 
-**Формат данных**
+**Формат данных.** Входной books.txt и одна строка стандартного ввода с новым названием.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Входной books.txt и одна строка стандартного ввода с новым названием. | Дополненный файл и его текст в stdout. Не добавляйте лишние пустые строки. |
+**Ожидаемый результат.** Дополненный файл и его текст в stdout. Не добавляйте лишние пустые строки.
 
 **Ограничения.** Файл существует; каждая прежняя строка, включая последнюю, заканчивается переводом строки; UTF-8.
 
@@ -3755,13 +3952,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-e1f7c6f4b8df2c90','files-csv-json',NULL,NULL,'Дорогие товары · обязательная','code','**Сюжет.** Склад хранит цены в CSV, а покупатель задаёт порог.
 
-**Условие.** Прочитайте products.csv через DictReader и выведите товары строго дороже порога. Строки сохраняют порядок файла.
+**Задача.** Прочитайте products.csv через DictReader и выведите товары строго дороже порога. Строки сохраняют порядок файла.
 
-**Формат данных**
+**Формат данных.** CSV с заголовком name,price; в stdin одно целое число — порог.
 
-| Входные данные | Выходные данные |
-|---|---|
-| CSV с заголовком name,price; в stdin одно целое число — порог. | Строки «название цена» для совпадений; при отсутствии вывода нет. |
+**Ожидаемый результат.** Строки «название цена» для совпадений; при отсутствии вывода нет.
 
 **Ограничения.** UTF-8, разделитель запятая; названия непустые без запятых; цены и порог целые от 0 до 10000. Файл может содержать только заголовок.
 
@@ -3776,13 +3971,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-4bfaa9c59ae22f31','files-csv-json',NULL,NULL,'Настройки игры · повторение','code','**Сюжет.** Игра хранит громкость и имя игрока в JSON.
 
-**Условие.** Прочитайте settings.json, измените только volume на значение из stdin и сохраните JSON обратно.
+**Задача.** Прочитайте settings.json, измените только volume на значение из stdin и сохраните JSON обратно.
 
-**Формат данных**
+**Формат данных.** JSON-объект с name и volume; затем целая громкость в stdin.
 
-| Входные данные | Выходные данные |
-|---|---|
-| JSON-объект с name и volume; затем целая громкость в stdin. | Обновлённый JSON-файл; stdout не требуется. Пробелы, отступы и экранирование кириллицы в JSON на оценку не влияют. |
+**Ожидаемый результат.** Обновлённый JSON-файл; stdout не требуется. Пробелы, отступы и экранирование кириллицы в JSON на оценку не влияют.
 
 **Ограничения.** Файл существует, UTF-8; name — строка, 0 ≤ volume ≤ 100.
 
@@ -3797,13 +3990,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-9e08f582c8ce93d1','files-csv-json',NULL,NULL,'Список учеников в CSV · по выбору','code','**Сюжет.** Учитель переносит список записей в табличный файл.
 
-**Условие.** save_students(records) записывает students.csv с заголовком name,score, затем читает файл через DictReader и возвращает восстановленный список словарей с целым score.
+**Задача.** save_students(records) записывает students.csv с заголовком name,score, затем читает файл через DictReader и возвращает восстановленный список словарей с целым score.
 
-**Формат данных**
+**Формат данных.** Аргумент — список словарей с name (строка) и score (целое).
 
-| Входные данные | Выходные данные |
-|---|---|
-| Аргумент — список словарей с name (строка) и score (целое). | CSV в UTF-8 и возвращаемый список, равный входному по содержимому. |
+**Ожидаемый результат.** CSV в UTF-8 и возвращаемый список, равный входному по содержимому.
 
 **Ограничения.** До 30 записей; 0 ≤ score ≤ 100; имена непустые, до 40 символов.
 
@@ -3818,13 +4009,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-6d11839289ecf59a','files-csv-json',NULL,NULL,'Список дел между запусками · по выбору','code','**Сюжет.** Программа добавляет новую задачу к ранее сохранённым.
 
-**Условие.** Прочитайте tasks.json как список строк, добавьте задачу из stdin и сохраните. Если файла нет, начните с пустого списка.
+**Задача.** Прочитайте tasks.json как список строк, добавьте задачу из stdin и сохраните. Если файла нет, начните с пустого списка.
 
-**Формат данных**
+**Формат данных.** Необязательный tasks.json; одна непустая строка stdin — новое дело.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Необязательный tasks.json; одна непустая строка stdin — новое дело. | Обновлённый JSON-массив в файле; stdout — количество задач после добавления. |
+**Ожидаемый результат.** Обновлённый JSON-массив в файле; stdout — количество задач после добавления.
 
 **Ограничения.** Существующий JSON корректен; до 100 прежних строк. Пустой по содержимому файл не гарантируется корректным JSON и не входит в допустимый ввод.
 
@@ -3839,13 +4028,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-01b26d1315e19df4','files-csv-json',NULL,NULL,'Каталог по автору · по выбору','code','**Сюжет.** Читатель ищет книги конкретного автора в сохранённом каталоге.
 
-**Условие.** В books.json лежит список объектов с title, author, year. Выведите названия книг, у которых author в точности совпадает с введённой строкой.
+**Задача.** В books.json лежит список объектов с title, author, year. Выведите названия книг, у которых author в точности совпадает с введённой строкой.
 
-**Формат данных**
+**Формат данных.** Существующий JSON-файл и строка автора в stdin.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Существующий JSON-файл и строка автора в stdin. | Названия в порядке файла; если совпадений нет — «Не найдено». |
+**Ожидаемый результат.** Названия в порядке файла; если совпадений нет — «Не найдено».
 
 **Ограничения.** До 50 книг; названия/авторы непустые; регистр важен.
 
@@ -3858,21 +4045,23 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 
 **Источник.** Авторская задача курса.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-183f28275e3e37bb','project-structure',NULL,NULL,'Мини-практика: разделим викторину','code','1. В `questions.py` создай функцию, которая возвращает вопрос и ответ.
-2. В `main.py` импортируй её.
-3. Вызови `main()` только в блоке `if __name__ == "__main__":`.
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-183f28275e3e37bb','project-structure',NULL,NULL,'Мини-практика: разделим викторину','code','**Задача.** Создай рядом два файла: `questions.py` и `main.py`.
 
-Пока можно потренироваться на двух файлах рядом, как в примере выше. Структуру пакета попробуй создать в отдельной папке проекта.',NULL,NULL,NULL);
+1. В `questions.py` создай функцию, которая возвращает вопрос и ответ. Формат возвращаемой пары выбери сам.
+2. В `main.py` импортируй функцию, вызови её и используй обе части возвращённой пары.
+3. Вызывай `main()` только в блоке `if __name__ == "__main__":`.
+
+Потренируйся сначала с двумя файлами рядом, как в примере выше. Структуру пакета попробуй создать в отдельной папке проекта.
+
+**Ожидаемый результат.** При прямом запуске `main.py` функция из `questions.py` вызывается, а вопрос и ответ используются в программе. При импорте `main.py` выполнение `main()` не начинается автоматически.',NULL,NULL,NULL);
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-4b732f5cf385aca0','project-structure',NULL,NULL,'Общий инструмент текста · обязательная','code','**Сюжет.** Две программы должны пользоваться одной функцией обработки текста.
 
-**Условие.** Создайте text_tools.py с upper_text(text), возвращающей текст в верхнем регистре. В main.py прочитайте строку, импортируйте функцию и выведите результат.
+**Задача.** Создайте text_tools.py с upper_text(text), возвращающей текст в верхнем регистре. В main.py прочитайте строку, импортируйте функцию и выведите результат.
 
-**Формат данных**
+**Формат данных.** stdin: одна строка. Оба файла находятся в одной папке; запуск python main.py из неё.
 
-| Входные данные | Выходные данные |
-|---|---|
-| stdin: одна строка. Оба файла находятся в одной папке; запуск python main.py из неё. | Одна строка; при импорте text_tools постороннего вывода нет. |
+**Ожидаемый результат.** Одна строка; при импорте text_tools постороннего вывода нет.
 
 **Ограничения.** До 80 символов; Python 3; сторонних пакетов нет.
 
@@ -3887,13 +4076,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-8d6111f249f9b03a','project-structure',NULL,NULL,'Запуск и импорт · обязательная','code','**Сюжет.** Вспомогательный модуль не должен запускать диалог при импорте.
 
-**Условие.** В greeting.py определите main(), печатающую «Готово». Вызывайте её только под защитой __name__. При обычном import greeting вывода нет.
+**Задача.** В greeting.py определите main(), печатающую «Готово». Вызывайте её только под защитой __name__. При обычном import greeting вывода нет.
 
-**Формат данных**
+**Формат данных.** Одна из команд в таблице; запуск из папки файла.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Одна из команд в таблице; запуск из папки файла. | Результат команды в stdout. |
+**Ожидаемый результат.** Результат команды в stdout.
 
 **Ограничения.** Никакого stdin и установки пакетов не требуется.
 
@@ -3908,13 +4095,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-0b1ce5cf6112fae7','project-structure',NULL,NULL,'Изолированная мастерская · обязательная','code','**Сюжет.** Для учебного проекта нужно отдельное окружение, чтобы зависимости не смешивались.
 
-**Условие.** Создайте .venv через venv. Его интерпретатором проверьте версию Python и pip. В check_env.py выведите, различаются ли sys.prefix и sys.base_prefix. Справка: после import sys поле sys.prefix содержит путь текущего интерпретатора, а sys.base_prefix — базового, на основе которого создано окружение. Сохраните команды запуска в Markdown-ячейке.
+**Задача.** Создайте .venv через venv. Его интерпретатором проверьте версию Python и pip. В check_env.py выведите, различаются ли sys.prefix и sys.base_prefix. Справка: после import sys поле sys.prefix содержит путь текущего интерпретатора, а sys.base_prefix — базового, на основе которого создано окружение. Сохраните команды запуска в Markdown-ячейке.
 
-**Формат данных**
+**Формат данных.** Рабочая папка и выбранный локальный Python; стандартный ввод не используется.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Рабочая папка и выбранный локальный Python; стандартный ввод не используется. | Папка .venv; вывод проверки из неё — True. Версии Python/pip фиксируются фактически установленными, универсального номера нет. |
+**Ожидаемый результат.** Папка .venv; вывод проверки из неё — True. Версии Python/pip фиксируются фактически установленными, универсального номера нет.
 
 **Ограничения.** Не помещайте .venv в сдаваемый архив. Команды активации зависят от ОС; используйте руководство урока.
 
@@ -3929,13 +4114,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-9280c5228b3137a1','project-structure',NULL,NULL,'Касса из модулей · повторение','code','**Сюжет.** Кассир хочет менять формат вывода отдельно от расчёта.
 
-**Условие.** В pricing.py создайте total_cost(price, count), возвращающую произведение. В main.py организуйте чтение двух чисел и печать результата; pricing.py не читает input и не печатает.
+**Задача.** В pricing.py создайте total_cost(price, count), возвращающую произведение. В main.py организуйте чтение двух чисел и печать результата; pricing.py не читает input и не печатает.
 
-**Формат данных**
+**Формат данных.** Два целых числа stdin: цена, затем количество. Запуск python main.py из папки проекта.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Два целых числа stdin: цена, затем количество. Запуск python main.py из папки проекта. | Одно целое число. |
+**Ожидаемый результат.** Одно целое число.
 
 **Ограничения.** 0 ≤ price,count ≤ 1000.
 
@@ -3950,13 +4133,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-ff8817c0819d1472','project-structure',NULL,NULL,'Викторина как пакет · по выбору','code','**Сюжет.** Учебную викторину запускают из корня проекта одинаковой командой.
 
-**Условие.** Создайте пакет quiz с __init__.py, data.py (вопрос и ответ 4), logic.py (проверка ответа) и main.py (ввод/вывод). Команда запуска: python -m quiz.main. Вопрос можно хранить, но при точной проверке печатайте только итог.
+**Задача.** Создайте пакет quiz с __init__.py, data.py (вопрос и ответ 4), logic.py (проверка ответа) и main.py (ввод/вывод). Команда запуска: python -m quiz.main. Вопрос можно хранить, но при точной проверке печатайте только итог.
 
-**Формат данных**
+**Формат данных.** Одна строка ответа stdin.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Одна строка ответа stdin. | «Верно» либо «Неверно». Сдайте файлы пакета и README с командой запуска. |
+**Ожидаемый результат.** «Верно» либо «Неверно». Сдайте файлы пакета и README с командой запуска.
 
 **Ограничения.** Ответ сравнивается после strip; правильная строка «4»; пустой ответ допустим. Импорт модулей не запускает ввод.
 
@@ -3971,13 +4152,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-4eb7c0945335d378','project-structure',NULL,NULL,'Воспроизводимое окружение · по выбору','code','**Сюжет.** Другому ученику нужно повторить окружение с уже изученным пакетом requests.
 
-**Условие.** В отдельном окружении установите requests, сохраните зависимости через pip freeze в requirements.txt. Создайте второе окружение и установите файл через pip install -r. В обоих средах проверьте импорт и совпадение requests.__version__.
+**Задача.** В отдельном окружении установите requests, сохраните зависимости через pip freeze в requirements.txt. Создайте второе окружение и установите файл через pip install -r. В обоих средах проверьте импорт и совпадение requests.__version__.
 
-**Формат данных**
+**Формат данных.** Команды терминала и requirements.txt, созданный первым окружением; stdin отсутствует.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Команды терминала и requirements.txt, созданный первым окружением; stdin отсутствует. | Два успешных импорта и одинаковая версия requests. В таблице критерии проверки, а не буквальный вывод с выдуманным номером версии. |
+**Ожидаемый результат.** Два успешных импорта и одинаковая версия requests. В таблице критерии проверки, а не буквальный вывод с выдуманным номером версии.
 
 **Ограничения.** Задание дополнительное; для установки нужен доступ к индексу пакетов. Используйте python -m pip соответствующего окружения. Версию не задавайте наугад — сохраните установленную.
 
@@ -3990,11 +4169,15 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 
 **Источник.** Авторская задача курса.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-b6c7d8b3fb88a566','command-line-git',NULL,NULL,'Проверь обработку ожидаемых ошибок','code','Попробуй указать отсутствующий файл и значение `--top 0`. Программа должна объяснить проблему в сообщении командной строки и завершиться ненулевым кодом, без длинного traceback. В примере это делает `parser.error(...)`.',NULL,NULL,NULL);
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-b6c7d8b3fb88a566','command-line-git',NULL,NULL,'Проверь обработку ожидаемых ошибок','code','**Задача.** Проверь обработку двух ожидаемых ошибок CLI-программы: укажи отсутствующий файл и запусти её со значением `--top 0`.
+
+**Ожидаемый результат.** В каждом случае программа объясняет проблему в сообщении командной строки и завершается с ненулевым кодом выхода, не показывая длинный traceback. В примере курса для этого используется `parser.error(...)`.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-22c095cf48772a98','command-line-git',NULL,NULL,'Добавь фильтр минимальной длины','code','Добавь параметр `--min-length N`: выводи только слова длиной не меньше N. Раздели чтение файла, подсчёт и печать отчёта на функции. Проверь пустой файл, файл с кириллицей, отсутствующий файл и минимальную длину больше всех слов. Не меняй исходный файл.',NULL,NULL,NULL);
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-22c095cf48772a98','command-line-git',NULL,NULL,'Добавь фильтр минимальной длины','code','**Задача.** Добавь параметр `--min-length N`, чтобы программа выводила только слова длиной не меньше `N`. Раздели чтение файла, подсчёт и вывод отчёта на функции. Проверь пустой файл, файл с кириллицей, отсутствующий файл и значение порога больше длины каждого слова. Исходный файл не меняй.
+
+**Ожидаемый результат.** В отчёте остаются только слова, длина которых не меньше переданного порога; пустой файл и файл, где все слова короче порога, не дают подходящих слов. Ошибка отсутствующего файла обрабатывается программой.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-80002be3a6cf18ad','command-line-git',NULL,NULL,'Учебный проект в Git','code','Git хранит историю изменений. Для упражнений создай отдельную папку `git-practice`, чтобы команды не затронули другие проекты. Внутри неё создай `notes.txt`, затем выполни:
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-80002be3a6cf18ad','command-line-git',NULL,NULL,'Учебный проект в Git','code','**Задача.** Выполни упражнение Git в отдельной папке `git-practice`, чтобы команды не затронули другие проекты. Создай в ней `notes.txt`, затем выполни:
 
 ```text
 git init
@@ -4003,14 +4186,14 @@ git add notes.txt
 git commit -m "Добавить заметки"
 ```
 
-Измени строку в `notes.txt` и посмотри разницу:
+Измени строку в `notes.txt` и посмотри разницу и состояние:
 
 ```text
 git diff
 git status
 ```
 
-Сохрани изменение новым коммитом, затем посмотри историю:
+Затем добавь и зафиксируй изменение вторым коммитом, после чего просмотри историю:
 
 ```text
 git add notes.txt
@@ -4018,35 +4201,58 @@ git commit -m "Уточнить заметки"
 git log --oneline
 ```
 
-- `git status` показывает файлы, которые изменились или ещё не добавлены.
-- `git diff` показывает незакоммиченные изменения в отслеживаемых файлах.
-- `git add` выбирает изменения для следующего коммита.
-- `git commit` сохраняет локальную точку истории.
-- `git log` показывает сохранённые точки.
+Объясни, что показывают `git status`, `git diff`, `git add`, `git commit` и `git log`. Перед применением `git restore` проверь `git status` и `git diff`: эта команда отбрасывает незакоммиченные изменения. Для этого первого упражнения восстановление не требуется; эксперимент можно отменить вручную.
 
-Перед `git restore` проверь `git status` и `git diff`: эта команда отбрасывает незакоммиченные изменения файла. Для первого знакомства восстановление не требуется; проще отменить эксперимент вручную.
+**Ожидаемый результат.** В истории папки `git-practice` находятся два коммита: «Добавить заметки» и «Уточнить заметки»; ты можешь объяснить назначение `status`, `diff` и `log`.
 
-### Что сдать
+**Что сдать.** Для CLI-части: файл программы с параметром `--min-length`, вывод запуска с `--help`, один обычный запуск и сообщение об ошибке при указании отсутствующего файла. Для Git-части: список двух коммитов и краткое объяснение команд `status`, `diff` и `log`.',NULL,NULL,NULL);
+--> statement-breakpoint
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-87204ce59f8390e4','testing-quality',NULL,NULL,'Добавь проверку двух последовательных вызовов with_item([], ...).','code','**Задача.** Проверь независимость списков в трёх вариантах. Напиши определения функций и затем добавь проверки:
 
-Файл с добавленным параметром `--min-length`, вывод запуска с `--help`, один обычный запуск и сообщение об ошибке для отсутствующего файла. Для Git — список двух коммитов и краткое объяснение, что показывают `status`, `diff` и `log`.',NULL,NULL,NULL);
+```python
+def with_item(items, item):
+    result = items.copy()
+    result.append(item)
+    return result
+
+def collect_bad(item, items=[]):
+    items.append(item)
+    return items
+
+def add_item(item, items=None):
+    if items is None:
+        items = []
+    items.append(item)
+    return items
+```
+
+1. Вызови `with_item([], "карандаш")` и `with_item([], "тетрадь")` и проверь каждый результат отдельно.
+2. Вызови `collect_bad("карандаш")`, затем `collect_bad("тетрадь")` без второго аргумента и сравни оба результата.
+3. Вызови `add_item("карандаш")`, затем `add_item("тетрадь")` без второго аргумента и сравни оба результата.
+
+**Ожидаемый результат.** Два вызова `with_item` возвращают независимые списки `[''карандаш'']` и `[''тетрадь'']`. У `collect_bad` второй результат содержит оба значения, потому что список по умолчанию общий. У `add_item` вызовы возвращают независимые списки `[''карандаш'']` и `[''тетрадь'']`. Проверки явно показывают разницу между двумя функциями с аргументом по умолчанию.
+
+**Источник.** Функции `collect_bad` и `add_item` показаны в уроке о функциях и аргументах по умолчанию; функция `with_item` — в уроке о тестировании.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-87204ce59f8390e4','testing-quality',NULL,NULL,'Добавь проверку двух последовательных вызовов with_item([], ...).','code','Добавь проверку двух последовательных вызовов `with_item([], ...)`. Затем проверь свою функцию с аргументом по умолчанию из урока о функциях. Такие проверки ловят общий список, который незаметно сохраняется между вызовами.',NULL,NULL,NULL);
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-ff9823937cdf75f2','testing-quality',NULL,NULL,'Задание 1. Осмысленные имена','code','**Задача.** Переименуй переменные `x`, `y` и `z` в примере так, чтобы было ясно, что он считает.
+
+**Ожидаемый результат.** Имена `x`, `y` и `z` заменены на понятные названия для списка чисел, суммы и среднего; вычисленное среднее осталось тем же.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-ff9823937cdf75f2','testing-quality',NULL,NULL,'Задание 1. Осмысленные имена','code','Переименуй переменные `x`, `y` и `z` в примере так, чтобы было ясно, что он считает.',NULL,NULL,NULL);
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-f4862af2149f5570','testing-quality',NULL,NULL,'Задание 2. Небольшие функции','code','**Задача.** Раздели программу на две функции: одну для вычисления суммы покупок, другую для применения скидки. Функции должны возвращать результат, а не печатать его.
+
+**Ожидаемый результат.** Одна функция возвращает сумму покупок, другая — результат применения скидки; обе возвращают значения и не печатают их.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-f4862af2149f5570','testing-quality',NULL,NULL,'Задание 2. Небольшие функции','code','Раздели программу на две функции: одну для вычисления суммы покупок, другую для применения скидки. Функции должны возвращать результат, а не печатать его.',NULL,NULL,NULL);
---> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-f72fe5118efb5ceb','testing-quality',NULL,NULL,'Задание 3. Автоматические тесты','code','Напиши функцию `is_adult(age)`, которая возвращает `True`, если возраст не меньше 18, и `False` иначе. Создай для неё класс `TestIsAdult` с тестами для возраста 18, 17 и 0.',NULL,NULL,NULL);
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-f72fe5118efb5ceb','testing-quality',NULL,NULL,'Задание 3. Автоматические тесты','code','**Задача.** Напиши функцию `is_adult(age)`, которая возвращает `True`, если возраст не меньше 18, и `False` иначе. Создай для неё класс `TestIsAdult` с тестами для возраста 18, 17 и 0.
+
+**Ожидаемый результат.** Класс тестов `TestIsAdult` проверяет: для 18 возвращается `True`, для 17 и 0 — `False`.',NULL,NULL,NULL);
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-b2856b0c651df683','testing-quality',NULL,NULL,'Лидер команды · обязательная','code','**Сюжет.** Тренер проверяет функцию выбора лучшего результата.
 
-**Условие.** largest(values) возвращает максимум непустого списка. Для пустого поднимает ValueError с текстом «Нет результатов». Подготовьте unittest-тесты для обычного, одноэлементного, отрицательного и пустого списка.
+**Задача.** largest(values) возвращает максимум непустого списка. Для пустого поднимает ValueError с текстом «Нет результатов». Подготовьте unittest-тесты для обычного, одноэлементного, отрицательного и пустого списка.
 
-**Формат данных**
+**Формат данных.** Список целых чисел — аргумент.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Список целых чисел — аргумент. | Возвращаемое число либо указанное исключение. Тесты проверяют требование независимо от реализации. |
+**Ожидаемый результат.** Возвращаемое число либо указанное исключение. Тесты проверяют требование независимо от реализации.
 
 **Ограничения.** До 100 элементов, каждое от −1000 до 1000.
 
@@ -4061,13 +4267,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-43274685a467d577','testing-quality',NULL,NULL,'Проверка парных упаковок · обязательная','code','**Сюжет.** Касса тестирует определение чётного количества.
 
-**Условие.** is_even(n) возвращает логическое значение чётности. Напишите независимые тесты для положительного чётного, нечётного, отрицательного и нуля.
+**Задача.** is_even(n) возвращает логическое значение чётности. Напишите независимые тесты для положительного чётного, нечётного, отрицательного и нуля.
 
-**Формат данных**
+**Формат данных.** Целый аргумент n.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Целый аргумент n. | True или False, не строка. |
+**Ожидаемый результат.** True или False, не строка.
 
 **Ограничения.** −1000 ≤ n ≤ 1000.
 
@@ -4082,13 +4286,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-f263576bb918e46b','testing-quality',NULL,NULL,'Средняя оценка · обязательная','code','**Сюжет.** Пустой журнал не должен незаметно превращаться в нулевую среднюю.
 
-**Условие.** average(scores) возвращает среднее непустого списка и поднимает ValueError("Нет оценок") для пустого. Добавьте тесты, включая список из одного элемента.
+**Задача.** average(scores) возвращает среднее непустого списка и поднимает ValueError("Нет оценок") для пустого. Добавьте тесты, включая список из одного элемента.
 
-**Формат данных**
+**Формат данных.** Список целых оценок.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Список целых оценок. | float либо указанное исключение; в тесте дробного среднего используйте подходящее сравнение чисел. |
+**Ожидаемый результат.** float либо указанное исключение; в тесте дробного среднего используйте подходящее сравнение чисел.
 
 **Ограничения.** До 30 оценок от 2 до 5.
 
@@ -4103,13 +4305,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-50d7648e2d8bf384','testing-quality',NULL,NULL,'Расчёт скидки · повторение','code','**Сюжет.** Магазин допускает скидку от 0 до 100 процентов и неотрицательную цену.
 
-**Условие.** final_price(price, discount) возвращает целую цену после скидки. Если цена отрицательная или discount вне диапазона, поднимает ValueError("Неверные данные"). Напишите тесты для 0%, 50%, 100%, нулевой цены и обоих видов ошибки.
+**Задача.** final_price(price, discount) возвращает целую цену после скидки. Если цена отрицательная или discount вне диапазона, поднимает ValueError("Неверные данные"). Напишите тесты для 0%, 50%, 100%, нулевой цены и обоих видов ошибки.
 
-**Формат данных**
+**Формат данных.** Целые price и discount — аргументы.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Целые price и discount — аргументы. | Целое число либо указанное исключение. |
+**Ожидаемый результат.** Целое число либо указанное исключение.
 
 **Ограничения.** В корректных данных 0 ≤ price ≤ 1000000, price кратна 100; 0 ≤ discount ≤ 100. Ошибочные данные в этой задаче намеренно входят в проверки.
 
@@ -4125,13 +4325,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-df42972ace11a142','testing-quality',NULL,NULL,'Касса с разделением обязанностей · по выбору','code','**Сюжет.** Кассе нужны расчёт суммы и форматирование чека, которые можно проверять отдельно.
 
-**Условие.** total(prices) возвращает сумму; receipt(name, prices) возвращает «ИМЯ: СУММА ₽». Разделите расчёт и форматирование; дайте переменным понятные имена. Тестируйте обе функции, исходный список не меняйте.
+**Задача.** total(prices) возвращает сумму; receipt(name, prices) возвращает «ИМЯ: СУММА ₽». Разделите расчёт и форматирование; дайте переменным понятные имена. Тестируйте обе функции, исходный список не меняйте.
 
-**Формат данных**
+**Формат данных.** Имя и список целых цен — аргументы receipt; список — аргумент total.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Имя и список целых цен — аргументы receipt; список — аргумент total. | Число для total и строка для receipt. |
+**Ожидаемый результат.** Число для total и строка для receipt.
 
 **Ограничения.** До 50 цен от 0 до 10000; имя непустое.
 
@@ -4146,13 +4344,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-034dd2c2d9d6c064','testing-quality',NULL,NULL,'Независимая копия измерений · по выбору','code','**Сюжет.** Аналитик хочет проверить, что обработка не испортила исходные данные.
 
-**Условие.** positive_copy(values) возвращает новый список положительных элементов в прежнем порядке. Напишите тесты значения результата, неизменности входного списка и отдельности результата; проверьте два последовательных вызова.
+**Задача.** positive_copy(values) возвращает новый список положительных элементов в прежнем порядке. Напишите тесты значения результата, неизменности входного списка и отдельности результата; проверьте два последовательных вызова.
 
-**Формат данных**
+**Формат данных.** Список целых чисел.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Список целых чисел. | Новый список. Даже при пустом входе результат — отдельный объект. |
+**Ожидаемый результат.** Новый список. Даже при пустом входе результат — отдельный объект.
 
 **Ограничения.** До 30 элементов от −100 до 100; повторы сохраняются.
 
@@ -4167,13 +4363,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 --> statement-breakpoint
 INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-cbba48144f9e4d76','testing-quality',NULL,NULL,'Защита небольшого проекта · по выбору','code','**Сюжет.** Команда готовит защиту консольной викторины.
 
-**Условие.** В своём проекте выделите normalize_answer(text), возвращающую strip/lower, и count_correct(answers, expected), считающую точные совпадения после нормализации. Для каждой функции напишите минимум обычный и граничный unittest-тест.
+**Задача.** В своём проекте выделите normalize_answer(text), возвращающую strip/lower, и count_correct(answers, expected), считающую точные совпадения после нормализации. Для каждой функции напишите минимум обычный и граничный unittest-тест.
 
-**Формат данных**
+**Формат данных.** Строка для первой функции; два списка строк равной длины для второй.
 
-| Входные данные | Выходные данные |
-|---|---|
-| Строка для первой функции; два списка строк равной длины для второй. | Возвращаемая строка или целое количество. Сдайте проект и команду запуска тестов. |
+**Ожидаемый результат.** Возвращаемая строка или целое количество. Сдайте проект и команду запуска тестов.
 
 **Ограничения.** До 20 ответов, до 80 символов в строке; пустые строки допустимы.
 
@@ -4187,95 +4381,100 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 
 **Источник.** Авторская задача курса.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-effb843a3a2b8f63','turtle',NULL,NULL,'Задача 1. Домик','code','Нарисуй домик: квадратный корпус, треугольную крышу и дверь. Используй `for`, `forward`, `left` или `right`, а для двери — `penup` и `goto`. Раскрась крышу и дверь.',NULL,NULL,NULL);
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-effb843a3a2b8f63','turtle',NULL,NULL,'Задача 1. Домик','code','**Задача.** Нарисуй домик с квадратным корпусом, треугольной крышей и дверью. Для повторяющихся сторон используй `for`, для линий — `forward` и повороты `left` или `right`; перед перемещением к двери подними перо (`penup`), а позицию задай через `goto`. Раскрась крышу и дверь.
+
+**Ожидаемый результат.** На рисунке видны квадратный корпус, треугольная крыша и дверь; крыша и дверь окрашены.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-9ada6475dedff376','turtle',NULL,NULL,'Задача 2. Светофор','code','Нарисуй три цветных круга вертикально: красный, жёлтый и зелёный. Используй `dot`, переменную для координаты `y` и цикл, если получится.',NULL,NULL,NULL);
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-9ada6475dedff376','turtle',NULL,NULL,'Задача 2. Светофор','code','**Задача.** Нарисуй светофор из трёх кругов, расположенных вертикально: красного, жёлтого и зелёного. Для кругов используй `dot`; координату `y` храни в переменной, а расположение элементов повтори циклом, если получается.
+
+**Ожидаемый результат.** На рисунке три вертикально расположенных круга в порядке сверху вниз: красный, жёлтый, зелёный.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-fa1f4b474448af9d','turtle',NULL,NULL,'Задача 3. Солнечный узор','code','Нарисуй солнце и 12 лучей вокруг него. Используй цикл, `forward`, `backward` и поворот на `30` градусов. Попробуй выбрать цвет и толщину линий самостоятельно.',NULL,NULL,NULL);
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-fa1f4b474448af9d','turtle',NULL,NULL,'Задача 3. Солнечный узор','code','**Задача.** Нарисуй солнце и 12 лучей вокруг него. Используй цикл, команды `forward` и `backward` и поворачивай черепашку на `30` градусов между лучами. Цвет и толщину линий выбери самостоятельно.
+
+**Ожидаемый результат.** На рисунке есть солнце и ровно 12 лучей вокруг него; выбранный цвет и толщина линий применены.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-1076b3315d8273b7','doodle-jump',NULL,NULL,'Измени цвета фона, героя и платформ. Объясни, какая строка рисует каждый объект','code','Начинай с задач, которые меняют одно правило. После каждого изменения объясняй, почему оно работает.
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-1076b3315d8273b7','doodle-jump',NULL,NULL,'Измени цвета фона, героя и платформ. Объясни, какая строка рисует каждый объект','code','**Задача.** В Doodle Jump измени цвета фона, героя и платформ. Объясни, какая строка рисует каждый из этих объектов.
 
-Раздел: Базовые.
+**Ожидаемый результат.** В игре видны изменённые цвета всех трёх объектов; ты можешь указать строки кода, отвечающие за их рисование.
 
-1. Измени цвета фона, героя и платформ. Объясни, какая строка рисует каждый объект.',NULL,NULL,NULL);
+**Что сдать.** Изменённый код и краткое объяснение строк отрисовки.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-73da5b13dfa44892','doodle-jump',NULL,NULL,'Сделай платформы шире. Проверь, почему генератор всё ещё удерживает их в окне','code','Начинай с задач, которые меняют одно правило. После каждого изменения объясняй, почему оно работает.
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-73da5b13dfa44892','doodle-jump',NULL,NULL,'Сделай платформы шире. Проверь, почему генератор всё ещё удерживает их в окне','code','**Задача.** Сделай платформы Doodle Jump шире и проверь, почему генератор по-прежнему удерживает их внутри окна.
 
-Раздел: Базовые.
+**Ожидаемый результат.** Платформы стали шире и остаются в пределах окна; ты можешь объяснить, как генератор ограничивает их положение.
 
-2. Сделай платформы шире. Проверь, почему генератор всё ещё удерживает их в окне.',NULL,NULL,NULL);
+**Что сдать.** Изменённый код и краткое объяснение проверки границ.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-f5e1066c01a85575','doodle-jump',NULL,NULL,'Добавь клавишу Q для выхода, сохранив Escape и крестик','code','Начинай с задач, которые меняют одно правило. После каждого изменения объясняй, почему оно работает.
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-f5e1066c01a85575','doodle-jump',NULL,NULL,'Добавь клавишу Q для выхода, сохранив Escape и крестик','code','**Задача.** Добавь в Doodle Jump клавишу `Q` для выхода из игры, сохранив выход по `Escape` и по кнопке закрытия окна.
 
-Раздел: Базовые.
+**Ожидаемый результат.** Игру можно закрыть каждым из трёх способов: `Q`, `Escape` и кнопкой окна.
 
-3. Добавь клавишу Q для выхода, сохранив Escape и крестик.',NULL,NULL,NULL);
+**Что сдать.** Изменённый код и краткое объяснение обработки новой клавиши.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-519659a3bb76e949','doodle-jump',NULL,NULL,'Выведи счёт не сверху слева, а сверху справа. Используй `get_rect(topright=(WIDTH - 12, 12))`','code','Начинай с задач, которые меняют одно правило. После каждого изменения объясняй, почему оно работает.
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-519659a3bb76e949','doodle-jump',NULL,NULL,'Выведи счёт не сверху слева, а сверху справа. Используй `get_rect(topright=(WIDTH - 12, 12))`','code','**Задача.** Перемести счёт Doodle Jump из верхнего левого угла в верхний правый. Для размещения используй `get_rect(topright=(WIDTH - 12, 12))`.
 
-Раздел: Базовые.
+**Ожидаемый результат.** Счёт выровнен по верхнему правому углу: его правый край находится на 12 пикселях левее края окна, а верхний — на 12 пикселях ниже верхнего края.
 
-4. Выведи счёт не сверху слева, а сверху справа. Используй `get_rect(topright=(WIDTH - 12, 12))`.',NULL,NULL,NULL);
+**Что сдать.** Изменённый код и краткое объяснение, как `topright` задаёт положение счёта.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-7930cce3e94928c8','doodle-jump',NULL,NULL,'Измени число пикселей за один балл с 10 на 20. Как изменится результат одного и того же подъёма?','code','Начинай с задач, которые меняют одно правило. После каждого изменения объясняй, почему оно работает.
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-7930cce3e94928c8','doodle-jump',NULL,NULL,'Измени число пикселей за один балл с 10 на 20. Как изменится результат одного и того же подъёма?','code','**Задача.** Измени правило начисления счёта за высоту: вместо 10 пикселей за один балл используй 20. Сравни результат одного и того же подъёма до и после изменения и объясни связь между пройденным расстоянием и счётом.
 
-Раздел: Базовые.
+**Ожидаемый результат.** После изменения для получения каждого балла требуется вдвое больший подъём; тот же подъём даёт примерно вдвое меньше баллов (с учётом целочисленного округления в программе).
 
-5. Измени число пикселей за один балл с 10 на 20. Как изменится результат одного и того же подъёма?',NULL,NULL,NULL);
+**Что сдать.** Изменённый код, сравнение результатов одного и того же подъёма и объяснение правила начисления.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-c26b9efa1dceabf3','doodle-jump',NULL,NULL,'Сделай два режима скорости героя. Выбор должен происходить до начала попытки, чтобы случайно не менять её в полёте','code','Начинай с задач, которые меняют одно правило. После каждого изменения объясняй, почему оно работает.
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-c26b9efa1dceabf3','doodle-jump',NULL,NULL,'Сделай два режима скорости героя. Выбор должен происходить до начала попытки, чтобы случайно не менять её в полёте','code','**Задача.** Добавь два режима скорости героя в Doodle Jump. Выбор режима должен происходить до начала попытки, чтобы скорость не менялась случайно во время прыжка.
 
-Раздел: Средние.
+**Ожидаемый результат.** Перед запуском попытки можно выбрать один из двух режимов; выбранная скорость сохраняется на протяжении этой попытки.
 
-6. Сделай два режима скорости героя. Выбор должен происходить до начала попытки, чтобы случайно не менять её в полёте.',NULL,NULL,NULL);
+**Что сдать.** Изменённый код и объяснение, как выбирается режим и почему скорость не меняется в ходе попытки.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-abf31e019b269182','doodle-jump',NULL,NULL,'Добавь надпись `"Press R"` в экран проигрыша и объясни, почему текст создаётся методом `render`','code','Начинай с задач, которые меняют одно правило. После каждого изменения объясняй, почему оно работает.
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-abf31e019b269182','doodle-jump',NULL,NULL,'Добавь надпись `"Press R"` в экран проигрыша и объясни, почему текст создаётся методом `render`','code','**Задача.** Добавь надпись `"Press R"` на экран проигрыша в Doodle Jump. Объясни, почему текст создаётся методом `render`.
 
-Раздел: Средние.
+**Ожидаемый результат.** После проигрыша на экране видна надпись `Press R`; в объяснении указано, что `render` создаёт поверхность с изображением текста для последующей отрисовки.
 
-7. Добавь надпись `"Press R"` в экран проигрыша и объясни, почему текст создаётся методом `render`.',NULL,NULL,NULL);
+**Что сдать.** Изменённый код и краткое объяснение назначения `render`.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-d45a555acd53d703','doodle-jump',NULL,NULL,'Сделай воспроизводимый учебный маршрут через `random.seed` и проверь один сложный прыжок несколько раз','code','Начинай с задач, которые меняют одно правило. После каждого изменения объясняй, почему оно работает.
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-d45a555acd53d703','doodle-jump',NULL,NULL,'Сделай воспроизводимый учебный маршрут через `random.seed` и проверь один сложный прыжок несколько раз','code','**Задача.** Сделай учебный маршрут Doodle Jump воспроизводимым с помощью `random.seed`. Выбери один сложный прыжок и проверь его несколько раз.
 
-Раздел: Средние.
+**Ожидаемый результат.** При повторных запусках с тем же seed генерируется один и тот же маршрут, поэтому выбранный прыжок можно проверить повторно.
 
-8. Сделай воспроизводимый учебный маршрут через `random.seed` и проверь один сложный прыжок несколько раз.',NULL,NULL,NULL);
+**Что сдать.** Изменённый код, результаты нескольких запусков одного маршрута с тем же seed и объяснение роли `random.seed`.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-ecacdfe4d7a0ceb6','doodle-jump',NULL,NULL,'Вместо остановки у боковой границы придумай переход на противоположный край. Согласуй дробную x и Rect.x, как уже делал ','code','Начинай с задач, которые меняют одно правило. После каждого изменения объясняй, почему оно работает.
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-ecacdfe4d7a0ceb6','doodle-jump',NULL,NULL,'Вместо остановки у боковой границы придумай переход на противоположный край. Согласуй дробную x и Rect.x, как уже делал ','code','**Задача.** Вместо остановки героя у боковой границы добавь переход на противоположный край окна. Согласуй дробную координату `x` и `Rect.x`, как координату `y` в уже сделанной механике. Выбери и объясни правило перехода: когда центр героя или весь прямоугольник пересекает границу.
 
-Раздел: Средние.
+**Ожидаемый результат.** Герой появляется у противоположного края по выбранному правилу, а дробная координата и `Rect.x` остаются согласованными.
 
-9. Вместо остановки у боковой границы придумай переход на противоположный край. Согласуй дробную x и Rect.x, как уже делал с y. Реши, когда герой должен появляться: при выходе центра или всего прямоугольника.',NULL,NULL,NULL);
+**Что сдать.** Изменённый код и объяснение выбранного правила перехода через границу.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-abc3e68207004b1b','doodle-jump',NULL,NULL,'Движущиеся платформы: сначала одна платформа с собственной горизонтальной скоростью, затем список таких объектов. Придёт','code','Начинай с задач, которые меняют одно правило. После каждого изменения объясняй, почему оно работает.
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-abc3e68207004b1b','doodle-jump',NULL,NULL,'Движущиеся платформы: сначала одна платформа с собственной горизонтальной скоростью, затем список таких объектов. Придёт','code','**Задача.** Добавь движущиеся платформы в Doodle Jump. Сначала реализуй одну платформу с собственной горизонтальной скоростью, затем расширь решение до списка таких платформ. Сравнивай положение платформ с положением игрока в одном и том же кадре.
 
-Раздел: Для продолжения курса.
+**Ожидаемый результат.** Одна платформа, а затем все платформы списка перемещаются по горизонтали; проверка столкновения использует положение игрока и платформы из одного кадра.
 
-10. Движущиеся платформы: сначала одна платформа с собственной горизонтальной скоростью, затем список таких объектов. Придётся сравнивать их положение с игроком в одном и том же кадре.',NULL,NULL,NULL);
+**Что сдать.** Изменённый код и объяснение того, как сверяются позиции в одном кадре.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-aebd68fe924b69f1','doodle-jump',NULL,NULL,'Хрупкие платформы: хранить признак типа, после первого отскока удалять платформу через новый список. Потребуется следить','code','Начинай с задач, которые меняют одно правило. После каждого изменения объясняй, почему оно работает.
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-aebd68fe924b69f1','doodle-jump',NULL,NULL,'Хрупкие платформы: хранить признак типа, после первого отскока удалять платформу через новый список. Потребуется следить','code','**Задача.** Добавь хрупкие платформы с признаком их типа. После первого отскока удаляй такую платформу через создание нового списка платформ. Проверь, что после удаления маршрут не становится невозможным.
 
-Раздел: Для продолжения курса.
+**Ожидаемый результат.** Хрупкая платформа исчезает после первого отскока, остальные платформы продолжают работать, а пройти маршрут всё ещё возможно.
 
-11. Хрупкие платформы: хранить признак типа, после первого отскока удалять платформу через новый список. Потребуется следить, чтобы маршрут не становился невозможным.',NULL,NULL,NULL);
+**Что сдать.** Изменённый код и проверки, подтверждающие удаление платформы после отскока и проходимость маршрута.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-16b3241565ecac0a','doodle-jump',NULL,NULL,'Постоянный рекорд: прочитать число из файла при запуске и записать при завершении; отдельно обработать отсутствие или по','code','Начинай с задач, которые меняют одно правило. После каждого изменения объясняй, почему оно работает.
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-16b3241565ecac0a','doodle-jump',NULL,NULL,'Постоянный рекорд: прочитать число из файла при запуске и записать при завершении; отдельно обработать отсутствие или по','code','**Задача.** Сделай рекорд Doodle Jump постоянным: прочитай его из файла при запуске и запиши в файл при завершении игры. Отдельно обработай ситуацию, когда файла нет или он повреждён.
 
-Раздел: Для продолжения курса.
+**Ожидаемый результат.** Сохранённый рекорд можно прочитать при следующем запуске; отсутствие или повреждение файла обрабатывается без аварийного завершения игры.
 
-12. Постоянный рекорд: прочитать число из файла при запуске и записать при завершении; отдельно обработать отсутствие или повреждение файла.',NULL,NULL,NULL);
+**Что сдать.** Изменённый код и проверку чтения сохранённого рекорда, отсутствующего файла и повреждённых данных.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-c6d7a701bb71dce7','doodle-jump',NULL,NULL,'Классы Player, Platform и Game: переходить к ним после того, как ученик может объяснить процедурную версию. Класс должен','code','Начинай с задач, которые меняют одно правило. После каждого изменения объясняй, почему оно работает.
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-c6d7a701bb71dce7','doodle-jump',NULL,NULL,'Классы Player, Platform и Game: переходить к ним после того, как ученик может объяснить процедурную версию. Класс должен','code','**Задача.** После того как сможешь объяснить процедурную версию Doodle Jump, раздели уже знакомые данные и действия на классы `Player`, `Platform` и `Game`. Не переноси в классы алгоритм, который пока не можешь объяснить.
 
-Раздел: Для продолжения курса.
+**Ожидаемый результат.** Игра сохраняет прежнее поведение, а назначение данных и действий каждого из трёх классов понятно из структуры программы.
 
-13. Классы Player, Platform и Game: переходить к ним после того, как ученик может объяснить процедурную версию. Класс должен объединять уже знакомые данные и действия, а не скрывать непонятный алгоритм.',NULL,NULL,NULL);
+**Что сдать.** Изменённый код и краткое объяснение ответственности `Player`, `Platform` и `Game`.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-d6b275cd10ef2bac','doodle-jump',NULL,NULL,'Картинка героя','code','Сначала закончи механику. Затем можно заменить зелёный прямоугольник PNG-изображением.
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-d6b275cd10ef2bac','doodle-jump',NULL,NULL,'Картинка героя','code','**Задача.** После завершения игровой механики замени зелёный прямоугольник героя PNG-картинкой `player.png`, лежащей рядом с `main.py`.
 
-1. Положи собственную картинку `player.png` рядом с `main.py`.
-2. Добавь `from pathlib import Path`.
-3. После создания окна, **до цикла**, загрузи и подготовь изображение:
+1. Добавь `from pathlib import Path`.
+2. После создания окна и до игрового цикла найди и подготовь картинку:
 
 ```python
 image_path = Path(__file__).resolve().parent / "player.png"
@@ -4291,83 +4490,97 @@ image_size = (
 player_image = pygame.transform.smoothscale(source_image, image_size)
 ```
 
-`Path(__file__)` позволяет искать файл относительно программы, а не текущего каталога терминала. `convert_alpha()` сохраняет прозрачные области и вызывается после открытия окна. `min` выбирает масштаб, при котором картинка помещается в прямоугольник целиком и не искажается.
+`Path(__file__)` ищет файл относительно программы, а не текущего каталога терминала. `convert_alpha()` сохраняет прозрачность и вызывается после открытия окна. Масштабирование должно целиком помещать картинку в размер героя без искажения.
 
-4. В части рисования замени строку с зелёным прямоугольником на:
+3. В коде отрисовки замени зелёный прямоугольник на:
 
 ```python
 image_rect = player_image.get_rect(midbottom=player.midbottom)
 screen.blit(player_image, image_rect)
 ```
 
-Физика по-прежнему использует `player`. Картинка может быть уже него — это осознанное упрощение: область столкновения остаётся прямоугольной и может отличаться от видимого контура. Не загружай файл каждый кадр.
+Для физики продолжай использовать `player`. Видимая картинка может быть уже прямоугольника столкновения — область столкновения остаётся прямоугольной и может отличаться от контура картинки. Не загружай файл в каждом кадре. PNG-иллюстрации урока показывают схемы и не предназначены для использования целиком как картинка героя.
 
-PNG-иллюстрации этого урока показывают схемы, поэтому использовать их целиком как картинку героя не нужно.',NULL,NULL,NULL);
+**Ожидаемый результат.** Вместо зелёного прямоугольника отображается выбранный PNG-спрайт, помещённый без искажения в размеры героя. Физика и прямоугольник столкновения продолжают использовать `player`, а изображение загружается до цикла один раз.
+
+**Что сдать.** Изменённый код и файл `player.png`.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-316217ff8d2b7f26','variables-print-input',NULL,NULL,'Выведите текст Я учусь Python!.','code','Выведите текст `Я учусь Python!`.',NULL,NULL,NULL);
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-316217ff8d2b7f26','variables-print-input',NULL,NULL,'Выведите текст Я учусь Python!.','code','**Задача.** Выведите текст `Я учусь Python!`.
+
+**Ожидаемый результат.** На экране появляется строка `Я учусь Python!`.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-eae9733325dbc933','variables-print-input',NULL,NULL,'Сохраните название животного в переменную pet.','code','Сохраните название животного в переменную `pet`. Выведите текст `Мой любимец:` и значение переменной.',NULL,NULL,NULL);
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-eae9733325dbc933','variables-print-input',NULL,NULL,'Сохраните название животного в переменную pet.','code','**Задача.** Сохраните название животного в переменную `pet`. Выведите текст `Мой любимец:` и значение переменной.
+
+**Ожидаемый результат.** В `pet` сохранено название выбранного животного; на экране показано `Мой любимец: ` и значение `pet`.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-b9f5665771e7c8a5','variables-print-input',NULL,NULL,'Присвойте points значение 2 и выведите его.','code','Присвойте `points` значение `2` и выведите его. Затем присвойте значение `6` и снова выведите его.',NULL,NULL,NULL);
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-b9f5665771e7c8a5','variables-print-input',NULL,NULL,'Присвойте points значение 2 и выведите его.','code','**Задача.** Присвойте `points` значение `2` и выведите его. Затем присвойте значение `6` и снова выведите его.
+
+**Ожидаемый результат.** На отдельных строках выведены `2`, затем `6`.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-bbad8676d98f5c37','variables-print-input',NULL,NULL,'Выведите слова я, учу, Python.','code','Выведите слова `я`, `учу`, `Python`. Используйте разделитель ` -> `.',NULL,NULL,NULL);
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-bbad8676d98f5c37','variables-print-input',NULL,NULL,'Выведите слова я, учу, Python.','code','**Задача.** Выведите слова `я`, `учу`, `Python`. Используйте разделитель ` -> `.
+
+**Ожидаемый результат.** На одной строке выведено `я -> учу -> Python`.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-68f782e6d2a0d60f','variables-print-input',NULL,NULL,'Что выведет print("4" + "5")?','text','Что выведет `print("4" + "5")`? Что выведет `print(4 + 5)`?',NULL,NULL,NULL);
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-68f782e6d2a0d60f','variables-print-input',NULL,NULL,'Что выведет print("4" + "5")?','text','**Задача.** Что выведет `print("4" + "5")`? Что выведет `print(4 + 5)`?
+
+**Ожидаемый результат.** Первый вызов выводит `45`, потому что складываются строки; второй выводит `9`, потому что складываются числа.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-9f9c6327fc518eac','variables-print-input',NULL,NULL,'Создайте переменные a = 17 и b = 5.','code','Создайте переменные `a = 17` и `b = 5`. Выведите `a // b` и `a % b`.',NULL,NULL,NULL);
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-9f9c6327fc518eac','variables-print-input',NULL,NULL,'Создайте переменные a = 17 и b = 5.','code','**Задача.** Создайте переменные `a = 17` и `b = 5`. Выведите `a // b` и `a % b`.
+
+**Ожидаемый результат.** На отдельных строках выведены результаты `a // b` и `a % b`: `3`, затем `2`.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-5556656014927744','variables-print-input',NULL,NULL,'Создайте переменные с именем и любимым цветом.','code','Создайте переменные с именем и любимым цветом. Выведите их одной командой `print()`.',NULL,NULL,NULL);
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-5556656014927744','variables-print-input',NULL,NULL,'Создайте переменные с именем и любимым цветом.','code','**Задача.** Создайте переменные с именем и любимым цветом. Выведите их одной командой `print()`.
+
+**Ожидаемый результат.** Одна команда `print()` выводит выбранные имя и любимый цвет в одной строке.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-0fed3c6fdad46386','variables-print-input',NULL,NULL,'Получите целое число с помощью input().','code','Получите целое число с помощью `input()`. Выведите это число, умноженное на 2.',NULL,NULL,NULL);
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-0fed3c6fdad46386','variables-print-input',NULL,NULL,'Получите целое число с помощью input().','code','**Задача.** Получите целое число с помощью `input()`. Выведите это число, умноженное на 2.
+
+**Ожидаемый результат.** После ввода целого числа на экран выводится его удвоенное значение.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-5cf9e3d76d8e85c2','variables-print-input',NULL,NULL,'Задание 1. Выведи фразу','code','Напиши программу, которая выводит на экран одну фразу: `Я учусь программировать!`.
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-5cf9e3d76d8e85c2','variables-print-input',NULL,NULL,'Задание 1. Выведи фразу','code','**Задача.** Напиши программу, которая выводит на экран одну фразу: `Я учусь программировать!`.
 
 **Ввод:** не нужен.
 
-**Пример вывода:**
-
+**Ожидаемый результат.**
 ```text
 Я учусь программировать!
 ```',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-0ab34a578a392f4c','variables-print-input',NULL,NULL,'Задание 2. Используй переменные','code','1. Создай переменную `name` и сохрани в ней текст `Аня`.
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-0ab34a578a392f4c','variables-print-input',NULL,NULL,'Задание 2. Используй переменные','code','**Задача.** 1. Создай переменную `name` и сохрани в ней текст `Аня`.
 2. Создай переменную `age` и сохрани в ней число `9`.
 3. Выведи имя и возраст двумя командами `print()`.
 
 **Ввод:** не нужен. Используй значения `Аня` и `9` из задания.
 
-**Пример вывода:**
-
+**Ожидаемый результат.**
 ```text
 Её зовут Аня
 Ей 9 лет
 ```',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-f86a421ac3d17063','variables-print-input',NULL,NULL,'Задание 3. Измени значение переменной','code','1. Сохрани число `3` в переменную `points` и выведи его.
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-f86a421ac3d17063','variables-print-input',NULL,NULL,'Задание 3. Измени значение переменной','code','**Задача.** 1. Сохрани число `3` в переменную `points` и выведи его.
 2. Потом сохрани число `8` в эту же переменную и выведи новое значение.
 
 **Ввод:** не нужен.
 
-**Пример вывода:**
-
+**Ожидаемый результат.**
 ```text
 3
 8
 ```',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-d1690c7e7d3cb454','variables-print-input',NULL,NULL,'Задание 4. Поставь разделитель','code','Одной командой `print()` выведи три слова: `красный`, `зелёный`, `синий`.
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-d1690c7e7d3cb454','variables-print-input',NULL,NULL,'Задание 4. Поставь разделитель','code','**Задача.** Одной командой `print()` выведи три слова: `красный`, `зелёный`, `синий`.
 
 Поставь между словами разделитель ` | `. Для этого используй настройку `sep`.
 
 **Ввод:** не нужен.
 
-**Пример вывода:**
-
+**Ожидаемый результат.**
 ```text
 красный | зелёный | синий
 ```',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-995a3b55d8a3ac84','variables-print-input',NULL,NULL,'Задание 5. Используй `end`','code','Напиши две команды `print()`.
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-995a3b55d8a3ac84','variables-print-input',NULL,NULL,'Задание 5. Используй `end`','code','**Задача.** Напиши две команды `print()`.
 
 - Первая выводит `Привет,`.
 - Вторая выводит `мир!`.
@@ -4377,38 +4590,35 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 
 **Ввод:** не нужен.
 
-**Пример вывода:**
-
+**Ожидаемый результат.**
 ```text
 Привет, мир!
 ```',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-5f7d832e70fa2ced','variables-print-input',NULL,NULL,'Задание 6. Спроси имя','code','1. С помощью `input()` спроси: `Как тебя зовут? `.
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-5f7d832e70fa2ced','variables-print-input',NULL,NULL,'Задание 6. Спроси имя','code','**Задача.** 1. С помощью `input()` спроси: `Как тебя зовут? `.
 2. Сохрани ответ в переменную `name`.
 3. Выведи приветствие: `Привет, имя!`.
 
 **Ввод:** после запуска введи `Аня` и нажми Enter.
 
-**Пример вывода после ввода:**
-
+**Ожидаемый результат.**
 ```text
 Привет, Аня!
 ```',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-0b672f89cfadaf80','variables-print-input',NULL,NULL,'Задание 7. Удвой число','code','1. Спроси целое число с помощью `input()`.
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-0b672f89cfadaf80','variables-print-input',NULL,NULL,'Задание 7. Удвой число','code','**Задача.** 1. Спроси целое число с помощью `input()`.
 2. Преврати ответ в число с помощью `int()`.
 3. Умножь число на `2`.
 4. Выведи ответ вместе с текстом `Удвоенное число:`.
 
 **Ввод:** после запуска введи `7` и нажми Enter.
 
-**Пример вывода после ввода:**
-
+**Ожидаемый результат.**
 ```text
 Удвоенное число: 14
 ```',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-be2eb457790974c4','variables-print-input',NULL,NULL,'Задание 8. Сложи два числа','code','1. Спроси первое целое число и сохрани его.
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-be2eb457790974c4','variables-print-input',NULL,NULL,'Задание 8. Сложи два числа','code','**Задача.** 1. Спроси первое целое число и сохрани его.
 2. Спроси второе целое число и сохрани его.
 3. Сложи числа.
 4. Выведи сумму вместе с текстом `Сумма:`.
@@ -4417,13 +4627,12 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 
 **Ввод:** сначала введи `12`, нажми Enter. Затем введи `5` и нажми Enter.
 
-**Пример вывода после двух вводов:**
-
+**Ожидаемый результат.**
 ```text
 Сумма: 17
 ```',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-dc86612076a74341','variables-print-input',NULL,NULL,'Задание 9. Сравни текст и числа','code','Напиши две команды `print()`:
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-dc86612076a74341','variables-print-input',NULL,NULL,'Задание 9. Сравни текст и числа','code','**Задача.** Напиши две команды `print()`:
 
 1. В первой сложи тексты `"4"` и `"5"`.
 2. Во второй сложи числа `4` и `5`.
@@ -4432,70 +4641,64 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 
 **Ввод:** не нужен.
 
-**Пример вывода:**
-
+**Ожидаемый результат.**
 ```text
 Тексты: 45
 Числа: 9
 ```',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-b6a3069634c9a73e','variables-print-input',NULL,NULL,'Задание 10. Найди целое деление и остаток','code','Создай переменные `a` и `b`. Сохрани в `a` число `17`, а в `b` — число `5`.
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-b6a3069634c9a73e','variables-print-input',NULL,NULL,'Задание 10. Найди целое деление и остаток','code','**Задача.** Создай переменные `a` и `b`. Сохрани в `a` число `17`, а в `b` — число `5`.
 
 Выведи сначала результат `a // b`, а затем результат `a % b`.
 
 **Ввод:** не нужен.
 
-**Пример вывода:**
-
+**Ожидаемый результат.**
 ```text
 3
 2
 ```',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-a57be68e1f4f5451','variables-print-input',NULL,NULL,'Задание 11. Спроси имя и любимый цвет','code','1. Спроси имя и сохрани ответ в переменную `name`.
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-a57be68e1f4f5451','variables-print-input',NULL,NULL,'Задание 11. Спроси имя и любимый цвет','code','**Задача.** 1. Спроси имя и сохрани ответ в переменную `name`.
 2. Спроси любимый цвет и сохрани ответ в переменную `color`.
 3. Выведи предложение: `Имя любит цвет цвет.` Подставь ответы вместо слов `Имя` и `цвет`.
 
 **Ввод:** сначала введи `Миша`, нажми Enter. Затем введи `синий` и нажми Enter.
 
-**Пример вывода после двух вводов:**
-
+**Ожидаемый результат.**
 ```text
 Миша любит синий цвет.
 ```',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-f42e9c6561b61c82','variables-print-input',NULL,NULL,'Задание 12. Выведи текст в три строки','code','Выведи слово `Python` три раза: каждое слово должно быть на отдельной строке.
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-f42e9c6561b61c82','variables-print-input',NULL,NULL,'Задание 12. Выведи текст в три строки','code','**Задача.** Выведи слово `Python` три раза: каждое слово должно быть на отдельной строке.
 
 Используй `\n` или три команды `print()`.
 
 **Ввод:** не нужен.
 
-**Пример вывода:**
-
+**Ожидаемый результат.**
 ```text
 Python
 Python
 Python
 ```',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-ca79e0d369fdaa87','conditions-bool-if',NULL,NULL,'Задание 1. Проверь типы значений','code','Напиши программу, которая показывает типы трёх значений: числа `7`, текста `"Привет"` и результата сравнения `7 > 3`. Используй `type()`.
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-ca79e0d369fdaa87','conditions-bool-if',NULL,NULL,'Задание 1. Проверь типы значений','code','**Задача.** Напиши программу, которая показывает типы трёх значений: числа `7`, текста `"Привет"` и результата сравнения `7 > 3`. Используй `type()`.
 
 **Ввод:** не нужен.
 
-**Пример вывода:**
-
+**Ожидаемый результат.**
 ```text
 <class ''int''>
 <class ''str''>
 <class ''bool''>
 ```',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-0446538bc2905232','conditions-bool-if',NULL,NULL,'Задание 2. Сравни числа','code','Создай переменные `a = 5` и `b = 5`. Покажи результаты четырёх сравнений: `a < b`, `a <= b`, `a == b`, `a != b`.
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-0446538bc2905232','conditions-bool-if',NULL,NULL,'Задание 2. Сравни числа','code','**Задача.** Создай переменные `a = 5` и `b = 5`. Покажи результаты четырёх сравнений: `a < b`, `a <= b`, `a == b`, `a != b`.
 
 **Ввод:** не нужен.
 
-**Пример вывода:**
-
+**Ожидаемый результат.**
 ```text
 False
 True
@@ -4503,24 +4706,22 @@ True
 False
 ```',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-eb3e6eb66defbd2c','conditions-bool-if',NULL,NULL,'Задание 3. Отличи `=` от `==`','code','Сохрани число `4` в переменную `number`. Покажи само число. Затем проверь, равно ли оно `4`, и равно ли оно `7`.
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-eb3e6eb66defbd2c','conditions-bool-if',NULL,NULL,'Задание 3. Отличи `=` от `==`','code','**Задача.** Сохрани число `4` в переменную `number`. Покажи само число. Затем проверь, равно ли оно `4`, и равно ли оно `7`.
 
 **Ввод:** не нужен.
 
-**Пример вывода:**
-
+**Ожидаемый результат.**
 ```text
 4
 True
 False
 ```',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-d4cc29ec35df10de','conditions-bool-if',NULL,NULL,'Задание 4. Проверь числа с помощью `bool()`','code','Покажи результат `bool()` для чисел `0`, `1`, `-2` и `2.5`.
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-d4cc29ec35df10de','conditions-bool-if',NULL,NULL,'Задание 4. Проверь числа с помощью `bool()`','code','**Задача.** Покажи результат `bool()` для чисел `0`, `1`, `-2` и `2.5`.
 
 **Ввод:** не нужен.
 
-**Пример вывода:**
-
+**Ожидаемый результат.**
 ```text
 False
 True
@@ -4528,12 +4729,11 @@ True
 True
 ```',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-c58e60c34d64e0d7','conditions-bool-if',NULL,NULL,'Задание 5. Проверь текст с помощью `bool()`','code','Покажи результат `bool()` для пустого текста `""`, одного пробела `" "`, текста `"0"` и слова `"Python"`.
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-c58e60c34d64e0d7','conditions-bool-if',NULL,NULL,'Задание 5. Проверь текст с помощью `bool()`','code','**Задача.** Покажи результат `bool()` для пустого текста `""`, одного пробела `" "`, текста `"0"` и слова `"Python"`.
 
 **Ввод:** не нужен.
 
-**Пример вывода:**
-
+**Ожидаемый результат.**
 ```text
 False
 True
@@ -4541,7 +4741,7 @@ True
 True
 ```',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-99f5559c5631ced2','conditions-bool-if',NULL,NULL,'Задание 6. Определи правило входа по возрасту','code','Напиши программу с переменной `age`. Используй `if`, `elif` и `else`:
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-99f5559c5631ced2','conditions-bool-if',NULL,NULL,'Задание 6. Определи правило входа по возрасту','code','**Задача.** Напиши программу с переменной `age`. Используй `if`, `elif` и `else`:
 
 - меньше 12 лет — `Вход запрещён`;
 - меньше 16 лет — `Вход разрешён с родителем`;
@@ -4552,43 +4752,39 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 
 **Ввод:** не нужен, возраст уже записан в программе.
 
-**Пример вывода:**
-
+**Ожидаемый результат.**
 ```text
 Вход разрешён с родителем
 ```',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-0c837054f3da792f','conditions-bool-if',NULL,NULL,'Задание 7. Проверь другой возраст','code','Скопируй в ячейку ниже свою программу из задания 6. Измени значение `age` на `18`. Запусти программу ещё раз.
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-0c837054f3da792f','conditions-bool-if',NULL,NULL,'Задание 7. Проверь другой возраст','code','**Задача.** Скопируй в ячейку ниже свою программу из задания 6. Измени значение `age` на `18`. Запусти программу ещё раз.
 
 **Ввод:** не нужен. Используй значение `18`.
 
-**Пример вывода:**
-
+**Ожидаемый результат.**
 ```text
 Вход разрешён до 19:00
 ```',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-46de4ddb4a84d09d','conditions-bool-if',NULL,NULL,'Задание 8. Проверь возраст 19 лет','code','Скопируй в ячейку ниже свою программу из задания 6. Измени значение `age` на `19`. Проверь, что выполняется ветка `else`.
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-46de4ddb4a84d09d','conditions-bool-if',NULL,NULL,'Задание 8. Проверь возраст 19 лет','code','**Задача.** Скопируй в ячейку ниже свою программу из задания 6. Измени значение `age` на `19`. Проверь, что выполняется ветка `else`.
 
 **Ввод:** не нужен. Используй значение `19`.
 
-**Пример вывода:**
-
+**Ожидаемый результат.**
 ```text
 Вход разрешён
 ```',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-eda3affd67a297c7','conditions-bool-if',NULL,NULL,'Задание 9. Используй `and`','code','Получи два целых числа с помощью `input()` и `int()`. Если оба числа больше нуля, выведи `Оба числа положительные`. Иначе выведи `Не оба числа положительные`.
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-eda3affd67a297c7','conditions-bool-if',NULL,NULL,'Задание 9. Используй `and`','code','**Задача.** Получи два целых числа с помощью `input()` и `int()`. Если оба числа больше нуля, выведи `Оба числа положительные`. Иначе выведи `Не оба числа положительные`.
 
 **Ввод:** сначала введи `4`, затем `6`.
 
-**Пример вывода после ввода:**
-
+**Ожидаемый результат.**
 ```text
 Оба числа положительные
 ```',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-4e67ec4a21ed2256','conditions-bool-if',NULL,NULL,'Задание 10. Используй `or` и учти ноль','code','Получи два целых числа. Проверь их в таком порядке:
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-4e67ec4a21ed2256','conditions-bool-if',NULL,NULL,'Задание 10. Используй `or` и учти ноль','code','**Задача.** Получи два целых числа. Проверь их в таком порядке:
 
 - если оба больше нуля, выведи `Оба числа положительные`;
 - иначе, если хотя бы одно меньше нуля, выведи `Есть отрицательное число`;
@@ -4596,13 +4792,12 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 
 **Ввод:** сначала введи `-2`, затем `0`.
 
-**Пример вывода после ввода:**
-
+**Ожидаемый результат.**
 ```text
 Есть отрицательное число
 ```',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-1f950c76011440bc','conditions-bool-if',NULL,NULL,'Задание 11. Проверь резервуар с водой','code','Получи количество литров через `input()` и преобразуй ответ в число с помощью `float()`.
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-1f950c76011440bc','conditions-bool-if',NULL,NULL,'Задание 11. Проверь резервуар с водой','code','**Задача.** Получи количество литров через `input()` и преобразуй ответ в число с помощью `float()`.
 
 - если количество равно нулю, выведи `Пусто`;
 - иначе выведи `Вода есть`.
@@ -4611,28 +4806,25 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 
 **Ввод:** введи `0`.
 
-**Пример вывода после ввода:**
-
+**Ожидаемый результат.**
 ```text
 Пусто
 ```',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-baa0e7a52c64354a','conditions-bool-if',NULL,NULL,'Задание 12. Проверь непустой резервуар','code','Используй ту же программу, что в задании 11. Проверь, что она выводит правильное сообщение, если воды больше нуля.
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-baa0e7a52c64354a','conditions-bool-if',NULL,NULL,'Задание 12. Проверь непустой резервуар','code','**Задача.** Используй ту же программу, что в задании 11. Проверь, что она выводит правильное сообщение, если воды больше нуля.
 
 **Ввод:** введи `2.5`.
 
-**Пример вывода после ввода:**
-
+**Ожидаемый результат.**
 ```text
 Вода есть
 ```',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-6ace98c3448520d3','while-loop-conditions',NULL,NULL,'Задание 1. Выведи числа от 1 до 4','code','Создай переменную `number` со значением `1`. Используй `while`, чтобы вывести числа от 1 до 4, каждое с новой строки. После каждого вывода увеличивай `number` на 1. После цикла выведи `Готово`.
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-6ace98c3448520d3','while-loop-conditions',NULL,NULL,'Задание 1. Выведи числа от 1 до 4','code','**Задача.** Создай переменную `number` со значением `1`. Используй `while`, чтобы вывести числа от 1 до 4, каждое с новой строки. После каждого вывода увеличивай `number` на 1. После цикла выведи `Готово`.
 
 **Ввод:** не нужен.
 
-**Пример вывода:**
-
+**Ожидаемый результат.**
 ```text
 1
 2
@@ -4641,12 +4833,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 Готово
 ```',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-6ed35146bfb37592','while-loop-conditions',NULL,NULL,'Задание 2. Сделай обратный отсчёт','code','Спроси целое число `n`. Выводи числа от `n` до `1`, уменьшая число на 1. После цикла выведи `Старт!`.
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-6ed35146bfb37592','while-loop-conditions',NULL,NULL,'Задание 2. Сделай обратный отсчёт','code','**Задача.** Спроси целое число `n`. Выводи числа от `n` до `1`, уменьшая число на 1. После цикла выведи `Старт!`.
 
 **Ввод нужен:** введи `3`.
 
-**Пример вывода:**
-
+**Ожидаемый результат.**
 ```text
 3
 2
@@ -4654,34 +4845,31 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 Старт!
 ```',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-24d9694d41e4ad5b','while-loop-conditions',NULL,NULL,'Задание 3. Проверь ноль повторов','code','Создай `number = 8`. Напиши цикл `while number < 5`, который выводит `Внутри цикла`. После цикла выведи `После цикла`.
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-24d9694d41e4ad5b','while-loop-conditions',NULL,NULL,'Задание 3. Проверь ноль повторов','code','**Задача.** Создай `number = 8`. Напиши цикл `while number < 5`, который выводит `Внутри цикла`. После цикла выведи `После цикла`.
 
 Условие сразу неверно. Проверь, что тело цикла не выполняется.
 
 **Ввод:** не нужен.
 
-**Пример вывода:**
-
+**Ожидаемый результат.**
 ```text
 После цикла
 ```',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-ef9babc627950e54','while-loop-conditions',NULL,NULL,'Задание 4. Посчитай сумму от 1 до n','code','Спроси целое число `n`. С помощью `while` сложи все числа от 1 до `n` включительно. Сохраняй сумму в переменную `total`. После цикла выведи `Сумма:` и ответ.
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-ef9babc627950e54','while-loop-conditions',NULL,NULL,'Задание 4. Посчитай сумму от 1 до n','code','**Задача.** Спроси целое число `n`. С помощью `while` сложи все числа от 1 до `n` включительно. Сохраняй сумму в переменную `total`. После цикла выведи `Сумма:` и ответ.
 
 **Ввод нужен:** введи `4`.
 
-**Пример вывода:**
-
+**Ожидаемый результат.**
 ```text
 Сумма: 10
 ```',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-d389981ecf2fa35c','while-loop-conditions',NULL,NULL,'Задание 5. Выведи нечётные числа','code','Используй `while`, чтобы вывести числа `1`, `3`, `5`, `7` по одному на строке. Начни с 1 и увеличивай переменную на 2 после каждого повтора.
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-d389981ecf2fa35c','while-loop-conditions',NULL,NULL,'Задание 5. Выведи нечётные числа','code','**Задача.** Используй `while`, чтобы вывести числа `1`, `3`, `5`, `7` по одному на строке. Начни с 1 и увеличивай переменную на 2 после каждого повтора.
 
 **Ввод:** не нужен.
 
-**Пример вывода:**
-
+**Ожидаемый результат.**
 ```text
 1
 3
@@ -4689,33 +4877,31 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 7
 ```',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-70c228c8ca9bf5c6','while-loop-conditions',NULL,NULL,'Задание 6. Повторяй ввод, пока не будет нужное слово','code','Спроси слово `стоп`. Пока ответ не равен слову `стоп`, выводи `Неверное слово` и спрашивай снова. Когда ответ станет `стоп`, выйди из цикла и выведи `Готово`.
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-70c228c8ca9bf5c6','while-loop-conditions',NULL,NULL,'Задание 6. Повторяй ввод, пока не будет нужное слово','code','**Задача.** Спроси слово `стоп`. Пока ответ не равен слову `стоп`, выводи `Неверное слово` и спрашивай снова. Когда ответ станет `стоп`, выйди из цикла и выведи `Готово`.
 
 Сравнение текста учитывает большие и маленькие буквы.
 
 **Ввод нужен:** введи по очереди `начать`, `СТОП`, `стоп`.
 
-**Пример вывода:**
-
+**Ожидаемый результат.**
 ```text
 Неверное слово
 Неверное слово
 Готово
 ```',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-c9c2255429137a05','while-loop-conditions',NULL,NULL,'Задание 7. Проверь число от 1 до 5','code','Спроси целое число. Пока оно меньше 1 **или** больше 5, выведи `Число вне диапазона` и попроси ввести число снова. Когда число попадёт в диапазон, выведи `Принято:` и это число.
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-c9c2255429137a05','while-loop-conditions',NULL,NULL,'Задание 7. Проверь число от 1 до 5','code','**Задача.** Спроси целое число. Пока оно меньше 1 **или** больше 5, выведи `Число вне диапазона` и попроси ввести число снова. Когда число попадёт в диапазон, выведи `Принято:` и это число.
 
 **Ввод нужен:** введи по очереди `0`, `6`, `4`.
 
-**Пример вывода:**
-
+**Ожидаемый результат.**
 ```text
 Число вне диапазона
 Число вне диапазона
 Принято: 4
 ```',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-dcf82a5f4b07aeb3','while-loop-conditions',NULL,NULL,'Задание 8. Используй `if` внутри `while`','code','Спроси целое число. Пока число не равно нулю:
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-dcf82a5f4b07aeb3','while-loop-conditions',NULL,NULL,'Задание 8. Используй `if` внутри `while`','code','**Задача.** Спроси целое число. Пока число не равно нулю:
 
 - если число больше нуля, выведи `Положительное`;
 - иначе выведи `Отрицательное`;
@@ -4725,15 +4911,14 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 
 **Ввод нужен:** введи по очереди `4`, `-2`, `0`.
 
-**Пример вывода:**
-
+**Ожидаемый результат.**
 ```text
 Положительное
 Отрицательное
 Готово
 ```',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-aed9abdf9d10b155','while-loop-conditions',NULL,NULL,'Задание 9. Используй `if`, `elif` и `else` внутри цикла','code','Программа должна три раза спросить оценку от 0 до 100. Для каждой оценки выведи:
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-aed9abdf9d10b155','while-loop-conditions',NULL,NULL,'Задание 9. Используй `if`, `elif` и `else` внутри цикла','code','**Задача.** Программа должна три раза спросить оценку от 0 до 100. Для каждой оценки выведи:
 
 - `Отлично`, если оценка не меньше 90;
 - `Хорошо`, если оценка не меньше 70;
@@ -4743,15 +4928,14 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 
 **Ввод нужен:** введи по очереди `95`, `75`, `60`.
 
-**Пример вывода:**
-
+**Ожидаемый результат.**
 ```text
 Отлично
 Хорошо
 Нужно повторить
 ```',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-ce2ea5339c5bd5df','while-loop-conditions',NULL,NULL,'Задание 10. Сделай игру «Угадай число»','code','Загаданное число уже записано в программе: `secret = 7`.
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-ce2ea5339c5bd5df','while-loop-conditions',NULL,NULL,'Задание 10. Сделай игру «Угадай число»','code','**Задача.** Загаданное число уже записано в программе: `secret = 7`.
 
 Спроси догадку. Пока она не равна загаданному числу:
 
@@ -4763,103 +4947,94 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 
 **Ввод нужен:** введи по очереди `3`, `9`, `7`.
 
-**Пример вывода:**
-
+**Ожидаемый результат.**
 ```text
 Моё число больше
 Моё число меньше
 Верно! Попыток: 3
 ```',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-cc095633cfe1495a','while-advanced-practice',NULL,NULL,'Задание 1. Сложи числа до сигнала','code','Вводи целые числа, пока не появится `-1`. Число `-1` — сигнал остановки, в сумму оно не входит. Посчитай количество введённых чисел и их сумму. Выведи оба ответа.
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-cc095633cfe1495a','while-advanced-practice',NULL,NULL,'Задание 1. Сложи числа до сигнала','code','**Задача.** Вводи целые числа, пока не появится `-1`. Число `-1` — сигнал остановки, в сумму оно не входит. Посчитай количество введённых чисел и их сумму. Выведи оба ответа.
 
 **Ввод нужен:** введи по очереди `4`, `-2`, `7`, `-1`.
 
-**Пример вывода:**
-
+**Ожидаемый результат.**
 ```text
 Количество: 3
 Сумма: 9
 ```',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-0368379b227f0cb2','while-advanced-practice',NULL,NULL,'Задание 2. Посчитай значения в диапазоне','code','Вводи целые числа до сигнала `0`. Ноль в подсчёт не входит. Посчитай, сколько чисел от 10 до 20 включительно.
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-0368379b227f0cb2','while-advanced-practice',NULL,NULL,'Задание 2. Посчитай значения в диапазоне','code','**Задача.** Вводи целые числа до сигнала `0`. Ноль в подсчёт не входит. Посчитай, сколько чисел от 10 до 20 включительно.
 
 **Ввод нужен:** введи `5`, `10`, `20`, `22`, `0`.
 
-**Пример вывода:**
-
+**Ожидаемый результат.**
 ```text
 Количество: 2
 ```',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-4244e37ad5e06710','while-advanced-practice',NULL,NULL,'Задание 3. Найди наибольшее число','code','Вводи целые числа до сигнала `-1`. Сигнал не учитывай. Выведи самое большое из введённых чисел. Считай, что до сигнала введено хотя бы одно число.
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-4244e37ad5e06710','while-advanced-practice',NULL,NULL,'Задание 3. Найди наибольшее число','code','**Задача.** Вводи целые числа до сигнала `-1`. Сигнал не учитывай. Выведи самое большое из введённых чисел. Считай, что до сигнала введено хотя бы одно число.
 
 **Ввод нужен:** введи `4`, `9`, `2`, `-1`.
 
-**Пример вывода:**
-
+**Ожидаемый результат.**
 ```text
 Максимум: 9
 ```',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-efb0e6db5a7e6670','while-advanced-practice',NULL,NULL,'Задание 4. Найди среднее значение','code','Вводи числа до сигнала `0`. Ноль не включай в расчёт. Найди сумму, количество чисел и среднее значение.
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-efb0e6db5a7e6670','while-advanced-practice',NULL,NULL,'Задание 4. Найди среднее значение','code','**Задача.** Вводи числа до сигнала `0`. Ноль не включай в расчёт. Найди сумму, количество чисел и среднее значение.
 
 **Ввод нужен:** введи `4`, `6`, `0`.
 
-**Пример вывода:**
-
+**Ожидаемый результат.**
 ```text
 Количество: 2
 Сумма: 10
 Среднее: 5.0
 ```',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-655620364433186a','while-advanced-practice',NULL,NULL,'Задание 5. Вычисли факториал','code','Спроси натуральное число `n`. Вычисли произведение чисел от 1 до `n` с помощью `while`. Сохраняй произведение в переменную. Ввод: `5`.
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-655620364433186a','while-advanced-practice',NULL,NULL,'Задание 5. Вычисли факториал','code','**Задача.** Спроси натуральное число `n`. Вычисли произведение чисел от 1 до `n` с помощью `while`. Сохраняй произведение в переменную. Ввод: `5`.
 
 **Ввод нужен:** введи `5`.
 
-**Пример вывода:**
-
+**Ожидаемый результат.**
 ```text
 Факториал: 120
 ```',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-cf8478341e8b07d9','while-advanced-practice',NULL,NULL,'Задание 6. Посчитай положительные, отрицательные и нули','code','Сначала спроси, сколько чисел будет введено. Затем получи это количество чисел и с помощью `if / elif / else` посчитай, сколько среди них положительных, отрицательных и равных нулю.
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-cf8478341e8b07d9','while-advanced-practice',NULL,NULL,'Задание 6. Посчитай положительные, отрицательные и нули','code','**Задача.** Сначала спроси, сколько чисел будет введено. Затем получи это количество чисел и с помощью `if / elif / else` посчитай, сколько среди них положительных, отрицательных и равных нулю.
 
 **Ввод нужен:** сначала введи количество `5`, затем числа `-3`, `0`, `4`, `5`, `-1` по одному.
 
-**Пример вывода:**
-
+**Ожидаемый результат.**
 ```text
 Положительных: 2
 Отрицательных: 2
 Нулей: 1
 ```',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-c56fd7864944666b','while-advanced-practice',NULL,NULL,'Задание 7. Сделай игру «Угадай число» со счётчиком','code','Загаданное число в программе — `17`. Спроси догадку. Пока она неверная, сообщай, больше или меньше загаданного числа догадка, и спрашивай снова. Считай количество попыток, включая правильный ответ.
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-c56fd7864944666b','while-advanced-practice',NULL,NULL,'Задание 7. Сделай игру «Угадай число» со счётчиком','code','**Задача.** Загаданное число в программе — `17`. Спроси догадку. Пока она неверная, сообщай, больше или меньше загаданного числа догадка, и спрашивай снова. Считай количество попыток, включая правильный ответ.
 
 **Ввод нужен:** введи по очереди `10`, `20`, `17`.
 
-**Пример вывода:**
-
+**Ожидаемый результат.**
 ```text
 Моё число больше
 Моё число меньше
 Верно! Попыток: 3
 ```',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-8f952b58f33b5420','while-advanced-practice',NULL,NULL,'Задание 8. Найди минимальное количество слагаемых','code','Дано целое число `target`. Найди наименьшее `k`, для которого сумма `1 + 2 + ... + k` не меньше `target`. Используй цикл `while`, переменную суммы и счётчик.
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-8f952b58f33b5420','while-advanced-practice',NULL,NULL,'Задание 8. Найди минимальное количество слагаемых','code','**Задача.** Дано целое число `target`. Найди наименьшее `k`, для которого сумма `1 + 2 + ... + k` не меньше `target`. Используй цикл `while`, переменную суммы и счётчик.
 
 **Ввод нужен:** введи `11`.
 
-**Пример вывода:**
-
+**Ожидаемый результат.**
 ```text
 Количество чисел: 5
 Сумма: 15
 ```',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-60c744cb819718ad','while-break-continue-range',NULL,NULL,'Задание 1. Выведи числа от 1 до `n`','code','Напиши программу, которая:
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-60c744cb819718ad','while-break-continue-range',NULL,NULL,'Задание 1. Выведи числа от 1 до `n`','code','**Задача.** Напиши программу, которая:
 
 1. Просит ввести целое число `n`.
 2. Использует `for`, чтобы вывести все числа от 1 до `n` включительно. Каждое число должно быть на новой строке.
@@ -4867,8 +5042,9 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 
 **Ввод нужен:** введи число `5`.
 
-**Пример вывода:**
+**Подсказка:** ввод целого числа можно записать так: `n = int(input())`. Чтобы `n` попало в цикл, используй границу остановки `n + 1`.
 
+**Ожидаемый результат.**
 ```text
 1
 2
@@ -4876,11 +5052,9 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 4
 5
 Готово
-```
-
-**Подсказка:** ввод целого числа можно записать так: `n = int(input())`. Чтобы `n` попало в цикл, используй границу остановки `n + 1`.',NULL,NULL,NULL);
+```',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-4c8ba450175285b2','while-break-continue-range',NULL,NULL,'Задание 2. Пропускай числа и остановись на восьми','code','Напиши программу, которая:
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-4c8ba450175285b2','while-break-continue-range',NULL,NULL,'Задание 2. Пропускай числа и остановись на восьми','code','**Задача.** Напиши программу, которая:
 
 1. Просит ввести целое число `n`.
 2. Проходит циклом `for` по числам от 1 до `n` включительно.
@@ -4891,8 +5065,11 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 
 **Ввод нужен:** введи `10`.
 
-**Пример вывода:**
+**Почему получился такой вывод:** число 3 пропустили; число 6 тоже пропустили; на числе 8 остановились. Поэтому 8, 9 и 10 уже не рассматриваются.
 
+**Подсказка:** проверь сначала `number == 8`, затем `number % 3 == 0`.
+
+**Ожидаемый результат.**
 ```text
 1
 2
@@ -4900,201 +5077,77 @@ INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,p
 5
 7
 Проверка завершена
-```
-
-**Почему получился такой вывод:** число 3 пропустили; число 6 тоже пропустили; на числе 8 остановились. Поэтому 8, 9 и 10 уже не рассматриваются.
-
-**Подсказка:** проверь сначала `number == 8`, затем `number % 3 == 0`.',NULL,NULL,NULL);
+```',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-a27f189a47606a85','mixed-lessons',NULL,NULL,'Задание 1. Знакомство','code','Спроси у пользователя:
-- имя
-- возраст
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-a27f189a47606a85','mixed-lessons',NULL,NULL,'Задание 1. Знакомство','code','**Задача.** Спроси у пользователя имя и возраст. Выведи одной строкой приветствие по образцу:
 
-Выведи одной строкой:
-
-```
+```text
 Привет, <имя>! Тебе <возраст> лет.
 ```
 
-**Пример работы программы:**
-
-```
-Как тебя зовут? Аня
-Сколько тебе лет? 12
-Привет, Аня! Тебе 12 лет.
-```
-
----',NULL,NULL,NULL);
+**Ожидаемый результат.** При вводе имени `Аня` и возраста `12` программа печатает `Привет, Аня! Тебе 12 лет.`.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-8e96adc410e691c3','mixed-lessons',NULL,NULL,'Задание 2. Повторялка','code','Спроси у пользователя:
-- слово
-- число `n`
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-8e96adc410e691c3','mixed-lessons',NULL,NULL,'Задание 2. Повторялка','code','**Задача.** Спроси у пользователя слово и число `n`. Выведи это слово `n` раз, каждый раз с новой строки.
 
-Выведи это слово `n` раз, каждый раз с новой строки.
+**Ожидаемый результат.** При слове `Python` и `n = 3` программа выводит три строки:
 
-**Пример:**
-
-```
-Введи слово: Python
-Сколько раз повторить? 3
+```text
 Python
 Python
 Python
-```
-
----',NULL,NULL,NULL);
+```',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-d4ce8a9a991de188','mixed-lessons',NULL,NULL,'Задание 3. Линия из символов','code','Спроси у пользователя:
-- символ (один знак, например `*` или `#`)
-- число `n`
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-d4ce8a9a991de188','mixed-lessons',NULL,NULL,'Задание 3. Линия из символов','code','**Задача.** Спроси один символ (например, `*` или `#`) и число `n`. Выведи строку из этого символа длиной `n`. Чтобы символы не переносились на разные строки, можно использовать `print(symbol, end="")`.
 
-Нарисуй линию из этого символа длиной `n`.
-
-**Пример:**
-
-```
-Введи символ: *
-Сколько символов? 7
-*******
-```
-
-> Подсказка: используй `print(symbol, end="")`, чтобы символы шли в одну строку.
-
----',NULL,NULL,NULL);
+**Ожидаемый результат.** Для символа `*` и `n = 7` выводится одна строка `*******`.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-fde0bf18087216ca','mixed-lessons',NULL,NULL,'Задание 4. Нумерованное приветствие','code','Спроси у пользователя:
-- имя
-- число `n`
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-fde0bf18087216ca','mixed-lessons',NULL,NULL,'Задание 4. Нумерованное приветствие','code','**Задача.** Спроси у пользователя имя и число `n`. Выведи приветствие `n` раз, нумеруя строки с 1. В `for i in range(n)` переменная `i` принимает значения от 0; продумай, как получить номера 1, 2, 3, … .
 
-Выведи приветствие `n` раз с номером строки:
+**Ожидаемый результат.** Для имени `Аня` и `n = 3` программа выводит:
 
-```
-Как тебя зовут? Аня
-Сколько раз поздороваться? 3
+```text
 1. Привет, Аня!
 2. Привет, Аня!
 3. Привет, Аня!
-```
-
-> Подсказка: внутри цикла `for i in range(n)` переменная `i` принимает значения 0, 1, 2... Подумай, как получить 1, 2, 3.
-
----',NULL,NULL,NULL);
+```',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-47bf922a121bc345','mixed-lessons',NULL,NULL,'Задание 5. Мини-таблица умножения','code','Спроси у пользователя число.
-Выведи таблицу умножения на это число от 1 до 5.
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-47bf922a121bc345','mixed-lessons',NULL,NULL,'Задание 5. Мини-таблица умножения','code','**Задача.** Спроси у пользователя число и выведи таблицу умножения на него от 1 до 5. Используй переменную цикла и умножение `*`.
 
-**Пример:**
+**Ожидаемый результат.** Для числа `3` программа выводит:
 
-```
-Введи число: 3
+```text
 3 x 1 = 3
 3 x 2 = 6
 3 x 3 = 9
 3 x 4 = 12
 3 x 5 = 15
-```
-
-> Подсказка: используй переменную цикла и `*` для умножения.
-
----',NULL,NULL,NULL);
+```',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-24595c70d7d7e0cc','mixed-lessons',NULL,NULL,'Задание 6. Чётное или нечётное','code','Спроси у пользователя число.
-Если оно чётное — выведи `Число чётное`.
-Если нечётное — выведи `Число нечётное`.
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-24595c70d7d7e0cc','mixed-lessons',NULL,NULL,'Задание 6. Чётное или нечётное','code','**Задача.** Спроси у пользователя число. Если оно чётное, выведи `Число чётное`, иначе выведи `Число нечётное`. Число чётное, если остаток от деления на 2 равен нулю: `number % 2 == 0`.
 
-**Пример 1:**
-
-```
-Введи число: 4
-Число чётное
-```
-
-**Пример 2:**
-
-```
-Введи число: 7
-Число нечётное
-```
-
-> Подсказка: число чётное, если остаток от деления на 2 равен нулю: `number % 2 == 0`.
-
----',NULL,NULL,NULL);
+**Ожидаемый результат.** Для `4` выводится `Число чётное`, для `7` — `Число нечётное`.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-c24d26c9d27c748a','mixed-lessons',NULL,NULL,'Задание 7. Можно ли получать права','code','Спроси у пользователя возраст.
-Если возраст 16 или больше — выведи `Можно получать права`.
-Иначе — выведи `Придётся подождать`.
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-c24d26c9d27c748a','mixed-lessons',NULL,NULL,'Задание 7. Можно ли получать права','code','**Задача.** Спроси у пользователя возраст. Если ему 16 лет или больше, выведи `Можно получать права`; иначе выведи `Придётся подождать`.
 
-**Пример 1:**
-
-```
-Сколько тебе лет? 18
-Можно получать права
-```
-
-**Пример 2:**
-
-```
-Сколько тебе лет? 14
-Придётся подождать
-```
-
----',NULL,NULL,NULL);
+**Ожидаемый результат.** Для возраста `18` выводится `Можно получать права`; для возраста `14` — `Придётся подождать`.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-1f7be742bd0ad2dc','mixed-lessons',NULL,NULL,'Задание 8. Оценка по баллам','code','Спроси у пользователя количество баллов (от 0 до 100).
-Выведи оценку по правилам:
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-1f7be742bd0ad2dc','mixed-lessons',NULL,NULL,'Задание 8. Оценка по баллам','code','**Задача.** Спроси количество баллов от 0 до 100 и выведи оценку по таблице:
 
-| Баллы       | Оценка                |
-|-------------|-----------------------|
-| 90 и больше | Отлично               |
-| 75–89       | Хорошо                |
-| 60–74       | Удовлетворительно     |
-| меньше 60   | Неудовлетворительно   |
+| Баллы | Оценка |
+|---|---|
+| 90 и больше | Отлично |
+| 75–89 | Хорошо |
+| 60–74 | Удовлетворительно |
+| меньше 60 | Неудовлетворительно |
 
-**Пример:**
+Используй `if`, `elif` и `else`.
 
-```
-Сколько баллов? 82
-Хорошо
-```
-
-> Подсказка: используй `if`, `elif` и `else`.
-
----',NULL,NULL,NULL);
+**Ожидаемый результат.** Для `82` программа выводит `Хорошо`; для любого введённого значения от 0 до 100 выбирается соответствующая ему строка таблицы.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-760c0ed72e567b4f','mixed-lessons',NULL,NULL,'Задание 9. Только чётные числа','code','Спроси у пользователя число `n`.
-С помощью цикла `for` и условия `if` выведи только чётные числа от 1 до `n`.
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-760c0ed72e567b4f','mixed-lessons',NULL,NULL,'Задание 9. Только чётные числа','code','**Задача.** Спроси у пользователя число `n`. С помощью `for` перебери числа от 1 до `n` включительно и с помощью `if` выведи только чётные.
 
-**Пример:**
-
-```
-Введи число: 10
-2
-4
-6
-8
-10
-```
-
-> Подсказка: перебери числа от 1 до n включительно и проверь каждое на чётность.
-
----',NULL,NULL,NULL);
+**Ожидаемый результат.** При `n = 10` на отдельных строках выводятся `2`, `4`, `6`, `8`, `10`.',NULL,NULL,NULL);
 --> statement-breakpoint
-INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-c7a006b9731e2a8a','mixed-lessons',NULL,NULL,'Задание 10. Угадай секретное слово (со звёздочкой)','code','Загадай секретное слово, например `"python"`.
-Позволь пользователю угадать его за 3 попытки.
+INSERT OR IGNORE INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES ('python-task-c7a006b9731e2a8a','mixed-lessons',NULL,NULL,'Задание 10. Угадай секретное слово (со звёздочкой)','code','**Задача.** Загадай секретное слово, например `"python"`, и дай пользователю не больше трёх попыток. После каждой попытки: если слово угадано, выведи `Правильно!` и останови цикл; иначе выведи `Неправильно, попробуй ещё раз`. Используй `for` для трёх попыток, `if` для сравнения и `break` для досрочной остановки.
 
-Для каждой попытки:
-- если слово угадано — выведи `Правильно!` и остановись;
-- иначе — выведи `Неправильно, попробуй ещё раз`.
-
-**Пример, если пользователь угадал со второй попытки:**
-
-```
-Угадай секретное слово: java
-Неправильно, попробуй ещё раз
-Угадай секретное слово: python
-Правильно!
-```
-
-> Подсказка: используй `for` для трёх попыток и `if` для проверки слова. Если слово угадано, используй `break`, чтобы остановить цикл досрочно.
-
----',NULL,NULL,NULL);
+**Ожидаемый результат.** Если пользователь вводит `java`, а затем `python`, программа сначала выводит `Неправильно, попробуй ещё раз`, затем `Правильно!` и завершает цикл.',NULL,NULL,NULL);

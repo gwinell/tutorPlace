@@ -72,6 +72,9 @@ for (const [themePosition, theme] of manifest.themes.entries()) {
         throw new Error(`Invalid assignment in ${subtopic.path}`);
       }
       if (assignment.prompt.length > 20000) throw new Error(`Assignment prompt is too long: ${assignment.id}`);
+      if (assignment.prompt.split('**Задача.**').length !== 2 || assignment.prompt.split('**Ожидаемый результат.**').length !== 2) {
+        throw new Error(`Assignment prompt must contain exactly one task and expected-result section: ${assignment.id}`);
+      }
       if (!['code', 'text', 'quiz'].includes(assignment.kind)) throw new Error(`Unsupported assignment kind: ${assignment.kind}`);
       assignmentRows.push({ ...assignment, topicId: subtopic.id });
     }
