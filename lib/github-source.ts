@@ -1,5 +1,10 @@
 export type GithubSource={url:string;format:'md'|'ipynb'};
 
+export function isGithubMaterialContentType(value:string|null){
+ const mediaType=value?.split(';',1)[0]?.trim().toLowerCase();
+ return mediaType==='text/plain'||mediaType==='text/markdown'||mediaType==='application/json'||mediaType==='application/octet-stream';
+}
+
 /** Validate and canonicalize a public GitHub Markdown or notebook file URL. */
 export function normalizeGithubSource(value:string):GithubSource{
  if(value.length>2000||/[\u0000-\u001f\u007f]/.test(value))throw new Error('Укажи публичную ссылку GitHub на файл .md или .ipynb.');

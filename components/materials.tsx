@@ -5,7 +5,7 @@ import remarkGfm from 'remark-gfm';
 import {BookOpen,FileCode2,ChevronRight,ChevronDown,LockKeyhole,ArrowUpRight,Plus,Settings,Check,ArrowLeft,Download,Info,ExternalLink,MessageSquare,MoveUp,MoveDown,Users,FolderPlus,ClipboardCheck,Send,MoreHorizontal} from 'lucide-react';
 import {Button,Tag,Empty,api} from './site-ui';
 import {Course,Topic,Assignment,Submission,User,topicProgress,dateLabel,resultStatus} from '@/lib/domain';
-import {normalizeGithubSource} from '@/lib/github-source';
+import {isGithubMaterialContentType,normalizeGithubSource} from '@/lib/github-source';
 import CodeEditor from './code-editor';
 
 export function Markdown({content}:{content:string}){return <div className="markdown"><ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown></div>;}
@@ -15,7 +15,7 @@ function parseNotebook(content:string):NotebookCell[]|null{try{const value:unkno
 async function fetchDemoGithubContent(source:string,format:string){
  const {url}=normalizeGithubSource(source),controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),10000),maxBytes=format==='ipynb'?5*1024*1024:2*1024*1024;
  try{
-  const response=await fetch(url,{redirect:'error',signal:controller.signal});if(!response.ok)throw new Error('Не удалось загрузить файл GitHub ('+response.status+').');
+  const response=await fetch(url,{redirect:'error',signal:controller.signal});if(!response.ok)throw new Error('Не удалось загрузить файл GitHub ('+response.status+').');if(!isGithubMaterialContentType(response.headers.get('content-type')))throw new Error('GitHub вернул неподдерживаемый тип файла.');
   const declared=Number(response.headers.get('content-length')||0);if(declared>maxBytes){await response.body?.cancel();throw new Error('Файл GitHub слишком большой.');}
   const reader=response.body?.getReader();if(!reader)throw new Error('GitHub не вернул содержимое файла.');
   const chunks:Uint8Array[]=[];let total=0;try{while(true){const {done,value}=await reader.read();if(done)break;total+=value.byteLength;if(total>maxBytes){await reader.cancel();throw new Error('Файл GitHub слишком большой.');}chunks.push(value);}}finally{reader.releaseLock();}

@@ -22,15 +22,19 @@ CREATE UNIQUE INDEX `lesson_preparation_topic_unique` ON `lesson_preparation_ite
 CREATE UNIQUE INDEX `lesson_preparation_assignment_unique` ON `lesson_preparation_items` (`lesson_id`,`assignment_id`);
 --> statement-breakpoint
 CREATE TRIGGER `topics_parent_insert_guard` BEFORE INSERT ON `topics`
-WHEN NEW.`parent_topic_id` IS NOT NULL AND NOT EXISTS (
-  SELECT 1 FROM `topics` WHERE `id`=NEW.`parent_topic_id` AND `course_id`=NEW.`course_id` AND `parent_topic_id` IS NULL
-)
+WHEN (NEW.`parent_topic_id` IS NOT NULL AND (
+  NEW.`id`=NEW.`parent_topic_id` OR
+  EXISTS (SELECT 1 FROM `topics` WHERE `parent_topic_id`=NEW.`id`) OR
+  NOT EXISTS (SELECT 1 FROM `topics` WHERE `id`=NEW.`parent_topic_id` AND `course_id`=NEW.`course_id` AND `parent_topic_id` IS NULL)
+)) OR (EXISTS (SELECT 1 FROM `topics` WHERE `parent_topic_id`=NEW.`id`) AND NEW.`course_id`<>(SELECT `course_id` FROM `topics` WHERE `id`=NEW.`id`))
 BEGIN SELECT RAISE(ABORT, 'topic parent must be a root in the same course'); END;
 --> statement-breakpoint
 CREATE TRIGGER `topics_parent_update_guard` BEFORE UPDATE OF `parent_topic_id`,`course_id` ON `topics`
-WHEN NEW.`parent_topic_id` IS NOT NULL AND NOT EXISTS (
-  SELECT 1 FROM `topics` WHERE `id`=NEW.`parent_topic_id` AND `course_id`=NEW.`course_id` AND `parent_topic_id` IS NULL
-)
+WHEN (NEW.`parent_topic_id` IS NOT NULL AND (
+  NEW.`id`=NEW.`parent_topic_id` OR
+  EXISTS (SELECT 1 FROM `topics` WHERE `parent_topic_id`=OLD.`id`) OR
+  NOT EXISTS (SELECT 1 FROM `topics` WHERE `id`=NEW.`parent_topic_id` AND `course_id`=NEW.`course_id` AND `parent_topic_id` IS NULL)
+)) OR (NEW.`course_id`<>OLD.`course_id` AND EXISTS (SELECT 1 FROM `topics` WHERE `parent_topic_id`=OLD.`id`))
 BEGIN SELECT RAISE(ABORT, 'topic parent must be a root in the same course'); END;
 --> statement-breakpoint
 CREATE TRIGGER `lesson_preparation_lesson_insert_guard` BEFORE INSERT ON `lesson_preparation_items`

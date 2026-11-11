@@ -42,6 +42,14 @@ test('миграции создают таблицу результатов пе
       database.prepare("INSERT INTO topics(id,course_id,title,description,content,format) VALUES ('root','course-review','Root',NULL,'# root','md')").run();
       database.prepare("INSERT INTO topics(id,course_id,parent_topic_id,title,description,content,format) VALUES ('child','course-review','root','Child',NULL,'# child','md')").run();
       assert.throws(() => database.prepare("INSERT INTO topics(id,course_id,parent_topic_id,title,content,format) VALUES ('grandchild','course-review','child','Grandchild','','md')").run(), /topic parent must be a root/);
+      database.prepare("INSERT INTO topics(id,course_id,title,content,format) VALUES ('root-2','course-review','Second root','','md')").run();
+      assert.throws(() => database.prepare("UPDATE topics SET parent_topic_id='root-2' WHERE id='root'").run(), /topic parent must be a root/);
+      assert.throws(() => database.prepare("UPDATE topics SET parent_topic_id='root-2' WHERE id='root-2'").run(), /topic parent must be a root/);
+      assert.throws(() => database.prepare("INSERT OR REPLACE INTO topics(id,course_id,parent_topic_id,title,content,format) VALUES ('root','course-review','root-2','Replaced root','','md')").run(), /topic parent must be a root/);
+      assert.throws(() => database.prepare("INSERT OR REPLACE INTO topics(id,course_id,parent_topic_id,title,content,format) VALUES ('root-2','course-review','root-2','Self parent','','md')").run(), /topic parent must be a root/);
+      database.prepare("INSERT INTO courses(id,title,position) VALUES ('other-course','Other course',1)").run();
+      assert.throws(() => database.prepare("UPDATE topics SET course_id='other-course' WHERE id='root'").run(), /topic parent must be a root/);
+      assert.throws(() => database.prepare("INSERT OR REPLACE INTO topics(id,course_id,title,content,format) VALUES ('root','other-course','Replaced root','','md')").run(), /topic parent must be a root/);
       assert.throws(() => database.prepare("INSERT INTO topics(id,course_id,parent_topic_id,title,content,format) VALUES ('wrong-course','other-course','root','Wrong course','','md')").run(), /topic parent must be a root/);
       database.prepare("INSERT INTO lessons(id,student_id,name,start,end,type,status) VALUES ('prep-lesson','student','QA student','2026-11-12T10:00:00Z','2026-11-12T10:55:00Z','paid','scheduled')").run();
       database.prepare("INSERT INTO lesson_preparation_items(id,lesson_id,kind,topic_id,position) VALUES ('prep-topic','prep-lesson','topic','child',0)").run();

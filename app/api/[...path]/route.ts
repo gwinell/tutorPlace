@@ -5,7 +5,7 @@ import {ROOM_STARTERS,starterLanguage,type RoomLanguage} from '@/lib/room-preset
 import {normalizeTrialPhone,limitTrialBooking} from '@/lib/trial-booking';
 import {reserveLessonMove,confirmLessonMove} from '@/lib/lesson-move';
 import {createSaluteJazzRoom,disableSaluteJazzRoom,saluteJazzConfigured} from '@/lib/salutejazz';
-import {normalizeGithubSource} from '@/lib/github-source';
+import {isGithubMaterialContentType,normalizeGithubSource} from '@/lib/github-source';
 export const dynamic='force-dynamic';
 // D1 projects differ per query; request bodies below use endpoint-specific fields.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -79,8 +79,9 @@ async function route(request:Request){
    let content=String(topic!.content||'');
    if(topic!.github_url){
      const source=githubSource(String(topic!.github_url));requireValue(source.format===topic!.format,'Формат материала не совпадает со ссылкой GitHub.',409);
-     let response:Response;try{response=await fetch(source.url,{redirect:'error',signal:AbortSignal.timeout(10000),headers:{'Accept':'text/plain, application/octet-stream','User-Agent':'codeTogether-course-materials'}});}catch{throw new HttpError('Не удалось загрузить файл из публичного GitHub. Проверь ссылку и повтори попытку.',502);}
+     let response:Response;try{response=await fetch(source.url,{redirect:'error',signal:AbortSignal.timeout(10000),headers:{'Accept':'text/plain, text/markdown, application/json, application/octet-stream','User-Agent':'codeTogether-course-materials'}});}catch{throw new HttpError('Не удалось загрузить файл из публичного GitHub. Проверь ссылку и повтори попытку.',502);}
      requireValue(response.ok,'Файл GitHub не найден или репозиторий закрыт.',502);
+     requireValue(isGithubMaterialContentType(response.headers.get('content-type')),'GitHub вернул неподдерживаемый тип файла.',502);
      content=await readLimitedText(response,source.format==='ipynb'?5_000_000:2_000_000);
      if(source.format==='ipynb')validateNotebook(content);
    }
