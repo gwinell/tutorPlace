@@ -123,3 +123,89 @@ test('миграция цены сохраняет существующих уч
     rmSync(directory, { recursive: true, force: true });
   }
 });
+
+test('миграция условий Python сохраняет правки преподавателя и решения учеников', () => {
+  const directory = mkdtempSync(path.join(os.tmpdir(), 'codetogether-python-prompts-'));
+  const databasePath = path.join(directory, 'before-standardization.sqlite');
+  const migrationDirectory = new URL('../drizzle/', import.meta.url);
+  const files = readdirSync(migrationDirectory).filter(name => /^\d+_.*\.sql$/.test(name)).sort();
+  const assignments = pythonAssignments.topics.flatMap(theme => theme.subtopics.flatMap(subtopic => subtopic.assignments));
+  const promptUpdates = assignments.filter(task => task.prompt);
+  const titleUpdates = assignments.filter(task => task.id === 'python-task-525cb5793df3b1f3'
+    || task.id === 'python-task-0a527d306edd6de6'
+    || task.id === 'python-task-6d4c00ca79b76db3'
+    || task.id === 'python-task-30ce9a461c912350'
+    || task.id === 'python-task-a7ecc49e7e8047e1'
+    || task.id === 'python-task-9887d02ff779e965');
+
+  try {
+    const database = new DatabaseSync(databasePath);
+    try {
+      database.exec('PRAGMA foreign_keys=ON; CREATE TABLE d1_migrations (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL UNIQUE, applied_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)');
+      for (const name of files.filter(name => name < '0015_standardize_python_assignment_prompts.sql')) {
+        database.exec(readFileSync(new URL(name, migrationDirectory), 'utf8'));
+        database.prepare('INSERT INTO d1_migrations(name) VALUES (?)').run(name);
+      }
+
+      const standardId = promptUpdates[0].id;
+      const tutorEditedId = promptUpdates[1].id;
+      const blankId = promptUpdates[2].id;
+      const untouchedTitleId = titleUpdates[0].id;
+      const tutorTitleId = titleUpdates[1].id;
+      const tutorPrompt = 'Условие, вручную изменённое преподавателем';
+      const tutorTitle = 'Заголовок преподавателя';
+      const legacyPrompt = 'Выведи название любимой книги или игры в кавычках. Пока не добавляй к ответу поясняющий текст.';
+      const legacyTitle = 'Создай переменную с понятным именем для любимого предмета и выведи оба значения.';
+      assert.equal(standardId, 'python-task-9d28301184e99d2f');
+      assert.equal(untouchedTitleId, 'python-task-525cb5793df3b1f3');
+      const beforeStandard = database.prepare('SELECT prompt FROM assignments WHERE id=?').get(standardId);
+      const beforeTutorTitle = database.prepare('SELECT title FROM assignments WHERE id=?').get(tutorTitleId);
+      assert.ok(beforeStandard?.prompt);
+      assert.ok(beforeTutorTitle?.title);
+
+      database.prepare('UPDATE assignments SET prompt=? WHERE id=?').run(legacyPrompt, standardId);
+      database.prepare('UPDATE assignments SET title=? WHERE id=?').run(legacyTitle, untouchedTitleId);
+      database.prepare('UPDATE assignments SET prompt=? WHERE id=?').run(tutorPrompt, tutorEditedId);
+      database.prepare("UPDATE assignments SET prompt='' WHERE id=?").run(blankId);
+      database.prepare('UPDATE assignments SET title=? WHERE id=?').run(tutorTitle, tutorTitleId);
+      database.prepare("INSERT INTO users(id,login,password,name,role,created_at) VALUES ('qa-student','qa-student','hash','QA student','student','2026-11-12T00:00:00.000Z')").run();
+      database.prepare('INSERT INTO submissions(id,assignment_id,student_id,content,result,created_at) VALUES (?, ?, ?, ?, ?, ?)')
+        .run('preserved-submission', tutorEditedId, 'qa-student', 'print(1)', '{"status":"pending"}', '2026-11-12T00:00:00.000Z');
+      const beforeIds = database.prepare('SELECT id FROM assignments ORDER BY id').all().map(row => row.id);
+
+      database.exec(readFileSync(new URL('0015_standardize_python_assignment_prompts.sql', migrationDirectory), 'utf8'));
+
+      const standard = database.prepare('SELECT prompt FROM assignments WHERE id=?').get(standardId);
+      const edited = database.prepare('SELECT prompt FROM assignments WHERE id=?').get(tutorEditedId);
+      const blank = database.prepare('SELECT prompt FROM assignments WHERE id=?').get(blankId);
+      const untouchedTitle = database.prepare('SELECT title FROM assignments WHERE id=?').get(untouchedTitleId);
+      const editedTitle = database.prepare('SELECT title FROM assignments WHERE id=?').get(tutorTitleId);
+      assert.equal(standard.prompt, assignments.find(task => task.id === standardId).prompt);
+      assert.equal(edited.prompt, tutorPrompt);
+      assert.equal(blank.prompt, assignments.find(task => task.id === blankId).prompt);
+      assert.equal(untouchedTitle.title, assignments.find(task => task.id === untouchedTitleId).title);
+      assert.equal(editedTitle.title, tutorTitle);
+      const migratedAssignments = database.prepare('SELECT id,title,prompt FROM assignments ORDER BY id').all();
+      assert.deepEqual(migratedAssignments.map(row => row.id), beforeIds);
+      for (const row of migratedAssignments) {
+        const expected = assignments.find(task => task.id === row.id);
+        assert.ok(expected, `assignment ${row.id} remains in the source export`);
+        assert.equal(row.prompt, row.id === tutorEditedId ? tutorPrompt : expected.prompt, `${row.id} prompt is migrated or preserved`);
+        assert.equal(row.title, row.id === tutorTitleId ? tutorTitle : expected.title, `${row.id} title is migrated or preserved`);
+      }
+      assert.deepEqual({ ...database.prepare('SELECT id,assignment_id,student_id,content,result,created_at FROM submissions WHERE id=?').get('preserved-submission') }, {
+        id: 'preserved-submission', assignment_id: tutorEditedId, student_id: 'qa-student', content: 'print(1)', result: '{"status":"pending"}', created_at: '2026-11-12T00:00:00.000Z',
+      });
+      assert.equal(migratedAssignments.length, beforeIds.length);
+      assert.equal(assignments.length, 371);
+      for (const task of assignments) {
+        assert.equal(task.prompt.split('**Задача.**').length, 2, `${task.id} should have one task section`);
+        assert.equal(task.prompt.split('**Ожидаемый результат.**').length, 2, `${task.id} should have one expected-result section`);
+      }
+    } finally {
+      database.close();
+    }
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
