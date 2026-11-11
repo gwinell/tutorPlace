@@ -21,7 +21,7 @@ type ApiBody = {
  options?:unknown[];topicIds?:unknown[];topicId?:string;topic_id?:string;parentTopicId?:string;parent_topic_id?:string;github_url?:string;lesson_id?:string;student_id?:string;
  meetUrl?:string;meet_url?:string;colab_url?:string;topic?:string;preparation?:unknown[];completed?:boolean;file?:string;update?:string;language?:string;id?:string;
  exerciseId?:string;wpm?:number;accuracy?:number;durationMs?:number;
- code?:string;url?:string;comment?:string;note?:string;
+ code?:string;url?:string;comment?:string;note?:string;type?:string;
 };
 type CalendarItem={id?:string;accessRole?:string;summary?:string;summaryOverride?:string;primary?:boolean};
 const PRIVACY_POLICY_VERSION='2026-11-09';
@@ -347,11 +347,12 @@ async function route(request:Request){
        AND (a.lesson_id IS NULL OR EXISTS (SELECT 1 FROM lessons l WHERE l.id=a.lesson_id AND l.student_id=?))`,u.id,u.id,u.id,u.id);
    const topicAccess=isTeacher?await all('SELECT topic_id,student_id FROM topic_access'):[];
    const preparationItems=isTeacher?await all('SELECT * FROM lesson_preparation_items ORDER BY lesson_id,position'):await all('SELECT p.* FROM lesson_preparation_items p JOIN lessons l ON l.id=p.lesson_id WHERE l.student_id=? ORDER BY p.lesson_id,p.position',u.id);
-   const [paymentLink,paymentRequests]=await Promise.all([
+   const [paymentLink,paymentRequests,paymentReminderPopupSetting]=await Promise.all([
      db().prepare("SELECT value FROM settings WHERE key='payment-link'").first<{value:string}>(),
      isTeacher?all('SELECT * FROM payment_requests ORDER BY created_at DESC'):all('SELECT * FROM payment_requests WHERE student_id=? ORDER BY created_at DESC',u.id),
+     db().prepare("SELECT value FROM settings WHERE key='payment-reminder-popup'").first<{value:string}>(),
    ]);
-   return json({user:u,lessons:isTeacher?await all('SELECT * FROM lessons ORDER BY start'):await all('SELECT * FROM lessons WHERE student_id=? ORDER BY start',u.id),courses,courseEnrollments,topics,topicAccess,assignments,preparationItems,submissions:isTeacher?await all('SELECT * FROM submissions ORDER BY created_at'):await all('SELECT * FROM submissions WHERE student_id=? ORDER BY created_at',u.id),students:isTeacher?(await all("SELECT * FROM users WHERE role='student'")).map(safeUser):[u],rooms:isTeacher?await all('SELECT * FROM rooms'):await all('SELECT * FROM rooms WHERE student_id=?',u.id),notifications:isTeacher?await all('SELECT * FROM notifications ORDER BY created_at DESC'):await all('SELECT * FROM notifications WHERE student_id=? ORDER BY created_at DESC',u.id),paymentLink:paymentLink?.value||null,paymentRequests,schedule:isTeacher?await schedule():undefined,configured:calendarConfigured(),saluteJazzConfigured:saluteJazzConfigured(secrets)});
+   return json({user:u,lessons:isTeacher?await all('SELECT * FROM lessons ORDER BY start'):await all('SELECT * FROM lessons WHERE student_id=? ORDER BY start',u.id),courses,courseEnrollments,topics,topicAccess,assignments,preparationItems,submissions:isTeacher?await all('SELECT * FROM submissions ORDER BY created_at'):await all('SELECT * FROM submissions WHERE student_id=? ORDER BY created_at',u.id),students:isTeacher?(await all("SELECT * FROM users WHERE role='student'")).map(safeUser):[u],rooms:isTeacher?await all('SELECT * FROM rooms'):await all('SELECT * FROM rooms WHERE student_id=?',u.id),notifications:isTeacher?await all('SELECT * FROM notifications ORDER BY created_at DESC'):await all('SELECT * FROM notifications WHERE student_id=? ORDER BY created_at DESC',u.id),paymentLink:paymentLink?.value||null,paymentRequests,paymentReminderPopupEnabled:paymentReminderPopupSetting?.value!=='0',schedule:isTeacher?await schedule():undefined,configured:calendarConfigured(),saluteJazzConfigured:saluteJazzConfigured(secrets)});
  }
  if(path[0]==='students'&&method==='POST'){
    await teacher(request);requireValue(text(body.name)&&text(body.parent_name)&&text(body.login),'Обязательны имя, возраст, родитель и логин.');requireValue(Number.isInteger(body.age)&&body.age!>=1&&body.age!<=100,'Укажи корректный возраст.');requireValue(Number.isSafeInteger(body.balance)&&body.balance!>=-1000000&&body.balance!<=1000000&&(!body.balance||body.balance>=0||Boolean(body.id)),'Баланс должен быть целым числом от -1 000 000 до 1 000 000.');requireValue(body.price_per_lesson===undefined||Number.isInteger(body.price_per_lesson)&&body.price_per_lesson!>=1&&body.price_per_lesson!<=1000000,'Цена занятия должна быть целым числом от 1 до 1 000 000 ₽.');requireValue(!body.password||typeof body.password==='string'&&body.password.length>=8&&body.password.length<=128,'Пароль — от 8 до 128 символов.');
@@ -388,6 +389,12 @@ async function route(request:Request){
    requireValue(results[0]?.meta.changes,'Активный урок не позволяет удалить ученика. Обнови список и попробуй снова.',409);
    try{await cleanupOrphanedAssignmentImages(database,secrets);}catch(error){console.error('Assignment image cleanup deferred after student deletion:',error instanceof Error?error.message:'Unknown error');}
    return json({ok:true});
+ }
+ if(path[0]==='settings'&&path[1]==='payment-reminders'&&method==='POST'){
+   await teacher(request);requireValue(typeof body.enabled==='boolean','Выбери, показывать ли всплывающие напоминания.');
+   const statements=[db().prepare("INSERT INTO settings (key,value) VALUES ('payment-reminder-popup',?) ON CONFLICT(key) DO UPDATE SET value=excluded.value").bind(body.enabled?'1':'0')];
+   if(!body.enabled)statements.push(db().prepare("UPDATE notifications SET read=1,popup_dismissed_at=COALESCE(popup_dismissed_at,?) WHERE type='payment_reminder' AND popup=1 AND popup_dismissed_at IS NULL").bind(now()));
+   await db().batch(statements);return json({ok:true,enabled:body.enabled});
  }
  if(path[0]==='settings'&&method==='POST'){
    await teacher(request);
@@ -430,6 +437,28 @@ async function route(request:Request){
    const normalized=normalizeSchedule({weeklyAvailability,dateOverrides,availabilityCalendarIds:selectedCalendars,timezone:text(body.timezone,64)||'Europe/Moscow',meetUrl:httpsUrl(body.meetUrl)});
    await db().prepare("INSERT INTO settings (key,value) VALUES ('schedule',?) ON CONFLICT(key) DO UPDATE SET value=excluded.value").bind(JSON.stringify(normalized)).run();return json({ok:true});
  }
+ if(path[0]==='courses'&&path[1]&&method==='DELETE'){
+   await teacher(request);const courseId=text(path[1],100);requireValue(courseId,'Курс не найден.',404);requireValue(await db().prepare('SELECT id FROM courses WHERE id=?').bind(courseId).first(),'Курс не найден.',404);
+   const results=await db().batch([
+     db().prepare(`INSERT INTO settings (key,value)
+       SELECT 'assignment-image-delete:course:' || ? || ':' || i.id, json_object('object_key',i.object_key)
+       FROM assignment_images i JOIN assignments a ON a.id=i.assignment_id JOIN topics t ON t.id=a.topic_id
+       WHERE t.course_id=? ON CONFLICT(key) DO NOTHING`).bind(courseId,courseId),
+     db().prepare(`DELETE FROM lesson_preparation_items
+       WHERE topic_id IN (SELECT id FROM topics WHERE course_id=?)
+          OR assignment_id IN (SELECT id FROM assignments WHERE topic_id IN (SELECT id FROM topics WHERE course_id=?))`).bind(courseId,courseId),
+     db().prepare('DELETE FROM submissions WHERE assignment_id IN (SELECT id FROM assignments WHERE topic_id IN (SELECT id FROM topics WHERE course_id=?))').bind(courseId),
+     db().prepare('DELETE FROM assignment_images WHERE assignment_id IN (SELECT id FROM assignments WHERE topic_id IN (SELECT id FROM topics WHERE course_id=?))').bind(courseId),
+     db().prepare('DELETE FROM assignments WHERE topic_id IN (SELECT id FROM topics WHERE course_id=?)').bind(courseId),
+     db().prepare('DELETE FROM topic_access WHERE topic_id IN (SELECT id FROM topics WHERE course_id=?)').bind(courseId),
+     db().prepare('DELETE FROM course_enrollments WHERE course_id=?').bind(courseId),
+     db().prepare('DELETE FROM topics WHERE course_id=?').bind(courseId),
+     db().prepare('DELETE FROM courses WHERE id=?').bind(courseId),
+   ]);
+   requireValue(results.at(-1)?.meta.changes===1,'Курс уже удалён. Обнови список.',404);
+   try{await cleanupOrphanedAssignmentImages(db(),secrets);}catch(error){console.error('Assignment image cleanup deferred after course deletion:',courseId,error instanceof Error?error.message:'Unknown error');}
+   return json({ok:true});
+ }
  if(path[0]==='courses'&&method==='POST'){
    await teacher(request);const courseId=text(body.id,100)||id(),title=text(body.title,120),description=text(body.description,1000);requireValue(title,'Укажи название курса.');
    const existing=body.id?await db().prepare('SELECT id,position FROM courses WHERE id=?').bind(courseId).first<Row>():null;
@@ -464,8 +493,22 @@ async function route(request:Request){
  if(path[0]==='access'&&method==='POST'){
    await teacher(request);requireValue(await db().prepare("SELECT id FROM users WHERE id=? AND role='student'").bind(body.studentId).first(),'Ученик не найден.');const topic=await db().prepare('SELECT course_id,parent_topic_id FROM topics WHERE id=?').bind(body.topicId).first<Row>();requireValue(topic,'Тема не найдена.');requireValue(!topic!.parent_topic_id,'Доступ настраивается у основной темы и наследуется подтемами.');requireValue(await db().prepare('SELECT id FROM course_enrollments WHERE course_id=? AND student_id=?').bind(topic!.course_id,body.studentId).first(),'Сначала открой доступ ученику к курсу.');if(body.enabled)await db().prepare('INSERT OR IGNORE INTO topic_access (id,topic_id,student_id) VALUES (?,?,?)').bind(id(),body.topicId,body.studentId).run();else await db().prepare('DELETE FROM topic_access WHERE topic_id=? AND student_id=?').bind(body.topicId,body.studentId).run();return json({ok:true});
  }
+ if(path[0]==='notifications'&&path[1]==='pending'&&method==='GET'){
+   const u=await auth(request);requireValue(u.role==='student','Всплывающие напоминания доступны ученику.',403);
+   const setting=await db().prepare("SELECT value FROM settings WHERE key='payment-reminder-popup'").first<{value:string}>();
+   if(setting?.value==='0')return json({notifications:[]});
+   const notifications=await all("SELECT id,student_id,title,body,created_at,read,type,popup,popup_dismissed_at FROM notifications WHERE student_id=? AND type='payment_reminder' AND popup=1 AND COALESCE(read,0)=0 AND popup_dismissed_at IS NULL ORDER BY created_at LIMIT 20",u.id);
+   return json({notifications});
+ }
+ if(path[0]==='notifications'&&path[1]&&path[2]==='dismiss'&&method==='POST'){
+   const u=await auth(request);requireValue(u.role==='student','Уведомление может закрыть только ученик.',403);
+   const result=await db().prepare('UPDATE notifications SET read=1,popup_dismissed_at=COALESCE(popup_dismissed_at,?) WHERE id=? AND student_id=?').bind(now(),path[1],u.id).run();
+   requireValue(result.meta.changes===1,'Уведомление не найдено.',404);return json({ok:true});
+ }
  if(path[0]==='notifications'&&method==='POST'){
-   await teacher(request);requireValue(await db().prepare("SELECT id FROM users WHERE id=? AND role='student'").bind(body.student_id).first(),'Выбери ученика.');requireValue(text(body.title)&&text(body.body,4000),'Добавь заголовок и сообщение.');await db().prepare('INSERT INTO notifications (id,student_id,title,body,created_at) VALUES (?,?,?,?,?)').bind(id(),body.student_id,text(body.title),text(body.body,4000),now()).run();return json({ok:true});
+   await teacher(request);requireValue(await db().prepare("SELECT id FROM users WHERE id=? AND role='student'").bind(body.student_id).first(),'Выбери ученика.');requireValue(text(body.title)&&text(body.body,4000),'Добавь заголовок и сообщение.');requireValue(body.type===undefined||body.type==='general'||body.type==='payment_reminder','Неизвестный тип уведомления.');
+   const type=body.type==='payment_reminder'?'payment_reminder':'general',setting=await db().prepare("SELECT value FROM settings WHERE key='payment-reminder-popup'").first<{value:string}>(),popup=type==='payment_reminder'&&setting?.value!=='0'?1:0;
+   await db().prepare('INSERT INTO notifications (id,student_id,title,body,created_at,read,type,popup) VALUES (?,?,?,?,?,0,?,?)').bind(id(),body.student_id,text(body.title),text(body.body,4000),now(),type,popup).run();return json({ok:true});
  }
  if(path[0]==='assignments'&&method==='POST'){
    await teacher(request);requireValue(text(body.title)&&text(body.prompt,20000)&&['code','quiz','text'].includes(body.kind||''),'Проверь данные задания.');const topicId=text(body.topic_id,100)||null,studentId=text(body.student_id,100)||null;requireValue(Boolean(topicId)!==Boolean(studentId),'Выбери тему курса или одного ученика.');if(topicId)requireValue(await db().prepare('SELECT id FROM topics WHERE id=?').bind(topicId).first(),'Тема не найдена.');if(studentId)requireValue(await db().prepare("SELECT id FROM users WHERE id=? AND role='student'").bind(studentId).first(),'Ученик не найден.');if(body.kind==='quiz')requireValue(Array.isArray(body.options)&&body.options.length>=2&&body.options.length<=20&&Number(body.answer)>=0&&Number(body.answer)<body.options.length,'Проверь варианты и номер правильного ответа.');const lessonId=text(body.lesson_id,100)||null;if(lessonId){const lesson=await db().prepare('SELECT student_id FROM lessons WHERE id=?').bind(lessonId).first<Row>();requireValue(lesson,'Урок не найден.');if(studentId)requireValue(lesson!.student_id===studentId,'Урок не принадлежит выбранному ученику.');if(topicId)requireValue(!!lesson!.student_id&&await studentCanReadTopic(lesson!.student_id,topicId),'У ученика нет доступа к теме, связанной с уроком.',403);}
@@ -587,6 +630,7 @@ async function route(request:Request){
    const r=await db().prepare('SELECT * FROM rooms WHERE id=?').bind(path[1]).first<Row>();requireValue(r&&(u.role==='teacher'||r.student_id===u.id),'Комната удалена или недоступна.',404);
    if(path[2]==='compile-kumir'){
     requireValue(method==='POST','Компиляция принимает только POST.',404);
+    requireValue(r!.language==='kumir','В этой комнате не выбран КуМир.',409);
     requireValue(typeof body.code==='string'&&body.code.length>0&&body.code.length<=100000,'Исходный файл должен содержать от 1 до 100 000 символов.');
     const compilerUrl=secrets.QUMIR_COMPILER_URL;
     requireValue(compilerUrl,'Компилятор Кумир пока не настроен.',503);

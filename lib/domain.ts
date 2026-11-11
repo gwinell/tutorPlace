@@ -30,7 +30,7 @@ export function serializeLessonPreparation(keys:string[]):LessonPreparationSelec
 }
 export type Submission = { id: string; assignment_id: string; student_id: string; content: string; result: string; created_at: string; feedback?: string; feedback_at?: string };
 export type Room = { id: string; student_id: string; name: string; language: string; student_code: string; teacher_code: string; student_state?:string;teacher_state?:string; revision: number; last_active: number };
-export type Notice = { id: string; title: string; body: string; created_at: string; student_id?: string; read?: number };
+export type Notice = { id: string; title: string; body: string; created_at: string; student_id?: string; read?: number; type?: 'general' | 'payment_reminder'; popup?: number; popup_dismissed_at?: string | null };
 export type AvailabilityWindow = { from: string; to: string };
 export type Schedule = {
   days: number[];

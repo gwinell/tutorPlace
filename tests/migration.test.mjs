@@ -33,6 +33,10 @@ test('миграции создают таблицу результатов пе
       assert.deepEqual(preparationColumns.map(column => column.name), ['id', 'lesson_id', 'kind', 'topic_id', 'assignment_id', 'position', 'completed_at']);
       const imageColumns = database.prepare('PRAGMA table_info(assignment_images)').all();
       assert.deepEqual(imageColumns.map(column => column.name), ['id', 'assignment_id', 'object_key', 'content_type', 'size_bytes', 'original_name', 'created_at']);
+      const notificationColumns = database.prepare('PRAGMA table_info(notifications)').all();
+      assert.ok(notificationColumns.some(column => column.name === 'type' && column.dflt_value === "'general'"));
+      assert.ok(notificationColumns.some(column => column.name === 'popup' && column.dflt_value === '0'));
+      assert.ok(notificationColumns.some(column => column.name === 'popup_dismissed_at'));
       database.prepare("INSERT INTO assignment_images(id,assignment_id,object_key,content_type,size_bytes,original_name,created_at) VALUES ('image','assignment','assignment-images/assignment/image.png','image/png',8,'fixture.png','now')").run();
       assert.throws(() => database.prepare("INSERT INTO assignment_images(id,assignment_id,object_key,content_type,size_bytes,original_name,created_at) VALUES ('bad-type','assignment','bad-type','image/svg+xml',8,'fixture.svg','now')").run());
       assert.throws(() => database.prepare("INSERT INTO assignment_images(id,assignment_id,object_key,content_type,size_bytes,original_name,created_at) VALUES ('too-large','assignment','too-large','image/png',8388609,'fixture.png','now')").run());
@@ -49,6 +53,11 @@ test('миграции создают таблицу результатов пе
       assert.throws(() => database.prepare('INSERT INTO typing_results VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)').run('id', 's', 'r', 'fr', 'exercise', 30, 90, 1000, 'now'));
       assert.throws(() => database.prepare('INSERT INTO typing_results VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)').run('id', 's', 'r', 'ru', 'exercise', 300, 90, 1000, 'now'));
       database.prepare("INSERT INTO users(id,login,password,name,role,created_at) VALUES ('student','student','hash','QA student','student','now')").run();
+      database.prepare("INSERT INTO notifications(id,student_id,title,body,created_at) VALUES ('legacy-notice','student','Legacy notice','History only','now')").run();
+      const legacyNotice = database.prepare("SELECT type,popup,read FROM notifications WHERE id='legacy-notice'").get();
+      assert.equal(legacyNotice.type, 'general');
+      assert.equal(legacyNotice.popup, 0);
+      assert.equal(legacyNotice.read, 0);
       database.prepare("INSERT INTO payment_requests(id,student_id,amount_rub,price_per_lesson,created_at) VALUES ('request','student',2500,1000,'now')").run();
       assert.equal(database.prepare('SELECT price_per_lesson FROM users WHERE id=?').get('student').price_per_lesson, 1000);
       assert.equal(database.prepare('SELECT status FROM payment_requests WHERE id=?').get('request').status, 'pending');

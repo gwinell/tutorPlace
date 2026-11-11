@@ -1225,3 +1225,16 @@
  .task-response-form{gap:14px;margin-top:19px}
  .task-detail .task-heading>.button{width:100%;justify-content:center}
 }
+
+.payment-reminder-setting{margin-top:18px;padding:12px 0;border-top:1px solid var(--border)}
+.payment-reminder-toast{position:fixed;z-index:120;right:24px;bottom:24px;width:min(390px,calc(100vw - 32px));max-height:20vh;min-height:135px;overflow:auto;padding:20px 48px 17px 21px;background:var(--surface);border:1px solid var(--border);border-left:4px solid #ad8a47;border-radius:13px;box-shadow:0 16px 48px #211b2826;animation:payment-reminder-in .25s ease-out}
+.payment-reminder-toast .eyebrow{display:block;margin:0 0 8px;color:var(--muted);font-size:11px}
+.payment-reminder-toast>strong{display:block;font-size:16px;line-height:1.4}
+.payment-reminder-toast>p{margin:7px 0 9px;color:var(--muted);font-size:14px;line-height:1.55}
+.payment-reminder-toast>small{color:var(--muted);font-size:11px}
+.payment-reminder-close{position:absolute;top:12px;right:12px;width:30px;height:30px;border:0;border-radius:50%;background:var(--bg);color:var(--muted);font-size:23px;line-height:1;cursor:pointer}
+@keyframes payment-reminder-in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:640px){.payment-reminder-toast{right:12px;bottom:12px;width:calc(100vw - 24px);max-height:24vh;min-height:120px;padding:17px 46px 14px 17px}}
+@media(prefers-reduced-motion:reduce){.payment-reminder-toast{animation:none}}
+
+:root[data-theme=dark] .payment-reminder-toast{border-left-color:#d8b76b}
