@@ -1,0 +1,77 @@
+name: Diagnose NixOS VPS
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: codetogether-vps-diagnostics
+  cancel-in-progress: false
+
+jobs:
+  diagnose:
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Install SSH key
+        env:
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VPS_KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/codetogether_diagnose
+          printf '%s\n' "$VPS_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/codetogether_diagnose ~/.ssh/known_hosts
+
+      - name: Check VPS services and local routes
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+        run: |
+          ssh -i ~/.ssh/codetogether_diagnose \
+            -o BatchMode=yes -o StrictHostKeyChecking=yes \
+            -o ConnectTimeout=10 "$VPS_USER@$VPS_HOST" 'bash -s' <<'REMOTE'
+          set +e
+          echo '== VPS clock and hostname =='
+          date --iso-8601=seconds
+          hostname
+
+          echo '== systemd units =='
+          for unit in caddy.service codetogether.service codetogether-qumir-compiler.service; do
+            active=$(systemctl is-active "$unit" 2>/dev/null || true)
+            properties=$(systemctl show "$unit" -p ActiveState -p SubState -p Result -p ExecMainStatus -p NRestarts 2>/dev/null | tr '\n' ' ')
+            printf '%s: %s %s\n' "$unit" "${active:-unknown}" "$properties"
+          done
+
+          echo '== listener ports =='
+          ss -H -ltn '( sport = :22 or sport = :80 or sport = :443 or sport = :3000 or sport = :3101 )' 2>/dev/null || true
+
+          probe() {
+            label=$1
+            shift
+            status=$(curl --connect-timeout 3 --max-time 8 --silent --output /dev/null --write-out '%{http_code}' "$@" 2>/dev/null) || status=FAIL
+            printf '%s=%s\n' "$label" "${status:-FAIL}"
+          }
+          echo '== localhost health =='
+          probe app_local http://127.0.0.1:3000/api/health
+          probe compiler_local http://127.0.0.1:3101/health
+          probe caddy_local -k --resolve code-together.ru:443:127.0.0.1 https://code-together.ru/api/health
+
+          echo '== VPS DNS =='
+          if getent ahosts code-together.ru >/dev/null 2>&1; then echo 'domain_dns=resolved'; else echo 'domain_dns=failed'; fi
+
+          echo '== application journal =='
+          echo 'journal access is not granted to the deployment user; unit states and health probes are reported above'
+          REMOTE
+
+      - name: Probe public HTTPS from GitHub runner
+        if: always()
+        run: |
+          if status=$(curl --connect-timeout 5 --max-time 12 --silent --output /dev/null --write-out '%{http_code}' https://code-together.ru/api/health 2>/dev/null); then
+            echo "public_https_http=$status"
+          else
+            echo 'public_https=unreachable'
+          fi
