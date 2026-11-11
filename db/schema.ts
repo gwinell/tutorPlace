@@ -102,7 +102,12 @@ export const typingResults = sqliteTable('typing_results', {
 export const notifications = sqliteTable('notifications', {
   id: text('id').primaryKey(), studentId: text('student_id').notNull(), title: text('title').notNull(), body: text('body').notNull(),
   createdAt: text('created_at').notNull(), read: integer('read').default(0),
-});
+  type: text('type').notNull().default('general'), popup: integer('popup').notNull().default(0), popupDismissedAt: text('popup_dismissed_at'),
+}, t => [
+  check('notifications_type_check', sql`${t.type} IN ('general', 'payment_reminder')`),
+  check('notifications_popup_check', sql`${t.popup} IN (0, 1)`),
+  index('notifications_student_popup_idx').on(t.studentId, t.popup, t.read, t.popupDismissedAt, t.createdAt),
+]);
 export const reviews = sqliteTable('reviews', {
   id: text('id').primaryKey(), name: text('name').notNull(), body: text('body').notNull(), rating: integer('rating').notNull(), published: integer('published').default(0),
 });

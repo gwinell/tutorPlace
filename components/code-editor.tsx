@@ -6,13 +6,13 @@ import luaSource from '../public/fengari.js?raw';
 import turtleSource from '../public/turtle-shim.py?raw';
 
 type TurtleEvent = { op: string; [key: string]: unknown };
-type KumirExecutor = 'robot'|'turtle'|'drawer'|'text';
+type KumirExecutor = 'robot'|'turtle'|'drawer'|'painter'|'text';
 type RobotFieldState = {x:number;y:number;width:number;height:number;painted:string[];hWalls:string[];vWalls:string[]};
 const defaultRobotField:RobotFieldState={x:0,y:0,width:7,height:7,painted:[],hWalls:[],vWalls:[]};
-const executorNames:Record<KumirExecutor,string>={robot:'Робот',turtle:'Черепаха',drawer:'Чертёжник',text:'Текстовый вывод'};
+const executorNames:Record<KumirExecutor,string>={robot:'Робот',turtle:'Черепаха',drawer:'Чертёжник',painter:'Рисователь',text:'Текстовый вывод'};
 function findKumirExecutor(code:string):KumirExecutor{
- const match=code.match(/^\s*использовать\s+(Робот|Черепаха|Чертежник|Чертёжник)(?=\s|$)/im)?.[1]?.toLocaleLowerCase('ru-RU');
- return match==='робот'?'robot':match==='черепаха'?'turtle':match==='чертежник'||match==='чертёжник'?'drawer':'text';
+ const match=code.match(/^\s*использовать\s+(Робот|Черепаха|Чертежник|Чертёжник|Рисователь)(?=\s|$)/im)?.[1]?.toLocaleLowerCase('ru-RU');
+ return match==='робот'?'robot':match==='черепаха'?'turtle':match==='чертежник'||match==='чертёжник'?'drawer':match==='рисователь'?'painter':'text';
 }
 type SyntaxToken = {type:'plain'|'keyword'|'string'|'number'|'comment'|'function'|'module'|'operator';text:string};
 const pythonKeywords=new Set('False None True and as assert async await break class continue def del elif else except finally for from global if import in is lambda nonlocal not or pass raise return try while with yield'.split(' '));
@@ -80,7 +80,7 @@ export function RuntimeProvider({children}:{children:ReactNode}){
    if(program.language==='kumir'){
      activeEngine.current='kumir';
      if(!kumirWorker.current){
-       kumirWorker.current=new Worker('/qumir/worker.js?v=6',{type:'module',name:'codeTogether Kumir'});
+       kumirWorker.current=new Worker('/qumir/worker.js?v=7',{type:'module',name:'codeTogether Kumir'});
        kumirWorker.current.onmessage=event=>{
          const message=event.data as RuntimeMessage;
          if(message.channel)listeners.current.get(message.channel)?.(message);
@@ -111,8 +111,8 @@ export function RuntimeProvider({children}:{children:ReactNode}){
  },[]);
  const executorEvent=useCallback((channel:string,event:Record<string,unknown>)=>{
    if(activeEngine.current!=='kumir'||!kumirWorker.current)return;
-   const type=event.type==='robot-edit'||event.type==='robot-resize'?'robot-edit':event.type==='drawer-control'?'drawer-control':'input-event';
-   if(type==='drawer-control')kumirWorker.current.postMessage({type,channel,command:event.command});
+   const type=event.type==='robot-edit'||event.type==='robot-resize'?'robot-edit':event.type==='drawer-control'?'drawer-control':event.type==='painter-control'?'painter-control':'input-event';
+   if(type==='drawer-control'||type==='painter-control')kumirWorker.current.postMessage({type,channel,command:event.command});
    else kumirWorker.current.postMessage({type,channel,event});
  },[]);
  useEffect(()=>{
@@ -176,9 +176,9 @@ function CodeEditorView({value,onChange,language='python',filename='student.py',
  function sendInput(event:FormEvent){event.preventDefault();inputs.current.push(input);setInput('');run(true);}
  function chooseExecutor(executor:Exclude<KumirExecutor,'text'>){
    setExecutorMenuOpen(false);setQumirVisible(true);setQumirHasFrame(false);setRobotEditing(false);
-   const directive=executor==='robot'?'Робот':executor==='turtle'?'Черепаха':'Чертежник';
-   const next=value.match(/^\s*использовать\s+(?:Робот|Черепаха|Чертежник|Чертёжник)(?=\s|$)/im)
-    ?value.replace(/^([ \t]*использовать\s+)(?:Робот|Черепаха|Чертежник|Чертёжник)(?=\s|$)/im,`$1${directive}`)
+   const directive=executor==='robot'?'Робот':executor==='turtle'?'Черепаха':executor==='painter'?'Рисователь':'Чертежник';
+   const next=value.match(/^\s*использовать\s+(?:Робот|Черепаха|Чертежник|Чертёжник|Рисователь)(?=\s|$)/im)
+    ?value.replace(/^([ \t]*использовать\s+)(?:Робот|Черепаха|Чертежник|Чертёжник|Рисователь)(?=\s|$)/im,`$1${directive}`)
     :`использовать ${directive}\n${value}`;
    if(!readOnly&&next!==value)onChange(next);
  }
@@ -238,7 +238,7 @@ function CodeEditorView({value,onChange,language='python',filename='student.py',
       <div className="qumir-executor-picker">
        <button type="button" className="qumir-control-button executor-picker-button" aria-haspopup="menu" aria-expanded={executorMenuOpen} onClick={()=>setExecutorMenuOpen(open=>!open)}><Bot size={15}/><span>Исполнитель</span><ChevronDown size={14}/></button>
        {executorMenuOpen&&<div className="qumir-executor-menu" role="menu" aria-label="Выбрать исполнителя">
-        {(['robot','turtle','drawer'] as const).map(executor=><button key={executor} type="button" role="menuitem" className={qumirExecutor===executor?'selected':''} disabled={readOnly} onClick={()=>chooseExecutor(executor)}>{executorNames[executor]}{qumirExecutor===executor&&<span aria-hidden="true">✓</span>}</button>)}
+        {(['robot','turtle','drawer','painter'] as const).map(executor=><button key={executor} type="button" role="menuitem" className={qumirExecutor===executor?'selected':''} disabled={readOnly} onClick={()=>chooseExecutor(executor)}>{executorNames[executor]}{qumirExecutor===executor&&<span aria-hidden="true">✓</span>}</button>)}
        </div>}
       </div>
       {qumirExecutor==='robot'&&<button type="button" className={'qumir-control-button'+(robotEditing?' active':'')} aria-pressed={robotEditing} disabled={readOnly||running} onClick={()=>setRobotEditing(editing=>!editing)}><PenLine size={14}/>{robotEditing?'Готово':'Поле'}</button>}
@@ -246,6 +246,11 @@ function CodeEditorView({value,onChange,language='python',filename='student.py',
        <button type="button" className="qumir-control-button icon-only" aria-label="Уменьшить масштаб" title="Уменьшить масштаб" onClick={()=>sendExecutorEvent(channel,{type:'drawer-control',command:'zoom-out'})}><ZoomOut size={15}/></button>
        <button type="button" className="qumir-control-button icon-only" aria-label="Увеличить масштаб" title="Увеличить масштаб" onClick={()=>sendExecutorEvent(channel,{type:'drawer-control',command:'zoom-in'})}><ZoomIn size={15}/></button>
        <button type="button" className="qumir-control-button icon-only" aria-label="Вписать рисунок" title="Вписать рисунок" onClick={()=>sendExecutorEvent(channel,{type:'drawer-control',command:'fit'})}><Maximize2 size={14}/></button>
+      </div>}
+      {qumirExecutor==='painter'&&<div className="qumir-zoom-controls" aria-label="Масштаб Рисователя">
+       <button type="button" className="qumir-control-button icon-only" aria-label="Уменьшить масштаб" title="Уменьшить масштаб" onClick={()=>sendExecutorEvent(channel,{type:'painter-control',command:'zoom-out'})}><ZoomOut size={15}/></button>
+       <button type="button" className="qumir-control-button icon-only" aria-label="Увеличить масштаб" title="Увеличить масштаб" onClick={()=>sendExecutorEvent(channel,{type:'painter-control',command:'zoom-in'})}><ZoomIn size={15}/></button>
+       <button type="button" className="qumir-control-button icon-only" aria-label="Вписать рисунок" title="Вписать рисунок" onClick={()=>sendExecutorEvent(channel,{type:'painter-control',command:'fit'})}><Maximize2 size={14}/></button>
       </div>}
      </div>
     </header>

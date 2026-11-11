@@ -115,6 +115,7 @@ function emitCanvas(runtime, executor) {
   else {
     if (executor === 'turtle') runtime.turtleModule?.__onCanvasShown?.();
     if (executor === 'drawer') runtime.drawerModule?.__onCanvasShown?.();
+    if (executor === 'painter') runtime.painterModule?.__onCanvasShown?.();
     sendCanvas(executor);
   }
 }
@@ -217,10 +218,7 @@ async function run(message) {
   const bytes = await response.arrayBuffer();
   const module = await WebAssembly.compile(bytes);
   const imports = WebAssembly.Module.imports(module);
-  if (imports.some(item => item.module === 'env' && item.name.startsWith('painter_'))) {
-    throw new Error('В комнате доступны исполнители Черепаха, Робот и Чертёжник.');
-  }
-  const executor = ['turtle', 'robot', 'drawer'].find(name => imports.some(item => item.module === 'env' && item.name.startsWith(`${name}_`))) || 'text';
+  const executor = ['painter', 'turtle', 'robot', 'drawer'].find(name => imports.some(item => item.module === 'env' && item.name.startsWith(`${name}_`))) || 'text';
   activeExecutor = executor;
   const runtime = await loadRuntime(module, { render: () => emitCanvas(runtime, executor), delay: () => 0 });
   activeRuntime = runtime;
@@ -260,6 +258,14 @@ self.onmessage = event => {
     if (event.data.command === 'zoom-in') activeRuntime?.drawerModule?.__zoomDrawerView?.(1.25);
     else if (event.data.command === 'zoom-out') activeRuntime?.drawerModule?.__zoomDrawerView?.(0.8);
     else if (event.data.command === 'fit') activeRuntime?.drawerModule?.__fitDrawerView?.();
+    return;
+  }
+  if (event.data?.type === 'painter-control') {
+    if (event.data.channel !== activeChannel || activeExecutor !== 'painter') return;
+    if (event.data.command === 'zoom-in') activeRuntime?.painterModule?.__zoomPainterView?.(1.25, canvasWidth / 2, canvasHeight / 2);
+    else if (event.data.command === 'zoom-out') activeRuntime?.painterModule?.__zoomPainterView?.(0.8, canvasWidth / 2, canvasHeight / 2);
+    else if (event.data.command === 'fit') activeRuntime?.painterModule?.__fitPainterView?.();
+    sendCanvas('painter');
     return;
   }
   if (event.data?.type === 'input-event') {

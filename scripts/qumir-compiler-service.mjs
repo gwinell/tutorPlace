@@ -69,6 +69,7 @@ async function verifyCompiler() {
     { name: 'Черепаха', source: 'использовать Черепаха\nалг\nнач\n    вперед(10)\nкон\n', importPrefix: 'turtle_' },
     { name: 'Робот', source: 'использовать Робот\nалг\nнач\n    закрасить\nкон\n', importPrefix: 'robot_' },
     { name: 'Чертёжник', source: 'использовать Чертежник\nалг\nнач\n    опустить перо\n    сместиться в точку(1.0, 1.0)\nкон\n', importPrefix: 'drawer_' },
+    { name: 'Рисователь', source: 'использовать Рисователь\nалг\nнач\n    новый лист(600, 200, белый)\n    кисть(HSL(0, 100, 50))\n    прямоугольник(0, 0, 6, 200)\nкон\n', importPrefix: 'painter_' },
   ];
   try {
     for (const [index, probe] of probes.entries()) {
