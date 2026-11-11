@@ -6,6 +6,7 @@ import {normalizeTrialPhone,limitTrialBooking} from '@/lib/trial-booking';
 import {reserveLessonMove,confirmLessonMove} from '@/lib/lesson-move';
 import {createSaluteJazzRoom,disableSaluteJazzRoom,saluteJazzConfigured} from '@/lib/salutejazz';
 import {isGithubMaterialContentType,normalizeGithubSource} from '@/lib/github-source';
+import {assignmentImageExtension,canReadAssignmentImage,cleanupOrphanedAssignmentImages,deleteQueuedR2Object,getR2Object,MAX_ASSIGNMENT_IMAGE_BYTES,pendingAssignmentImageId,putR2Object,r2S3Config,replacePendingAssignmentImage,sanitizeAssignmentImageName,validateAssignmentImage,type AssignmentImageContentType,R2StorageError} from '@/lib/assignment-images';
 export const dynamic='force-dynamic';
 // D1 projects differ per query; request bodies below use endpoint-specific fields.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -40,6 +41,13 @@ async function readLimitedText(response:Response,maxBytes:number){
  const bytes=new Uint8Array(total);let offset=0;for(const chunk of chunks){bytes.set(chunk,offset);offset+=chunk.byteLength;}
  return new TextDecoder('utf-8',{fatal:false}).decode(bytes);
 }
+async function readLimitedBytes(request:Request,maxBytes:number){
+ const declared=Number(request.headers.get('content-length')||0);requireValue(!declared||declared<=maxBytes,'Изображение слишком большое.',413);
+ const reader=request.body?.getReader();requireValue(reader,'Файл не получен.',400);const chunks:Uint8Array[]=[];let total=0;
+ try{while(true){const {done,value}=await reader.read();if(done)break;total+=value.byteLength;if(total>maxBytes){await reader.cancel();throw new HttpError('Изображение слишком большое.',413);}chunks.push(value);}}
+ finally{reader.releaseLock();}
+ const bytes=new Uint8Array(total);let offset=0;for(const chunk of chunks){bytes.set(chunk,offset);offset+=chunk.byteLength;}return bytes;
+}
 function validateNotebook(content:string){let parsed:unknown;try{parsed=JSON.parse(content);}catch{throw new HttpError('Файл .ipynb содержит некорректный JSON.',422);}requireValue(!!parsed&&typeof parsed==='object'&&'cells'in parsed&&Array.isArray((parsed as {cells?:unknown}).cells),'Файл .ipynb не содержит список ячеек.',422);}
 async function studentCanReadTopic(studentId:string,topicId:string){return !!await db().prepare(`SELECT t.id FROM topics t JOIN course_enrollments e ON e.course_id=t.course_id AND e.student_id=? JOIN topic_access a ON a.topic_id=COALESCE(t.parent_topic_id,t.id) AND a.student_id=? WHERE t.id=?`).bind(studentId,studentId,topicId).first();}
 async function retireMeeting(lessonId:string,roomId:string|undefined|null){
@@ -60,13 +68,82 @@ async function teacher(request:Request){return auth(request,true);}
 async function lessonAccess(request:Request,lessonId:string){const u=await auth(request);const l=await db().prepare('SELECT * FROM lessons WHERE id=?').bind(lessonId).first<Row>();requireValue(l&&(u.role==='teacher'||l.student_id===u.id),'Урок не найден.',404);return {u,l:l!};}
 async function route(request:Request){
  const url=new URL(request.url),path=url.pathname.replace(/^\/api\//,'').split('/').filter(Boolean),method=request.method;
+ const imageUpload=path[0]==='assignments'&&path[1]&&path[2]==='images'&&method==='POST';
  if(method!=='GET'){
    const origin=request.headers.get('origin');
    const proxyProto=request.headers.get('x-forwarded-proto')?.split(',')[0]?.trim();
    const proxyHost=(request.headers.get('x-forwarded-host')||request.headers.get('host'))?.split(',')[0]?.trim();
    const proxyOrigin=proxyProto&&proxyHost?`${proxyProto}://${proxyHost}`:null;
    requireValue(origin===url.origin||origin===proxyOrigin,'Запрос с другого сайта запрещён.',403);
-   const length=Number(request.headers.get('content-length')||0);requireValue(length<2200000,'Размер запроса слишком большой.',413);
+   const length=Number(request.headers.get('content-length')||0);requireValue(imageUpload?(!length||length<=MAX_ASSIGNMENT_IMAGE_BYTES+65536):length<2200000,'Размер запроса слишком большой.',413);
+ }
+ if(imageUpload){
+   await teacher(request);const assignmentId=path[1];
+   requireValue(/^[a-zA-Z0-9_-]{1,100}$/.test(assignmentId),'Некорректный номер задания.',400);
+   const assignment=await db().prepare('SELECT id,prompt FROM assignments WHERE id=?').bind(assignmentId).first<Row>();requireValue(assignment,'Сначала сохрани задание.',404);
+   const contentType=request.headers.get('content-type')||'';requireValue(contentType.toLowerCase().startsWith('multipart/form-data;'),'Отправь изображение как multipart/form-data.',415);
+   const bytes=await readLimitedBytes(request,MAX_ASSIGNMENT_IMAGE_BYTES+65536);let data:FormData;try{data=await new Request(url,{method:'POST',headers:{'Content-Type':contentType},body:bytes.slice().buffer as ArrayBuffer}).formData();}catch{throw new HttpError('Не удалось прочитать изображение.',400);}
+   const file=data.get('file');requireValue(file instanceof File,'Выбери изображение.',400);requireValue(file.size>0&&file.size<=MAX_ASSIGNMENT_IMAGE_BYTES,'Размер изображения не должен превышать 8 МБ.',413);
+   const placeholder=data.get('placeholder');requireValue(typeof placeholder==='string','Сохрани условие с местом изображения перед загрузкой.',400);
+   const pending=pendingAssignmentImageId(placeholder);requireValue(pending,'Некорректное место для изображения.',400);
+   const imageId=pending!.id,imageUrl=`/api/assignment-images/${imageId}`,database=db();
+   const existingImage=await database.prepare('SELECT id,assignment_id,content_type,size_bytes FROM assignment_images WHERE id=?').bind(imageId).first<Row>();
+   if(existingImage){
+     requireValue(existingImage!.assignment_id===assignmentId,'Идентификатор изображения уже использован.',409);
+     const restoredPrompt=replacePendingAssignmentImage(String(assignment!.prompt||''),placeholder,imageId);
+     if(restoredPrompt){
+       const restored=await database.prepare('UPDATE assignments SET prompt=? WHERE id=? AND prompt=? AND EXISTS (SELECT 1 FROM assignment_images WHERE id=? AND assignment_id=?)').bind(restoredPrompt,assignmentId,assignment!.prompt,imageId,assignmentId).run();
+       if(restored.meta.changes===1)return json({id:imageId,url:imageUrl,content_type:String(existingImage!.content_type),size_bytes:Number(existingImage!.size_bytes)},200);
+     }
+     const latest=await database.prepare('SELECT prompt FROM assignments WHERE id=?').bind(assignmentId).first<Row>();
+     requireValue(String(latest?.prompt||'').includes(imageUrl),'Идентификатор изображения уже использован.',409);
+     return json({id:imageId,url:imageUrl,content_type:String(existingImage!.content_type),size_bytes:Number(existingImage!.size_bytes)},200);
+   }
+   const mime=file.type.toLowerCase() as AssignmentImageContentType;requireValue(['image/jpeg','image/png','image/webp','image/gif'].includes(mime),'Поддерживаются PNG, JPEG, WebP и GIF.',415);
+   const imageBytes=new Uint8Array(await file.arrayBuffer());requireValue(validateAssignmentImage(imageBytes,mime),'Файл не соответствует заявленному формату изображения.',415);
+   const config=r2S3Config(secrets);requireValue(config,'Загрузка изображений временно недоступна.',503);
+   const objectId=id(),key=`assignment-images/${assignmentId}/${objectId}.${assignmentImageExtension(mime)}`;
+   const updatedPrompt=replacePendingAssignmentImage(String(assignment!.prompt||''),placeholder,imageId);
+   requireValue(updatedPrompt,'Место для изображения не найдено в сохранённом условии. Сохрани условие и попробуй ещё раз.',409);
+   try{await putR2Object(key,imageBytes,mime,config);}catch(error){if(error instanceof R2StorageError)throw new HttpError('Хранилище изображений временно недоступно.',503);throw error;}
+   const cleanupUnreferencedUpload=async()=>{
+     const stored=await database.prepare('SELECT object_key FROM assignment_images WHERE id=?').bind(imageId).first<Row>();
+     const queueId=`${imageId}:${objectId}`,queueKey=`assignment-image-delete:${queueId}`,queueValue=JSON.stringify({object_key:key});
+     if(stored?.object_key===key){
+       const deleted=await database.batch([
+         database.prepare("INSERT INTO settings (key,value) SELECT ?,? WHERE EXISTS (SELECT 1 FROM assignment_images WHERE id=? AND object_key=? AND NOT EXISTS (SELECT 1 FROM assignments WHERE id=? AND instr(prompt,?)>0)) ON CONFLICT(key) DO UPDATE SET value=excluded.value").bind(queueKey,queueValue,imageId,key,assignmentId,imageUrl),
+         database.prepare('DELETE FROM assignment_images WHERE id=? AND object_key=? AND NOT EXISTS (SELECT 1 FROM assignments WHERE id=? AND instr(prompt,?)>0)').bind(imageId,key,assignmentId,imageUrl),
+       ]);
+       if(deleted[0]?.meta?.changes===1&&deleted[1]?.meta?.changes===1)await deleteQueuedR2Object(database,key,queueId,config);
+       else if(deleted[0]?.meta?.changes===1)await database.prepare('DELETE FROM settings WHERE key=? AND value=?').bind(queueKey,queueValue).run();
+     }else{
+       await database.prepare('INSERT INTO settings (key,value) VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value').bind(queueKey,queueValue).run();
+       await deleteQueuedR2Object(database,key,queueId,config);
+     }
+   };
+   let saved:{meta:{changes:number}}[];
+   try{
+     saved=await database.batch([
+       database.prepare('INSERT INTO assignment_images (id,assignment_id,object_key,content_type,size_bytes,original_name,created_at) SELECT ?,?,?,?,?,?,? WHERE EXISTS (SELECT 1 FROM assignments WHERE id=? AND prompt=?)').bind(imageId,assignmentId,key,mime,imageBytes.byteLength,sanitizeAssignmentImageName(file.name),now(),assignmentId,assignment!.prompt),
+       database.prepare('UPDATE assignments SET prompt=? WHERE id=? AND prompt=?').bind(updatedPrompt,assignmentId,assignment!.prompt),
+     ]);
+   }catch(error){try{await cleanupUnreferencedUpload();}catch(cleanupError){console.error('Uncommitted assignment image cleanup deferred:',imageId,cleanupError instanceof Error?cleanupError.message:'Unknown error');}throw error;}
+   if(saved[0]?.meta?.changes!==1||saved[1]?.meta?.changes!==1){
+     try{await cleanupUnreferencedUpload();}catch(cleanupError){console.error('Uncommitted assignment image cleanup deferred:',imageId,cleanupError instanceof Error?cleanupError.message:'Unknown error');}
+     throw new HttpError('Условие изменилось во время загрузки. Повтори сохранение задания.',409);
+   }
+   return json({id:imageId,url:imageUrl,content_type:mime,size_bytes:imageBytes.byteLength},201);
+ }
+ if(path[0]==='assignment-images'&&path[1]&&method==='GET'){
+   const user=await auth(request),image=await db().prepare('SELECT i.id,i.object_key,i.content_type,i.size_bytes,a.id AS assignment_id,a.topic_id,a.student_id,a.lesson_id FROM assignment_images i JOIN assignments a ON a.id=i.assignment_id WHERE i.id=?').bind(path[1]).first<Row>();
+   requireValue(image,'Изображение не найдено.',404);
+   const courseAccess=user.role!=='teacher'&&!!image!.topic_id&&!!await db().prepare(`SELECT a.id FROM assignments a JOIN topics t ON t.id=a.topic_id JOIN course_enrollments e ON e.course_id=t.course_id AND e.student_id=? JOIN topic_access x ON x.topic_id=COALESCE(t.parent_topic_id,t.id) AND x.student_id=? WHERE a.id=?`).bind(user.id,user.id,image!.assignment_id).first();
+   const lessonBelongsToUser=user.role==='teacher'||!image!.lesson_id||!!await db().prepare('SELECT id FROM lessons WHERE id=? AND student_id=?').bind(image!.lesson_id,user.id).first();
+   requireValue(canReadAssignmentImage({role:user.role,targetBelongsToUser:image!.student_id===user.id||courseAccess,lessonBelongsToUser}),'Изображение недоступно.',403);
+   const config=r2S3Config(secrets);requireValue(config,'Хранилище изображений временно недоступно.',503);
+   let bytes:Uint8Array;try{bytes=await getR2Object(String(image!.object_key),config);}catch(error){if(error instanceof R2StorageError)throw new HttpError(error.status===404?'Изображение не найдено.':'Хранилище изображений временно недоступно.',error.status===404?404:503);throw error;}
+   requireValue(bytes.byteLength===Number(image!.size_bytes)&&bytes.byteLength<=MAX_ASSIGNMENT_IMAGE_BYTES,'Изображение повреждено.',502);
+   return new Response(bytes.slice().buffer as ArrayBuffer,{headers:{'Content-Type':String(image!.content_type),'Content-Length':String(bytes.byteLength),'Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff','Cross-Origin-Resource-Policy':'same-origin'}});
  }
  const body:ApiBody=method==='GET'?{}:await request.json().catch(()=>({})) as ApiBody;
  if(path[0]==='reviews'&&method==='GET')return json({reviews:await all('SELECT id,name,body,rating FROM reviews WHERE published=1')});
@@ -309,6 +386,7 @@ async function route(request:Request){
      database.prepare(`DELETE FROM settings WHERE key=? AND ${absent}`).bind('cancel-lock:'+studentId,studentId),
    ]);
    requireValue(results[0]?.meta.changes,'Активный урок не позволяет удалить ученика. Обнови список и попробуй снова.',409);
+   try{await cleanupOrphanedAssignmentImages(database,secrets);}catch(error){console.error('Assignment image cleanup deferred after student deletion:',error instanceof Error?error.message:'Unknown error');}
    return json({ok:true});
  }
  if(path[0]==='settings'&&method==='POST'){
@@ -391,7 +469,9 @@ async function route(request:Request){
  }
  if(path[0]==='assignments'&&method==='POST'){
    await teacher(request);requireValue(text(body.title)&&text(body.prompt,20000)&&['code','quiz','text'].includes(body.kind||''),'Проверь данные задания.');const topicId=text(body.topic_id,100)||null,studentId=text(body.student_id,100)||null;requireValue(Boolean(topicId)!==Boolean(studentId),'Выбери тему курса или одного ученика.');if(topicId)requireValue(await db().prepare('SELECT id FROM topics WHERE id=?').bind(topicId).first(),'Тема не найдена.');if(studentId)requireValue(await db().prepare("SELECT id FROM users WHERE id=? AND role='student'").bind(studentId).first(),'Ученик не найден.');if(body.kind==='quiz')requireValue(Array.isArray(body.options)&&body.options.length>=2&&body.options.length<=20&&Number(body.answer)>=0&&Number(body.answer)<body.options.length,'Проверь варианты и номер правильного ответа.');const lessonId=text(body.lesson_id,100)||null;if(lessonId){const lesson=await db().prepare('SELECT student_id FROM lessons WHERE id=?').bind(lessonId).first<Row>();requireValue(lesson,'Урок не найден.');if(studentId)requireValue(lesson!.student_id===studentId,'Урок не принадлежит выбранному ученику.');if(topicId)requireValue(!!lesson!.student_id&&await studentCanReadTopic(lesson!.student_id,topicId),'У ученика нет доступа к теме, связанной с уроком.',403);}
-   await db().prepare('INSERT INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES (?,?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET topic_id=excluded.topic_id,student_id=excluded.student_id,lesson_id=excluded.lesson_id,title=excluded.title,kind=excluded.kind,prompt=excluded.prompt,options=excluded.options,answer=excluded.answer,tests=NULL').bind(body.id||id(),topicId,studentId,lessonId,text(body.title),body.kind,text(body.prompt,20000),body.kind==='quiz'?JSON.stringify(body.options):null,body.kind==='quiz'?String(body.answer):null,null).run();return json({ok:true});
+   const assignmentId=text(body.id,100)||id(),existingAssignment=await db().prepare('SELECT id FROM assignments WHERE id=?').bind(assignmentId).first();
+   if(!existingAssignment)requireValue(!await db().prepare('SELECT id FROM assignment_images WHERE assignment_id=?').bind(assignmentId).first(),'Этот идентификатор уже использовался. Создай задание заново.',409);
+   await db().prepare('INSERT INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests) VALUES (?,?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET topic_id=excluded.topic_id,student_id=excluded.student_id,lesson_id=excluded.lesson_id,title=excluded.title,kind=excluded.kind,prompt=excluded.prompt,options=excluded.options,answer=excluded.answer,tests=NULL').bind(assignmentId,topicId,studentId,lessonId,text(body.title),body.kind,text(body.prompt,20000),body.kind==='quiz'?JSON.stringify(body.options):null,body.kind==='quiz'?String(body.answer):null,null).run();return json({ok:true});
  }
  if(path[0]==='submit'&&method==='POST'){
    const u=await auth(request);requireValue(u.role==='student','Отправка доступна ученику.',403);const a=await db().prepare(`SELECT a.* FROM assignments a WHERE a.id=? AND ((a.student_id=? AND a.topic_id IS NULL) OR (a.topic_id IS NOT NULL AND EXISTS (SELECT 1 FROM topics t JOIN course_enrollments e ON e.course_id=t.course_id AND e.student_id=? JOIN topic_access x ON x.topic_id=COALESCE(t.parent_topic_id,t.id) AND x.student_id=? WHERE t.id=a.topic_id))) AND (a.lesson_id IS NULL OR EXISTS (SELECT 1 FROM lessons l WHERE l.id=a.lesson_id AND l.student_id=?))`).bind(body.assignmentId,u.id,u.id,u.id,u.id).first<Row>();requireValue(a,'Задание недоступно.',403);const content=text(body.content,50000);requireValue(content,'Добавь решение.');

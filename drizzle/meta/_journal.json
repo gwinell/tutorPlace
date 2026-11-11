@@ -92,6 +92,20 @@
       "when": 1794420000000,
       "tag": "0012_course_subtopics_and_preparation",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "6",
+      "when": 1794420001000,
+      "tag": "0013_assignment_images",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "6",
+      "when": 1794420002000,
+      "tag": "0014_python_course_seed",
+      "breakpoints": true
     }
   ]
 }

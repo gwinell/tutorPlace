@@ -83,8 +83,25 @@ jobs:
         env:
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_USER: ${{ secrets.VPS_USER }}
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
         run: |
+          set -euo pipefail
           archive="codetogether-${GITHUB_SHA}.tar.gz"
           nixos_archive="codetogether-nixos-${GITHUB_SHA}.tar.gz"
           scp -i ~/.ssh/codetogether_deploy -o BatchMode=yes -o StrictHostKeyChecking=yes "$archive" "$nixos_archive" "$nixos_archive.sig" "$VPS_USER@$VPS_HOST:/tmp/"
-          ssh -i ~/.ssh/codetogether_deploy -o BatchMode=yes -o StrictHostKeyChecking=yes "$VPS_USER@$VPS_HOST" "sudo -n \$(readlink -f /run/current-system/sw/bin/codetogether-config-deploy) ${GITHUB_SHA} && sudo -n \$(readlink -f /run/current-system/sw/bin/codetogether-deploy) ${GITHUB_SHA} && curl --fail --silent http://127.0.0.1:3101/health"
+          r2_configured=false
+          if [[ -n "$R2_ACCOUNT_ID" || -n "$R2_ACCESS_KEY_ID" || -n "$R2_SECRET_ACCESS_KEY" || -n "$R2_BUCKET_NAME" ]]; then
+            if [[ -z "$R2_ACCOUNT_ID" || -z "$R2_ACCESS_KEY_ID" || -z "$R2_SECRET_ACCESS_KEY" || -z "$R2_BUCKET_NAME" ]]; then
+              echo "All four R2 repository secrets must be set together." >&2
+              exit 1
+            fi
+            r2_configured=true
+          fi
+          ssh -i ~/.ssh/codetogether_deploy -o BatchMode=yes -o StrictHostKeyChecking=yes "$VPS_USER@$VPS_HOST" "sudo -n \$(readlink -f /run/current-system/sw/bin/codetogether-config-deploy) ${GITHUB_SHA}"
+          if [[ "$r2_configured" == true ]]; then
+            printf '%s\n' "$R2_ACCOUNT_ID" "$R2_ACCESS_KEY_ID" "$R2_SECRET_ACCESS_KEY" "$R2_BUCKET_NAME" | ssh -i ~/.ssh/codetogether_deploy -o BatchMode=yes -o StrictHostKeyChecking=yes "$VPS_USER@$VPS_HOST" "sudo -n \$(readlink -f /run/current-system/sw/bin/codetogether-r2-secrets-deploy)"
+          fi
+          ssh -i ~/.ssh/codetogether_deploy -o BatchMode=yes -o StrictHostKeyChecking=yes "$VPS_USER@$VPS_HOST" "sudo -n \$(readlink -f /run/current-system/sw/bin/codetogether-deploy) ${GITHUB_SHA} && curl --fail --silent http://127.0.0.1:3101/health && curl --fail --silent http://127.0.0.1:3000/api/health"

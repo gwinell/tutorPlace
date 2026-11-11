@@ -6,6 +6,9 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { DatabaseSync } from 'node:sqlite';
 
+const pythonCourseManifest = JSON.parse(readFileSync(new URL('../course-data/python/CODETOGETHER_COURSE.json', import.meta.url), 'utf8'));
+const pythonAssignments = JSON.parse(readFileSync(new URL('../course-data/python/CODETOGETHER_ASSIGNMENTS.json', import.meta.url), 'utf8'));
+
 test('миграции создают таблицу результатов печати и проверяют диапазоны', () => {
   const directory = mkdtempSync(path.join(os.tmpdir(), 'codetogether-migration-'));
   const databasePath = path.join(directory, 'test.sqlite');
@@ -28,6 +31,20 @@ test('миграции создают таблицу результатов пе
       assert.ok(topicColumns.some(column => column.name === 'github_url'));
       const preparationColumns = database.prepare('PRAGMA table_info(lesson_preparation_items)').all();
       assert.deepEqual(preparationColumns.map(column => column.name), ['id', 'lesson_id', 'kind', 'topic_id', 'assignment_id', 'position', 'completed_at']);
+      const imageColumns = database.prepare('PRAGMA table_info(assignment_images)').all();
+      assert.deepEqual(imageColumns.map(column => column.name), ['id', 'assignment_id', 'object_key', 'content_type', 'size_bytes', 'original_name', 'created_at']);
+      database.prepare("INSERT INTO assignment_images(id,assignment_id,object_key,content_type,size_bytes,original_name,created_at) VALUES ('image','assignment','assignment-images/assignment/image.png','image/png',8,'fixture.png','now')").run();
+      assert.throws(() => database.prepare("INSERT INTO assignment_images(id,assignment_id,object_key,content_type,size_bytes,original_name,created_at) VALUES ('bad-type','assignment','bad-type','image/svg+xml',8,'fixture.svg','now')").run());
+      assert.throws(() => database.prepare("INSERT INTO assignment_images(id,assignment_id,object_key,content_type,size_bytes,original_name,created_at) VALUES ('too-large','assignment','too-large','image/png',8388609,'fixture.png','now')").run());
+      const pythonCourse = database.prepare('SELECT id,title FROM courses WHERE id=?').get('python-course');
+      assert.equal(pythonCourse.id, 'python-course');
+      assert.equal(pythonCourse.title, 'Python');
+      assert.equal(database.prepare("SELECT COUNT(*) AS count FROM topics WHERE course_id='python-course' AND parent_topic_id IS NULL").get().count, pythonCourseManifest.themes.length);
+      assert.equal(database.prepare("SELECT COUNT(*) AS count FROM topics WHERE course_id='python-course' AND parent_topic_id IS NOT NULL").get().count, pythonCourseManifest.themes.flatMap(theme => theme.subtopics).length);
+      assert.equal(database.prepare("SELECT COUNT(*) AS count FROM assignments a JOIN topics t ON t.id=a.topic_id WHERE t.course_id='python-course'").get().count, pythonAssignments.metadata.counts.assignments);
+      assert.equal(database.prepare("SELECT COUNT(*) AS count FROM topics WHERE course_id='python-course' AND parent_topic_id IS NOT NULL AND github_url LIKE 'https://github.com/gwinell/proglang-courses/blob/codetogether/python-course/python/%'").get().count, pythonCourseManifest.themes.flatMap(theme => theme.subtopics).length);
+      assert.equal(database.prepare("SELECT COUNT(*) AS count FROM course_enrollments WHERE course_id='python-course'").get().count, 0);
+      assert.equal(database.prepare("SELECT COUNT(*) AS count FROM topic_access x JOIN topics t ON t.id=x.topic_id WHERE t.course_id='python-course'").get().count, 0);
       assert.equal(database.prepare('PRAGMA integrity_check').get().integrity_check, 'ok');
       assert.throws(() => database.prepare('INSERT INTO typing_results VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)').run('id', 's', 'r', 'fr', 'exercise', 30, 90, 1000, 'now'));
       assert.throws(() => database.prepare('INSERT INTO typing_results VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)').run('id', 's', 'r', 'ru', 'exercise', 300, 90, 1000, 'now'));

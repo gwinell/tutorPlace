@@ -42,6 +42,11 @@ function setup(beforeRecovery = () => {}) {
         first: async () => statement.get(...args) ?? null,
         all: async () => ({ results: statement.all(...args) }),
         run: () => {
+          if (query.startsWith('DELETE FROM assignment_images') && network.beforeAssignmentImageMetadataDelete) {
+            const callback = network.beforeAssignmentImageMetadataDelete;
+            network.beforeAssignmentImageMetadataDelete = null;
+            callback();
+          }
           if (query.startsWith("INSERT INTO lessons (id,student_id,name,start,end,type,status,event_id,operation_started_at,meet_url,topic) SELECT ?,id,?,?,?")) {
             const callback = network.beforeManualInsert;
             network.beforeManualInsert = null;
@@ -87,7 +92,7 @@ function setup(beforeRecovery = () => {}) {
   }));
   const events = new Map();
   let etag = 0;
-  const network = { lostResponse: false, unavailableAfterPatch: false, unavailable: false, skipPatch: false, failDelete: false, failJazzDisable: false, afterFreeBusy: null, beforeManualInsert: null, beforeRoomInsert: null, jazzEnabled: false, jazzRoom: null, disabledRooms: [], busy: [] };
+  const network = { lostResponse: false, unavailableAfterPatch: false, unavailable: false, skipPatch: false, failDelete: false, failJazzDisable: false, afterFreeBusy: null, beforeManualInsert: null, beforeRoomInsert: null, beforeAssignmentImageMetadataDelete: null, jazzEnabled: false, jazzRoom: null, disabledRooms: [], busy: [], r2Uploads: [], r2Deletes: [] };
   const calendarFetch = async (url, options) => {
     const path = new URL(url).pathname;
     if (path === '/token') return Response.json({ access_token: 'fixture', expires_in: 3600 });
@@ -128,6 +133,27 @@ function setup(beforeRecovery = () => {}) {
   const modules = {
     'cloudflare:workers': { env },
     '@/lib/runtime-env': { getRuntimeEnvironment: () => env },
+    '@/lib/assignment-images': {
+      assignmentImageExtension: () => 'png',
+      canReadAssignmentImage: ({ role, targetBelongsToUser, lessonBelongsToUser }) => role === 'teacher' || (targetBelongsToUser && lessonBelongsToUser),
+      deleteQueuedR2Object: async (_database, key) => network.r2Deletes.push(key), getR2Object: async () => Uint8Array.from([137,80,78,71,13,10,26,10]),
+      MAX_ASSIGNMENT_IMAGE_BYTES: 8 * 1024 * 1024, putR2Object: async (key, bytes, contentType) => network.r2Uploads.push({ key, size: bytes.length, contentType }),
+      r2S3Config: environment => environment.R2_ACCOUNT_ID ? { fixture: true } : null,
+      cleanupOrphanedAssignmentImages: async () => {},
+      pendingAssignmentImageId: placeholder => {
+        const marker = /^!\[([^\]\r\n]{0,180})\]\(codetogether-pending:([0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})\)$/i.exec(placeholder);
+        return marker ? { id: marker[2], alt: marker[1] } : null;
+      },
+      replacePendingAssignmentImage: (prompt, placeholder, imageId) => {
+        if (!placeholder || prompt.indexOf(placeholder) < 0 || prompt.indexOf(placeholder) !== prompt.lastIndexOf(placeholder)) return null;
+        const marker = /^!\[([^\]\r\n]{0,180})\]\(codetogether-pending:([0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})\)$/i.exec(placeholder);
+        if (!marker || marker[2] !== imageId) return null;
+        return prompt.replace(placeholder, `![${marker[1].replace(/[\[\]\\()\r\n]/g, '').slice(0, 120).trim() || 'Изображение'}](/api/assignment-images/${imageId})`);
+      },
+      sanitizeAssignmentImageName: fileName => fileName,
+      validateAssignmentImage: (bytes, type) => type === 'image/png' && [137,80,78,71,13,10,26,10].every((byte, index) => bytes[index] === byte),
+      R2StorageError: class R2StorageError extends Error {},
+    },
     '@/lib/sqlite-db': { getSqliteDatabase: () => { throw new Error('SQLite fallback is not used by booking fixtures'); } },
     '@/lib/salutejazz': {
       saluteJazzConfigured: () => network.jazzEnabled,
@@ -140,7 +166,7 @@ function setup(beforeRecovery = () => {}) {
     runInNewContext(source, {
       module: loaded, exports: loaded.exports,
       require: path => modules[path.startsWith('./') ? '@/lib/' + path.slice(2) : path] ?? require(path),
-      Response, Request, URL, URLSearchParams, Intl, TextEncoder, TextDecoder, AbortSignal, crypto,
+      Response, Request, URL, URLSearchParams, FormData, File, Headers, Intl, TextEncoder, TextDecoder, AbortSignal, crypto,
       fetch: calendarFetch, console: { error() {} }, btoa, atob,
     });
     modules[name] = loaded.exports;
@@ -479,4 +505,109 @@ test('Удаление ученика работает через DELETE и уд
   assert.equal(qa.sql.prepare('SELECT COUNT(*) AS n FROM sessions WHERE user_id=?').get(student.id).n, 0);
   assert.equal(qa.sql.prepare('SELECT COUNT(*) AS n FROM payment_requests WHERE student_id=?').get(student.id).n, 0);
   assert.equal((await qa.request('workspace', undefined, cookie)).status, 401);
+});
+
+test('Изображение задания выдаётся только ученику с доступом к заданию и его уроку', async () => {
+  const s = setup();
+  const teacher = await s.teacherSession();
+  const owner = await s.createStudent(teacher);
+  const stranger = await s.createStudent(teacher);
+  Object.assign(s.modules['@/lib/runtime-env'].getRuntimeEnvironment(), {
+    R2_ACCOUNT_ID: 'fixture-account', R2_ACCESS_KEY_ID: 'fixture-key',
+    R2_SECRET_ACCESS_KEY: 'fixture-secret', R2_BUCKET_NAME: 'fixture-bucket',
+  });
+  const insertImage = (imageId, assignmentId, topicId, studentId, lessonId) => {
+    s.sql.prepare('INSERT INTO assignments(id,topic_id,student_id,lesson_id,title,kind,prompt) VALUES (?,?,?,?,?,?,?)')
+      .run(assignmentId, topicId, studentId, lessonId, 'Fixture', 'text', 'Prompt');
+    s.sql.prepare('INSERT INTO assignment_images(id,assignment_id,object_key,content_type,size_bytes,original_name,created_at) VALUES (?,?,?,?,?,?,?)')
+      .run(imageId, assignmentId, 'assignment-images/' + assignmentId + '/' + imageId + '.png', 'image/png', 8, 'fixture.png', new Date().toISOString());
+  };
+  insertImage('orphan-image', 'orphan-assignment', null, owner.student.id, null);
+  s.sql.prepare('DELETE FROM assignments WHERE id=?').run('orphan-assignment');
+  const reusedId = await s.request('assignments', { id: 'orphan-assignment', student_id: owner.student.id, title: 'Reused', kind: 'text', prompt: 'Prompt' }, teacher);
+  assert.equal(reusedId.status, 409);
+  const imageResponse = async (imageId, cookie) => s.modules.route.GET(new Request(origin + '/api/assignment-images/' + imageId, { headers: { Cookie: cookie } }));
+
+  insertImage('personal-image', 'personal-assignment', null, owner.student.id, null);
+  const marker = '![uploaded](codetogether-pending:11111111-1111-4111-8111-111111111111)';
+  s.sql.prepare('UPDATE assignments SET prompt=? WHERE id=?').run('Prompt\n' + marker, 'personal-assignment');
+  assert.equal((await imageResponse('personal-image', stranger.cookie)).status, 403);
+  const personal = await imageResponse('personal-image', owner.cookie);
+  assert.equal(personal.status, 200);
+  assert.equal(personal.headers.get('content-type'), 'image/png');
+  assert.equal(personal.headers.get('cache-control'), 'private, no-store');
+  assert.deepEqual([...new Uint8Array(await personal.arrayBuffer())], [137,80,78,71,13,10,26,10]);
+
+  s.sql.prepare("INSERT INTO courses(id,title,position) VALUES ('image-course','Image course',0)").run();
+  s.sql.prepare("INSERT INTO topics(id,course_id,title,position,content,format) VALUES ('image-topic','image-course','Topic',0,'','md')").run();
+  s.sql.prepare("INSERT INTO course_enrollments(id,course_id,student_id) VALUES ('image-enrollment','image-course',?)").run(owner.student.id);
+  s.sql.prepare("INSERT INTO topic_access(id,topic_id,student_id) VALUES ('image-access','image-topic',?)").run(owner.student.id);
+  insertImage('course-image', 'course-assignment', 'image-topic', null, null);
+  assert.equal((await imageResponse('course-image', stranger.cookie)).status, 403);
+  assert.equal((await imageResponse('course-image', owner.cookie)).status, 200);
+
+  s.sql.prepare("INSERT INTO lessons(id,student_id,name,start,end,type,status) VALUES ('other-student-lesson',?,'Other','2026-11-12T10:00:00Z','2026-11-12T10:55:00Z','paid','scheduled')").run(stranger.student.id);
+  insertImage('lesson-image', 'lesson-assignment', null, owner.student.id, 'other-student-lesson');
+  assert.equal((await imageResponse('lesson-image', owner.cookie)).status, 403);
+  assert.equal((await imageResponse('personal-image', teacher)).status, 200);
+
+  const upload = async (cookie, type = 'image/png', bytes = Uint8Array.from([137,80,78,71,13,10,26,10])) => {
+    const body = new FormData();
+    body.append('file', new File([bytes], 'uploaded.png', { type }));
+    body.append('placeholder', marker);
+    return s.modules.route.POST(new Request(origin + '/api/assignments/personal-assignment/images', {
+      method: 'POST', headers: { Origin: origin, Cookie: cookie }, body,
+    }));
+  };
+  assert.equal((await upload(owner.cookie)).status, 403);
+  assert.equal((await upload(teacher, 'image/svg+xml')).status, 415);
+  assert.equal((await upload(teacher, 'image/png', new TextEncoder().encode('<svg/>'))).status, 415);
+  const uploadedCountBeforeOversize = s.network.r2Uploads.length;
+  assert.equal((await upload(teacher, 'image/png', new Uint8Array(8 * 1024 * 1024 + 1))).status, 413);
+  assert.equal(s.network.r2Uploads.length, uploadedCountBeforeOversize);
+  const uploaded = await upload(teacher);
+  assert.equal(uploaded.status, 201);
+  const uploadedMetadata = await uploaded.json();
+  assert.match(uploadedMetadata.url, /^\/api\/assignment-images\//);
+  assert.match(s.network.r2Uploads.at(-1).key, /^assignment-images\/personal-assignment\/[0-9a-f-]{36}\.png$/);
+  assert.equal(s.network.r2Uploads.at(-1).size, 8);
+  assert.equal(s.network.r2Uploads.at(-1).contentType, 'image/png');
+  assert.equal(s.sql.prepare('SELECT prompt FROM assignments WHERE id=?').get('personal-assignment').prompt, 'Prompt\n![uploaded](' + uploadedMetadata.url + ')');
+  assert.equal((await imageResponse(uploadedMetadata.id, owner.cookie)).status, 200);
+  const uploadCountAfterSuccess = s.network.r2Uploads.length;
+  s.sql.prepare('UPDATE assignments SET prompt=? WHERE id=?').run('Prompt\n' + marker, 'personal-assignment');
+  const retry = await upload(teacher);
+  assert.equal(retry.status, 200);
+  assert.equal((await retry.json()).id, uploadedMetadata.id);
+  assert.equal(s.network.r2Uploads.length, uploadCountAfterSuccess);
+  assert.equal(s.sql.prepare('SELECT prompt FROM assignments WHERE id=?').get('personal-assignment').prompt, 'Prompt\n![uploaded](' + uploadedMetadata.url + ')');
+
+  const failedMarker = '![failed](codetogether-pending:33333333-3333-4333-8333-333333333333)';
+  s.sql.prepare('UPDATE assignments SET prompt=? WHERE id=?').run(failedMarker, 'personal-assignment');
+  s.sql.exec("CREATE TRIGGER ignore_assignment_image_marker BEFORE UPDATE OF prompt ON assignments WHEN NEW.id='personal-assignment' BEGIN SELECT RAISE(IGNORE); END");
+  s.network.beforeAssignmentImageMetadataDelete = () => {
+    s.sql.exec('DROP TRIGGER ignore_assignment_image_marker');
+    s.sql.prepare('UPDATE assignments SET prompt=? WHERE id=?').run('![uploaded](/api/assignment-images/33333333-3333-4333-8333-333333333333)', 'personal-assignment');
+  };
+  const failedUpload = await (async () => {
+    const body = new FormData();
+    body.append('file', new File([Uint8Array.from([137,80,78,71,13,10,26,10])], 'uploaded.png', { type: 'image/png' }));
+    body.append('placeholder', failedMarker);
+    return s.modules.route.POST(new Request(origin + '/api/assignments/personal-assignment/images', {
+      method: 'POST', headers: { Origin: origin, Cookie: teacher }, body,
+    }));
+  })();
+  assert.equal(failedUpload.status, 409);
+  assert.equal(s.sql.prepare("SELECT COUNT(*) AS count FROM assignment_images WHERE assignment_id='personal-assignment'").get().count, 3);
+  assert.equal(s.network.r2Deletes.includes(s.network.r2Uploads.at(-1).key), false);
+  assert.equal((await imageResponse('33333333-3333-4333-8333-333333333333', owner.cookie)).status, 200);
+  const retryBody = new FormData();
+  retryBody.append('file', new File([Uint8Array.from([137,80,78,71,13,10,26,10])], 'uploaded.png', { type: 'image/png' }));
+  retryBody.append('placeholder', failedMarker);
+  const retryFailedUpload = await s.modules.route.POST(new Request(origin + '/api/assignments/personal-assignment/images', {
+    method: 'POST', headers: { Origin: origin, Cookie: teacher }, body: retryBody,
+  }));
+  assert.equal(retryFailedUpload.status, 200);
+  assert.equal((await retryFailedUpload.json()).id, '33333333-3333-4333-8333-333333333333');
+  assert.equal(s.network.r2Uploads.length, uploadCountAfterSuccess + 1);
 });

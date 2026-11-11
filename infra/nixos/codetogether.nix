@@ -130,6 +130,30 @@ let
     set -euo pipefail
     exec ${pkgs.coreutils}/bin/cat ${appRoot}/backups/latest.sqlite
   '';
+  r2SecretsDeploy = pkgs.writeShellScriptBin "codetogether-r2-secrets-deploy" ''
+    set -euo pipefail
+    IFS= read -r account_id
+    IFS= read -r access_key_id
+    IFS= read -r secret_access_key
+    IFS= read -r bucket_name
+    if IFS= read -r extra || [ -n "''${extra:-}" ]; then
+      echo "expected exactly four R2 secret lines" >&2
+      exit 65
+    fi
+    [[ "$account_id" =~ ^[A-Fa-f0-9]{32}$ ]] || { echo "invalid R2 account ID" >&2; exit 65; }
+    [[ "$access_key_id" =~ ^[A-Za-z0-9_-]{8,128}$ ]] || { echo "invalid R2 access key ID" >&2; exit 65; }
+    [[ "$secret_access_key" =~ ^[A-Za-z0-9_./+=-]{16,256}$ ]] || { echo "invalid R2 secret access key" >&2; exit 65; }
+    [[ "$bucket_name" =~ ^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$ ]] || { echo "invalid R2 bucket name" >&2; exit 65; }
+    file="$(mktemp /etc/codetogether/r2.env.XXXXXX)"
+    trap 'rm -f "$file"' EXIT
+    printf 'R2_ACCOUNT_ID=%s\nR2_ACCESS_KEY_ID=%s\nR2_SECRET_ACCESS_KEY=%s\nR2_BUCKET_NAME=%s\n' \
+      "$account_id" "$access_key_id" "$secret_access_key" "$bucket_name" > "$file"
+    chown root:root "$file"
+    chmod 0600 "$file"
+    mv -f "$file" /etc/codetogether/r2.env
+    trap - EXIT
+    systemctl restart codetogether.service
+  '';
 in
 {
   users.groups.codetogether = {};
@@ -195,7 +219,7 @@ in
         "QUMIR_COMPILER_URL=http://127.0.0.1:3101"
         "NODE_OPTIONS=--disable-warning=ExperimentalWarning"
       ];
-      EnvironmentFile = "-/etc/codetogether/secrets.env";
+      EnvironmentFile = [ "-/etc/codetogether/secrets.env" "-/etc/codetogether/r2.env" ];
       ExecStartPre = "${pkgs.nodejs_22}/bin/node ${appRoot}/current/migrate-sqlite.mjs";
       ExecStart = "${pkgs.nodejs_22}/bin/node ${appRoot}/current/server.js";
       Restart = "always";
@@ -247,7 +271,7 @@ in
       Group = "codetogether";
       WorkingDirectory = "${appRoot}/current";
       Environment = [ "DATABASE_PATH=${appRoot}/data/codetogether.sqlite" ];
-      EnvironmentFile = "-/etc/codetogether/secrets.env";
+      EnvironmentFile = [ "-/etc/codetogether/secrets.env" "-/etc/codetogether/r2.env" ];
       ExecStart = "${pkgs.nodejs_22}/bin/node ${appRoot}/current/maintenance.mjs";
       NoNewPrivileges = true;
       ProtectSystem = "strict";
@@ -287,6 +311,7 @@ in
     { users = [ deployUser ]; commands = [ { command = "${configDeployScript}/bin/codetogether-config-deploy"; options = [ "NOPASSWD" ]; } ]; }
     { users = [ deployUser ]; commands = [ { command = "${deployScript}/bin/codetogether-deploy"; options = [ "NOPASSWD" ]; } ]; }
     { users = [ deployUser ]; commands = [ { command = "${backupExport}/bin/codetogether-backup-export"; options = [ "NOPASSWD" ]; } ]; }
+    { users = [ deployUser ]; commands = [ { command = "${r2SecretsDeploy}/bin/codetogether-r2-secrets-deploy"; options = [ "NOPASSWD" ]; } ]; }
   ];
-  environment.systemPackages = [ configDeployScript deployScript backupExport pkgs.nodejs_22 pkgs.curl pkgs.sqlite ];
+  environment.systemPackages = [ configDeployScript deployScript backupExport r2SecretsDeploy pkgs.nodejs_22 pkgs.curl pkgs.sqlite ];
 }
