@@ -12,6 +12,7 @@ const migrations = readdirSync(migrationDir).filter(name => name.endsWith('.sql'
 const require = createRequire(import.meta.url);
 const sources = [
   ['@/lib/domain', 'lib/domain.ts'],
+  ['@/lib/github-source', 'lib/github-source.ts'],
   ['@/lib/room-presets', 'lib/room-presets.ts'],
   ['@/lib/server', 'lib/server.ts'],
   ['@/lib/collaboration', 'lib/collaboration.ts'],

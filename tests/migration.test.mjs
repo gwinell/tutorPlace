@@ -23,6 +23,11 @@ test('миграции создают таблицу результатов пе
       const paymentColumns = database.prepare('PRAGMA table_info(payment_requests)').all();
       assert.ok(paymentColumns.some(column => column.name === 'amount_rub'));
       assert.ok(paymentColumns.some(column => column.name === 'credited_lessons'));
+      const topicColumns = database.prepare('PRAGMA table_info(topics)').all();
+      assert.ok(topicColumns.some(column => column.name === 'parent_topic_id'));
+      assert.ok(topicColumns.some(column => column.name === 'github_url'));
+      const preparationColumns = database.prepare('PRAGMA table_info(lesson_preparation_items)').all();
+      assert.deepEqual(preparationColumns.map(column => column.name), ['id', 'lesson_id', 'kind', 'topic_id', 'assignment_id', 'position', 'completed_at']);
       assert.equal(database.prepare('PRAGMA integrity_check').get().integrity_check, 'ok');
       assert.throws(() => database.prepare('INSERT INTO typing_results VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)').run('id', 's', 'r', 'fr', 'exercise', 30, 90, 1000, 'now'));
       assert.throws(() => database.prepare('INSERT INTO typing_results VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)').run('id', 's', 'r', 'ru', 'exercise', 300, 90, 1000, 'now'));
@@ -33,6 +38,16 @@ test('миграции создают таблицу результатов пе
       assert.throws(() => database.prepare("INSERT INTO payment_requests(id,student_id,amount_rub,price_per_lesson,created_at) VALUES ('bad','missing',2500,1000,'now')").run(), /payment request student does not exist/);
       assert.throws(() => database.prepare("INSERT INTO rooms(id,student_id,name,language,student_code,teacher_code,revision,last_active) VALUES ('orphan','missing','Room','python','','',0,0)").run(), /room student does not exist/);
       assert.throws(() => database.prepare("INSERT INTO payment_requests(id,student_id,amount_rub,price_per_lesson,created_at) VALUES ('invalid-amount','student',0,1000,'now')").run());
+      database.prepare("INSERT INTO courses(id,title,description,position) VALUES ('course-review','Review course',NULL,0)").run();
+      database.prepare("INSERT INTO topics(id,course_id,title,description,content,format) VALUES ('root','course-review','Root',NULL,'# root','md')").run();
+      database.prepare("INSERT INTO topics(id,course_id,parent_topic_id,title,description,content,format) VALUES ('child','course-review','root','Child',NULL,'# child','md')").run();
+      assert.throws(() => database.prepare("INSERT INTO topics(id,course_id,parent_topic_id,title,content,format) VALUES ('grandchild','course-review','child','Grandchild','','md')").run(), /topic parent must be a root/);
+      assert.throws(() => database.prepare("INSERT INTO topics(id,course_id,parent_topic_id,title,content,format) VALUES ('wrong-course','other-course','root','Wrong course','','md')").run(), /topic parent must be a root/);
+      database.prepare("INSERT INTO lessons(id,student_id,name,start,end,type,status) VALUES ('prep-lesson','student','QA student','2026-11-12T10:00:00Z','2026-11-12T10:55:00Z','paid','scheduled')").run();
+      database.prepare("INSERT INTO lesson_preparation_items(id,lesson_id,kind,topic_id,position) VALUES ('prep-topic','prep-lesson','topic','child',0)").run();
+      assert.equal(database.prepare("SELECT topic_id FROM lesson_preparation_items WHERE id='prep-topic'").get().topic_id, 'child');
+      assert.throws(() => database.prepare("INSERT INTO lesson_preparation_items(id,lesson_id,kind,topic_id,assignment_id,position) VALUES ('bad-prep','prep-lesson','topic','child','task',1)").run());
+      assert.throws(() => database.prepare("INSERT INTO lesson_preparation_items(id,lesson_id,kind,topic_id,position) VALUES ('orphan-prep','missing-lesson','topic','child',0)").run(), /preparation item requires a student lesson/);
     } finally {
       database.close();
     }
@@ -55,6 +70,8 @@ test('миграция цены сохраняет существующих уч
         database.prepare('INSERT INTO d1_migrations(name) VALUES (?)').run(name);
       }
       database.prepare("INSERT INTO users(id,login,password,name,role,balance,created_at) VALUES ('legacy','legacy','hash','Existing student','student',7,'2024-01-01T00:00:00.000Z')").run();
+      database.prepare("INSERT INTO courses(id,title,position) VALUES ('legacy-course','Legacy course',0)").run();
+      database.prepare("INSERT INTO topics(id,course_id,title,content,format,position) VALUES ('legacy-topic','legacy-course','Legacy topic','# Preserve this','md',0)").run();
     } finally {
       database.close();
     }
@@ -69,6 +86,11 @@ test('миграция цены сохраняет существующих уч
       assert.equal(student.id, 'legacy');
       assert.equal(student.balance, 7);
       assert.equal(student.price_per_lesson, 1000);
+      const topic = upgraded.prepare('SELECT course_id,parent_topic_id,github_url,content FROM topics WHERE id=?').get('legacy-topic');
+      assert.equal(topic.course_id, 'legacy-course');
+      assert.equal(topic.parent_topic_id, null);
+      assert.equal(topic.github_url, null);
+      assert.equal(topic.content, '# Preserve this');
     } finally {
       upgraded.close();
     }
