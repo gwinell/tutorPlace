@@ -57,8 +57,10 @@ jobs:
           }
           echo '== localhost health =='
           probe app_local http://127.0.0.1:3000/api/health
+          probe app_home http://127.0.0.1:3000/
           probe compiler_local http://127.0.0.1:3101/health
           probe caddy_local -k --resolve code-together.ru:443:127.0.0.1 https://code-together.ru/api/health
+          probe caddy_home -k --resolve code-together.ru:443:127.0.0.1 https://code-together.ru/
 
           echo '== VPS DNS =='
           if getent ahosts code-together.ru >/dev/null 2>&1; then echo 'domain_dns=resolved'; else echo 'domain_dns=failed'; fi
@@ -70,8 +72,14 @@ jobs:
       - name: Probe public HTTPS from GitHub runner
         if: always()
         run: |
-          if status=$(curl --connect-timeout 5 --max-time 12 --silent --output /dev/null --write-out '%{http_code}' https://code-together.ru/api/health 2>/dev/null); then
-            echo "public_https_http=$status"
-          else
-            echo 'public_https=unreachable'
-          fi
+          probe_public() {
+            label=$1
+            path=$2
+            if status=$(curl --connect-timeout 5 --max-time 12 --silent --output /dev/null --write-out '%{http_code}' "https://code-together.ru$path" 2>/dev/null); then
+              printf 'public_%s_http=%s\n' "$label" "$status"
+            else
+              printf 'public_%s=unreachable\n' "$label"
+            fi
+          }
+          probe_public homepage /
+          probe_public api_health /api/health
