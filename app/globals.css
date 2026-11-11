@@ -430,6 +430,11 @@
 }
 .privacy-page{min-height:100vh;background:var(--bg);padding:64px 24px}.privacy-content{max-width:780px;margin:0 auto;padding:48px;background:var(--surface);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow)}.privacy-content>.text-link{margin-bottom:34px}.privacy-content h1{font-size:clamp(32px,5vw,48px);line-height:1.16;margin:0 0 12px}.privacy-content .privacy-updated{color:var(--muted);margin-bottom:38px}.privacy-content h2{font-size:22px;letter-spacing:-.5px;margin:31px 0 10px}.privacy-content p{font-size:16px;line-height:1.85;color:var(--muted);margin:12px 0}.privacy-content .eyebrow{margin:25px 0 12px}.privacy-content .privacy-back{margin-top:34px}.checkbox-label a{color:var(--purple);text-decoration:underline;text-underline-offset:3px}.footer-links>a{font-size:14px;color:var(--muted)}.footer-links>a:hover{color:var(--purple)}
 @media(max-width:640px){.privacy-page{padding:20px 14px}.privacy-content{padding:27px 21px;border-radius:14px}.privacy-content h1{font-size:32px}.privacy-content h2{font-size:20px}.privacy-content p{font-size:15px}}
+.privacy-content ul,.privacy-content ol{padding-left:24px;margin:13px 0 18px;color:var(--muted)}
+.privacy-content li{font-size:15px;line-height:1.8;padding-left:4px;margin:7px 0}
+.privacy-content li::marker{color:var(--purple)}
+.privacy-content a:not(.button){color:var(--purple);text-decoration:underline;text-underline-offset:3px}
+.privacy-content section+section{margin-top:8px}
 @media(max-width:360px){
   .site-header .brand{font-size:16px;gap:5px}
   .site-header .brand-mark{width:24px;height:24px}
