@@ -1,4 +1,4 @@
-import { loadRuntime } from './runtime/loader.js?v=6';
+import { loadRuntime } from './runtime/loader.js?v=7';
 
 const outputLimit = 100_000;
 const canvasWidth = 720;
@@ -7,10 +7,12 @@ let executionSession = null;
 let canvas = null;
 let canvasContext = null;
 let canvasFrames = 0;
+let forceNextCanvasFrame = false;
 let outputSize = 0;
 let activeChannel = null;
 let activeExecutor = 'text';
 let activeRuntime = null;
+let robotView = { zoom: 1, panX: 0, panY: 0 };
 
 const frameHandlers = new Map();
 const windowHandlers = new Map();
@@ -58,8 +60,10 @@ function installWorkerBrowserShims() {
   };
   self.removeEventListener = (type, callback) => windowHandlers.get(type)?.delete(callback);
   self.requestAnimationFrame = callback => setTimeout(() => {
+    const force = forceNextCanvasFrame;
+    forceNextCanvasFrame = false;
     callback(performance.now());
-    sendCanvas(activeExecutor);
+    sendCanvas(activeExecutor, force);
   }, 0);
   self.cancelAnimationFrame = clearTimeout;
   self.document = {
@@ -74,40 +78,68 @@ function installWorkerBrowserShims() {
   };
 }
 
-function sendCanvas(executor = activeExecutor) {
-  if (!canvas || canvasFrames >= 500) return;
-  canvasFrames += 1;
+function sendCanvas(executor = activeExecutor, force = false) {
+  if (!canvas || (!force && canvasFrames >= 500)) return;
+  if (!force) canvasFrames += 1;
   const bitmap = canvas.transferToImageBitmap();
   post('canvas', { bitmap, executor }, [bitmap]);
 }
 
-function drawRobot(robot) {
+function drawRobot(robot, force = false) {
   const state = robot?.__getRobotState?.();
   if (!state || !canvasContext) return;
   post('robot-state', { state });
-  const { width, height } = canvas;
-  const cell = Math.max(16, Math.min((width - 48) / state.width, (height - 48) / state.height));
-  const left = (width - cell * state.width) / 2;
-  const top = (height - cell * state.height) / 2;
+  const width = canvasWidth, height = canvasHeight;
+  const cell = Math.min((width - 48) / state.width, (height - 48) / state.height) * robotView.zoom;
+  const left = (width - cell * state.width) / 2 + robotView.panX;
+  const top = (height - cell * state.height) / 2 + robotView.panY;
   canvasContext.setTransform(1, 0, 0, 1, 0, 0);
   canvasContext.clearRect(0, 0, width, height);
   canvasContext.fillStyle = '#fff';
   canvasContext.fillRect(0, 0, width, height);
-  for (let y = 0; y < state.height; y += 1) for (let x = 0; x < state.width; x += 1) {
-    const px = left + x * cell, py = top + y * cell;
-    canvasContext.fillStyle = state.painted.includes(`${x},${y}`) ? '#e4e8df' : '#faf9f5';
-    canvasContext.fillRect(px + 1, py + 1, cell - 2, cell - 2);
-    canvasContext.strokeStyle = '#d6d4cc';
-    canvasContext.lineWidth = 1;
-    canvasContext.strokeRect(px, py, cell, cell);
-    if (state.hWalls.includes(`${x},${y}`)) { canvasContext.strokeStyle = '#303238'; canvasContext.lineWidth = 3; canvasContext.beginPath(); canvasContext.moveTo(px, py + cell); canvasContext.lineTo(px + cell, py + cell); canvasContext.stroke(); }
-    if (state.vWalls.includes(`${x},${y}`)) { canvasContext.strokeStyle = '#303238'; canvasContext.lineWidth = 3; canvasContext.beginPath(); canvasContext.moveTo(px + cell, py); canvasContext.lineTo(px + cell, py + cell); canvasContext.stroke(); }
+  const fieldWidth = state.width * cell, fieldHeight = state.height * cell;
+  const inset = Math.min(1, cell * 0.08);
+  const lineWidth = Math.max(0.5, Math.min(3, cell * 0.12));
+  canvasContext.fillStyle = '#faf9f5';
+  canvasContext.fillRect(left, top, fieldWidth, fieldHeight);
+  canvasContext.fillStyle = '#e4e8df';
+  for (const key of new Set(state.painted)) {
+    const [x, y] = key.split(',').map(Number);
+    canvasContext.fillRect(left + x * cell + inset, top + y * cell + inset, Math.max(0, cell - inset * 2), Math.max(0, cell - inset * 2));
   }
+  canvasContext.strokeStyle = '#d6d4cc';
+  canvasContext.lineWidth = Math.min(1, lineWidth);
+  canvasContext.beginPath();
+  for (let x = 0; x <= state.width; x += 1) {
+    const px = left + x * cell;
+    canvasContext.moveTo(px, top);
+    canvasContext.lineTo(px, top + fieldHeight);
+  }
+  for (let y = 0; y <= state.height; y += 1) {
+    const py = top + y * cell;
+    canvasContext.moveTo(left, py);
+    canvasContext.lineTo(left + fieldWidth, py);
+  }
+  canvasContext.stroke();
+  canvasContext.strokeStyle = '#303238';
+  canvasContext.lineWidth = lineWidth;
+  canvasContext.beginPath();
+  for (const key of new Set(state.hWalls)) {
+    const [x, y] = key.split(',').map(Number);
+    canvasContext.moveTo(left + x * cell, top + (y + 1) * cell);
+    canvasContext.lineTo(left + (x + 1) * cell, top + (y + 1) * cell);
+  }
+  for (const key of new Set(state.vWalls)) {
+    const [x, y] = key.split(',').map(Number);
+    canvasContext.moveTo(left + (x + 1) * cell, top + y * cell);
+    canvasContext.lineTo(left + (x + 1) * cell, top + (y + 1) * cell);
+  }
+  canvasContext.stroke();
   const cx = left + (state.x + 0.5) * cell, cy = top + (state.y + 0.5) * cell;
   canvasContext.fillStyle = '#41634d';
   canvasContext.beginPath();
   canvasContext.moveTo(cx, cy - cell * 0.3); canvasContext.lineTo(cx + cell * 0.28, cy + cell * 0.25); canvasContext.lineTo(cx - cell * 0.28, cy + cell * 0.25); canvasContext.closePath(); canvasContext.fill();
-  sendCanvas('robot');
+  sendCanvas('robot', force);
 }
 
 function emitCanvas(runtime, executor) {
@@ -176,9 +208,9 @@ function editRobot(event) {
   const robot = activeRuntime?.robotModule;
   const state = robot?.__getRobotState?.();
   if (!state) return;
-  const cell = Math.max(16, Math.min((canvas.width - 48) / state.width, (canvas.height - 48) / state.height));
-  const left = (canvas.width - cell * state.width) / 2;
-  const top = (canvas.height - cell * state.height) / 2;
+  const cell = Math.min((canvasWidth - 48) / state.width, (canvasHeight - 48) / state.height) * robotView.zoom;
+  const left = (canvasWidth - cell * state.width) / 2 + robotView.panX;
+  const top = (canvasHeight - cell * state.height) / 2 + robotView.panY;
   const localX = Number(event.clientX) - left;
   const localY = Number(event.clientY) - top;
   if (localX < 0 || localY < 0 || localX >= cell * state.width || localY >= cell * state.height) return;
@@ -196,11 +228,16 @@ function editRobot(event) {
     ].sort((a, b) => a[1] - b[1]);
     if (distances[0][1] <= edge) robot.__toggleWall?.(x, y, distances[0][0]);
   }
-  drawRobot(robot);
+  drawRobot(robot, true);
 }
 
 async function run(message) {
   activeChannel = message.channel;
+  robotView = {
+    zoom: Math.max(1, Math.min(24, Number(message.robotView?.zoom) || 1)),
+    panX: Math.max(-10000, Math.min(10000, Number(message.robotView?.panX) || 0)),
+    panY: Math.max(-10000, Math.min(10000, Number(message.robotView?.panY) || 0)),
+  };
   outputSize = 0;
   canvasFrames = 0;
   canvas = new OffscreenCanvas(canvasWidth, canvasHeight);
@@ -248,27 +285,49 @@ self.onmessage = event => {
     if (event.data.channel === activeChannel && activeExecutor === 'robot') {
       if (event.data.event?.type === 'robot-resize') {
         activeRuntime?.robotModule?.__setRobotState?.(event.data.event.state);
-        drawRobot(activeRuntime?.robotModule);
+        drawRobot(activeRuntime?.robotModule, true);
       } else editRobot(event.data.event || {});
     }
     return;
   }
+  if (event.data?.type === 'robot-view') {
+    if (event.data.channel !== activeChannel || activeExecutor !== 'robot') return;
+    const view = event.data.view || {};
+    robotView = {
+      zoom: Math.max(1, Math.min(24, Number(view.zoom) || 1)),
+      panX: Math.max(-10000, Math.min(10000, Number(view.panX) || 0)),
+      panY: Math.max(-10000, Math.min(10000, Number(view.panY) || 0)),
+    };
+    drawRobot(activeRuntime?.robotModule, true);
+    return;
+  }
   if (event.data?.type === 'drawer-control') {
     if (event.data.channel !== activeChannel || activeExecutor !== 'drawer') return;
+    forceNextCanvasFrame = true;
     if (event.data.command === 'zoom-in') activeRuntime?.drawerModule?.__zoomDrawerView?.(1.25);
     else if (event.data.command === 'zoom-out') activeRuntime?.drawerModule?.__zoomDrawerView?.(0.8);
     else if (event.data.command === 'fit') activeRuntime?.drawerModule?.__fitDrawerView?.();
     return;
   }
+  if (event.data?.type === 'turtle-control') {
+    if (event.data.channel !== activeChannel || activeExecutor !== 'turtle') return;
+    forceNextCanvasFrame = true;
+    if (event.data.command === 'zoom-in') activeRuntime?.turtleModule?.__zoomTurtleView?.(1.25);
+    else if (event.data.command === 'zoom-out') activeRuntime?.turtleModule?.__zoomTurtleView?.(0.8);
+    else if (event.data.command === 'fit') activeRuntime?.turtleModule?.__fitTurtleView?.();
+    return;
+  }
   if (event.data?.type === 'painter-control') {
     if (event.data.channel !== activeChannel || activeExecutor !== 'painter') return;
+    forceNextCanvasFrame = true;
     if (event.data.command === 'zoom-in') activeRuntime?.painterModule?.__zoomPainterView?.(1.25, canvasWidth / 2, canvasHeight / 2);
     else if (event.data.command === 'zoom-out') activeRuntime?.painterModule?.__zoomPainterView?.(0.8, canvasWidth / 2, canvasHeight / 2);
     else if (event.data.command === 'fit') activeRuntime?.painterModule?.__fitPainterView?.();
-    sendCanvas('painter');
+    sendCanvas('painter', true);
     return;
   }
   if (event.data?.type === 'input-event') {
+    forceNextCanvasFrame = true;
     dispatchInput(event.data.event);
     return;
   }

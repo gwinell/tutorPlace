@@ -307,6 +307,7 @@ export function __onCanvasShown() {
 
 export function __fitPainterView() {
   if (!canvas) return;
+  resetView();
   fitCanvas();
   scheduleDraw();
 }

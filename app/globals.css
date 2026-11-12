@@ -1105,6 +1105,8 @@
 .robot-field-resize>div>button:disabled{opacity:.45;cursor:not-allowed}
 .robot-field-resize>div>strong{min-width:20px;color:var(--ink);font-size:12px;text-align:center}
 .qumir-executor>canvas.robot-field-editing{cursor:crosshair;touch-action:none}
+.qumir-executor>canvas.robot-field-pannable{cursor:grab;touch-action:none}
+.qumir-executor>canvas.robot-field-pannable:active{cursor:grabbing}
 .code-editor.kumir-workspace-editor>.qumir-executor>header{flex-wrap:wrap}
 @media(max-width:680px){
  .code-editor.kumir-workspace-editor>.qumir-executor>header{align-items:center;gap:8px}

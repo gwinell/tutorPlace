@@ -58,10 +58,10 @@ export async function loadRuntime(bytes, options = {}) {
     import('./future.js'),
     import('./locator.js'),
     import('../io_wrapper.js'),
-    optionalImport('./turtle.js', usesImport(imports, 'turtle_')),
+    optionalImport('./turtle.js?v=7', usesImport(imports, 'turtle_')),
     optionalImport('./robot.js', usesImport(imports, 'robot_')),
-    optionalImport('./drawer.js', usesImport(imports, 'drawer_')),
-    optionalImport('./painter.js', usesImport(imports, 'painter_')),
+    optionalImport('./drawer.js?v=7', usesImport(imports, 'drawer_')),
+    optionalImport('./painter.js?v=7', usesImport(imports, 'painter_')),
     optionalImport('./colors.js', usesImport(imports, 'color_')),
     optionalImport('./keyboard.js', usesImport(imports, 'keyboard_')),
   ]);

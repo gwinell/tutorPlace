@@ -8,7 +8,9 @@ import turtleSource from '../public/turtle-shim.py?raw';
 type TurtleEvent = { op: string; [key: string]: unknown };
 type KumirExecutor = 'robot'|'turtle'|'drawer'|'painter'|'text';
 type RobotFieldState = {x:number;y:number;width:number;height:number;painted:string[];hWalls:string[];vWalls:string[]};
+type RobotView = {zoom:number;panX:number;panY:number};
 const defaultRobotField:RobotFieldState={x:0,y:0,width:7,height:7,painted:[],hWalls:[],vWalls:[]};
+const defaultRobotView:RobotView={zoom:1,panX:0,panY:0};
 const executorNames:Record<KumirExecutor,string>={robot:'Робот',turtle:'Черепаха',drawer:'Чертёжник',painter:'Рисователь',text:'Текстовый вывод'};
 function findKumirExecutor(code:string):KumirExecutor{
  const match=code.match(/^\s*использовать\s+(Робот|Черепаха|Чертежник|Чертёжник|Рисователь)(?=\s|$)/im)?.[1]?.toLocaleLowerCase('ru-RU');
@@ -49,7 +51,7 @@ function tokenizeSource(source:string,language:string):SyntaxToken[]{
  return tokens;
 }
 type RuntimeMessage = { ctRuntime?: boolean; channel?: string; type?: string; text?: string; event?: TurtleEvent; bitmap?: ImageBitmap; executor?: string; state?:RobotFieldState };
-type RuntimeProgram = { code: string; language: string; inputs: string[]; outputLimit: number; turtleSource: string; roomId?: string; kumirInput?: string; robotField?:RobotFieldState };
+type RuntimeProgram = { code: string; language: string; inputs: string[]; outputLimit: number; turtleSource: string; roomId?: string; kumirInput?: string; robotField?:RobotFieldState; robotView?:RobotView };
 type RuntimeController = {
   ready: boolean;
   activeChannel: string | null;
@@ -80,7 +82,7 @@ export function RuntimeProvider({children}:{children:ReactNode}){
    if(program.language==='kumir'){
      activeEngine.current='kumir';
      if(!kumirWorker.current){
-       kumirWorker.current=new Worker('/qumir/worker.js?v=7',{type:'module',name:'codeTogether Kumir'});
+       kumirWorker.current=new Worker('/qumir/worker.js?v=8',{type:'module',name:'codeTogether Kumir'});
        kumirWorker.current.onmessage=event=>{
          const message=event.data as RuntimeMessage;
          if(message.channel)listeners.current.get(message.channel)?.(message);
@@ -111,8 +113,9 @@ export function RuntimeProvider({children}:{children:ReactNode}){
  },[]);
  const executorEvent=useCallback((channel:string,event:Record<string,unknown>)=>{
    if(activeEngine.current!=='kumir'||!kumirWorker.current)return;
-   const type=event.type==='robot-edit'||event.type==='robot-resize'?'robot-edit':event.type==='drawer-control'?'drawer-control':event.type==='painter-control'?'painter-control':'input-event';
-   if(type==='drawer-control'||type==='painter-control')kumirWorker.current.postMessage({type,channel,command:event.command});
+   const type=event.type==='robot-edit'||event.type==='robot-resize'?'robot-edit':event.type==='robot-view'?'robot-view':event.type==='drawer-control'?'drawer-control':event.type==='turtle-control'?'turtle-control':event.type==='painter-control'?'painter-control':'input-event';
+   if(type==='drawer-control'||type==='turtle-control'||type==='painter-control')kumirWorker.current.postMessage({type,channel,command:event.command});
+   else if(type==='robot-view')kumirWorker.current.postMessage({type,channel,view:event.view});
    else kumirWorker.current.postMessage({type,channel,event});
  },[]);
  useEffect(()=>{
@@ -144,8 +147,8 @@ function CodeEditorView({value,onChange,language='python',filename='student.py',
  const [output,setOutput]=useState(''),[running,setRunning]=useState(false),[waiting,setWaiting]=useState(false),[input,setInput]=useState(''),[loading,setLoading]=useState(false);
  const [turtleEvents,setTurtleEvents]=useState<TurtleEvent[]>([]),[turtleVisible,setTurtleVisible]=useState(false),[qumirVisible,setQumirVisible]=useState(language==='kumir'),[qumirHasFrame,setQumirHasFrame]=useState(false),[kumirInput,setKumirInput]=useState('');
  const qumirExecutor:KumirExecutor=language==='kumir'?findKumirExecutor(value):'text';
- const [executorMenuOpen,setExecutorMenuOpen]=useState(false),[robotEditing,setRobotEditing]=useState(false),[robotTool,setRobotTool]=useState<'wall'|'paint'|'robot'>('wall'),[robotField,setRobotField]=useState<RobotFieldState>(defaultRobotField);
- const inputs=useRef<string[]>([]),timer=useRef<ReturnType<typeof setTimeout>|null>(null),source=useRef(''),outputCharacters=useRef(0),executionElapsed=useRef(0),executionSegmentStarted=useRef<number|null>(null),outputRef=useRef<HTMLPreElement>(null),inputRef=useRef<HTMLInputElement>(null),qumirCanvas=useRef<HTMLCanvasElement>(null),highlightRef=useRef<HTMLPreElement>(null),lineNumbersRef=useRef<HTMLPreElement>(null);
+ const [executorMenuOpen,setExecutorMenuOpen]=useState(false),[robotEditing,setRobotEditing]=useState(false),[robotTool,setRobotTool]=useState<'wall'|'paint'|'robot'>('wall'),[robotField,setRobotField]=useState<RobotFieldState>(defaultRobotField),[robotView,setRobotView]=useState<RobotView>(defaultRobotView);
+ const inputs=useRef<string[]>([]),timer=useRef<ReturnType<typeof setTimeout>|null>(null),source=useRef(''),outputCharacters=useRef(0),executionElapsed=useRef(0),executionSegmentStarted=useRef<number|null>(null),outputRef=useRef<HTMLPreElement>(null),inputRef=useRef<HTMLInputElement>(null),qumirCanvas=useRef<HTMLCanvasElement>(null),highlightRef=useRef<HTMLPreElement>(null),lineNumbersRef=useRef<HTMLPreElement>(null),robotViewRef=useRef<RobotView>(defaultRobotView),robotDrag=useRef<{x:number;y:number}|null>(null);
  const syntaxTokens=useMemo(()=>language==='python'||language==='kumir'?tokenizeSource(value,language):[],[value,language]);
  const {activeChannel,ready,register,run:runProgram,stop:stopProgram}=runtime;
  const sendTurtleEvent=runtime.turtleEvent;
@@ -166,8 +169,9 @@ function CodeEditorView({value,onChange,language='python',filename='student.py',
    if(!ready)return;
    if(!replay&&value.length>100000){setOutput('Файл слишком большой: максимум 100 000 символов.');return;}
    onActivity?.();
-   if(!replay){inputs.current=[];source.current=value;outputCharacters.current=0;executionElapsed.current=0;executionSegmentStarted.current=null;setTurtleEvents([]);setTurtleVisible(false);setQumirVisible(language==='kumir');setQumirHasFrame(false);setRobotEditing(false);if(qumirCanvas.current){const context=qumirCanvas.current.getContext('2d');context?.clearRect(0,0,qumirCanvas.current.width,qumirCanvas.current.height);}}
-   if(!runProgram(channel,{code:source.current,language,inputs:inputs.current,outputLimit:Math.max(0,100000-outputCharacters.current),turtleSource,roomId,kumirInput,robotField}))return;
+   const viewForRun=replay?robotView:defaultRobotView;
+   if(!replay){inputs.current=[];source.current=value;outputCharacters.current=0;executionElapsed.current=0;executionSegmentStarted.current=null;setTurtleEvents([]);setTurtleVisible(false);setQumirVisible(language==='kumir');setQumirHasFrame(false);setRobotEditing(false);setRobotView(defaultRobotView);robotViewRef.current=defaultRobotView;if(qumirCanvas.current){const context=qumirCanvas.current.getContext('2d');context?.clearRect(0,0,qumirCanvas.current.width,qumirCanvas.current.height);}}
+   if(!runProgram(channel,{code:source.current,language,inputs:inputs.current,outputLimit:Math.max(0,100000-outputCharacters.current),turtleSource,roomId,kumirInput,robotField,robotView:viewForRun}))return;
    setOutput('');setWaiting(false);setRunning(true);setLoading(false);
    if(timer.current)clearTimeout(timer.current);
    timer.current=setTimeout(()=>{stopProgram(channel);setRunning(false);setLoading(false);setOutput(current=>current+'\nСреда не ответила. Проверь подключение и попробуй запустить снова.');},45000);
@@ -175,18 +179,18 @@ function CodeEditorView({value,onChange,language='python',filename='student.py',
  function stop(){stopProgram(channel);if(timer.current)clearTimeout(timer.current);setRunning(false);setLoading(false);setWaiting(false);setOutput(current=>current+'\nВыполнение остановлено.');}
  function sendInput(event:FormEvent){event.preventDefault();inputs.current.push(input);setInput('');run(true);}
  function chooseExecutor(executor:Exclude<KumirExecutor,'text'>){
-   setExecutorMenuOpen(false);setQumirVisible(true);setQumirHasFrame(false);setRobotEditing(false);
+   setExecutorMenuOpen(false);setQumirVisible(true);setQumirHasFrame(false);setRobotEditing(false);setRobotView(defaultRobotView);robotViewRef.current=defaultRobotView;robotDrag.current=null;
    const directive=executor==='robot'?'Робот':executor==='turtle'?'Черепаха':executor==='painter'?'Рисователь':'Чертежник';
    const next=value.match(/^\s*использовать\s+(?:Робот|Черепаха|Чертежник|Чертёжник|Рисователь)(?=\s|$)/im)
     ?value.replace(/^([ \t]*использовать\s+)(?:Робот|Черепаха|Чертежник|Чертёжник|Рисователь)(?=\s|$)/im,`$1${directive}`)
     :`использовать ${directive}\n${value}`;
    if(!readOnly&&next!==value)onChange(next);
  }
- useEffect(()=>{if(language==='kumir'&&qumirExecutor==='robot'&&(!qumirHasFrame||robotEditing))drawRobotFieldPreview(qumirCanvas.current,robotField);},[language,qumirExecutor,qumirHasFrame,robotEditing,robotField]);
+ useEffect(()=>{if(language==='kumir'&&qumirExecutor==='robot'&&(!qumirHasFrame||robotEditing))drawRobotFieldPreview(qumirCanvas.current,robotField,robotView);},[language,qumirExecutor,qumirHasFrame,robotEditing,robotField,robotView]);
  useEffect(()=>{if(language==='kumir'&&!qumirHasFrame&&qumirExecutor!=='robot'&&qumirCanvas.current){const context=qumirCanvas.current.getContext('2d');context?.clearRect(0,0,qumirCanvas.current.width,qumirCanvas.current.height);}},[language,qumirExecutor,qumirHasFrame]);
  function editRobotAt(event:ReactPointerEvent<HTMLCanvasElement>){
    const point=mapQumirPoint(event.currentTarget,event.clientX,event.clientY),px=point.clientX,py=point.clientY;
-   const cell=Math.max(16,Math.min(672/robotField.width,392/robotField.height)),left=(720-cell*robotField.width)/2,top=(440-cell*robotField.height)/2,localX=px-left,localY=py-top;
+   const {cell,left,top}=robotFieldGeometry(robotField,robotViewRef.current),localX=px-left,localY=py-top;
    if(localX<0||localY<0||localX>=cell*robotField.width||localY>=cell*robotField.height)return;
    const x=Math.floor(localX/cell),y=Math.floor(localY/cell);let next={...robotField};let side:string|undefined;
    if(robotTool==='robot'){next={...next,x,y};}
@@ -197,6 +201,15 @@ function CodeEditorView({value,onChange,language='python',filename='student.py',
     if(distances[0][1]<=edge){side=distances[0][0];const key=side==='north'?`${x},${y-1}`:side==='south'?`${x},${y}`:side==='west'?`${x-1},${y}`:`${x},${y}`;const allowed=side==='north'?y>0:side==='south'?y<robotField.height-1:side==='west'?x>0:x<robotField.width-1;if(allowed){const walls=side==='north'||side==='south'?robotField.hWalls:robotField.vWalls;const updated=walls.includes(key)?walls.filter(item=>item!==key):[...walls,key];next=side==='north'||side==='south'?{...next,hWalls:updated}:{...next,vWalls:updated};}}
    }
    setRobotField(next);sendExecutorEvent(channel,{type:'robot-edit',clientX:px,clientY:py,action:robotTool,side});
+ }
+ function updateRobotView(next:RobotView){robotViewRef.current=next;setRobotView(next);sendExecutorEvent(channel,{type:'robot-view',view:next});}
+ function zoomRobot(factor:number){const zoom=Math.max(1,Math.min(24,robotViewRef.current.zoom*factor));updateRobotView({...robotViewRef.current,zoom});}
+ function moveRobotView(event:ReactPointerEvent<HTMLCanvasElement>){
+   if(qumirExecutor!=='robot'||robotEditing||!robotDrag.current)return;
+   const point=mapQumirPoint(event.currentTarget,event.clientX,event.clientY),previous=robotDrag.current;
+   robotDrag.current={x:point.clientX,y:point.clientY};
+   const current=robotViewRef.current;
+   updateRobotView({...current,panX:current.panX+point.clientX-previous.x,panY:current.panY+point.clientY-previous.y});
  }
  function resizeRobotField(axis:'width'|'height',delta:number){
    const dimension=Math.max(1,Math.min(200,robotField[axis]+delta));if(dimension===robotField[axis])return;
@@ -242,6 +255,16 @@ function CodeEditorView({value,onChange,language='python',filename='student.py',
        </div>}
       </div>
       {qumirExecutor==='robot'&&<button type="button" className={'qumir-control-button'+(robotEditing?' active':'')} aria-pressed={robotEditing} disabled={readOnly||running} onClick={()=>setRobotEditing(editing=>!editing)}><PenLine size={14}/>{robotEditing?'Готово':'Поле'}</button>}
+      {qumirExecutor==='robot'&&<div className="qumir-zoom-controls" aria-label="Масштаб Робота">
+       <button type="button" className="qumir-control-button icon-only" aria-label="Уменьшить масштаб" title="Уменьшить масштаб" disabled={robotView.zoom<=1} onClick={()=>zoomRobot(.8)}><ZoomOut size={15}/></button>
+       <button type="button" className="qumir-control-button icon-only" aria-label="Увеличить масштаб" title="Увеличить масштаб" disabled={robotView.zoom>=24} onClick={()=>zoomRobot(1.25)}><ZoomIn size={15}/></button>
+       <button type="button" className="qumir-control-button icon-only" aria-label="Вписать поле" title="Вписать поле" onClick={()=>updateRobotView(defaultRobotView)}><Maximize2 size={14}/></button>
+      </div>}
+      {qumirExecutor==='turtle'&&<div className="qumir-zoom-controls" aria-label="Масштаб Черепахи">
+       <button type="button" className="qumir-control-button icon-only" aria-label="Уменьшить масштаб" title="Уменьшить масштаб" onClick={()=>sendExecutorEvent(channel,{type:'turtle-control',command:'zoom-out'})}><ZoomOut size={15}/></button>
+       <button type="button" className="qumir-control-button icon-only" aria-label="Увеличить масштаб" title="Увеличить масштаб" onClick={()=>sendExecutorEvent(channel,{type:'turtle-control',command:'zoom-in'})}><ZoomIn size={15}/></button>
+       <button type="button" className="qumir-control-button icon-only" aria-label="Вписать рисунок" title="Вписать рисунок" onClick={()=>sendExecutorEvent(channel,{type:'turtle-control',command:'fit'})}><Maximize2 size={14}/></button>
+      </div>}
       {qumirExecutor==='drawer'&&<div className="qumir-zoom-controls" aria-label="Масштаб Чертёжника">
        <button type="button" className="qumir-control-button icon-only" aria-label="Уменьшить масштаб" title="Уменьшить масштаб" onClick={()=>sendExecutorEvent(channel,{type:'drawer-control',command:'zoom-out'})}><ZoomOut size={15}/></button>
        <button type="button" className="qumir-control-button icon-only" aria-label="Увеличить масштаб" title="Увеличить масштаб" onClick={()=>sendExecutorEvent(channel,{type:'drawer-control',command:'zoom-in'})}><ZoomIn size={15}/></button>
@@ -263,23 +286,33 @@ function CodeEditorView({value,onChange,language='python',filename='student.py',
      <small>{robotTool==='wall'?'Нажми на край клетки':robotTool==='paint'?'Нажми на клетку, чтобы закрасить':'Нажми на клетку, чтобы переместить Робота'}</small>
     </div>}
     {!qumirHasFrame&&qumirExecutor!=='robot'&&<div className="qumir-stage-empty"><strong>{qumirExecutor==='text'?'Текстовая программа':'Поле готово'}</strong><span>{qumirExecutor==='text'?'Ввод и вывод программы доступны слева.':'Запусти программу, чтобы увидеть исполнителя.'}</span></div>}
-    <canvas ref={qumirCanvas} width={720} height={440} aria-label={qumirExecutor==='robot'&&robotEditing?'Редактируемое поле Робота':'Поле исполнителя Кумир'} tabIndex={0} className={robotEditing?'robot-field-editing':''} onPointerDown={event=>{event.currentTarget.setPointerCapture(event.pointerId);if(qumirExecutor==='robot'){if(robotEditing)editRobotAt(event);return;}const point=mapQumirPoint(event.currentTarget,event.clientX,event.clientY);sendExecutorEvent(channel,{type:'pointerdown',...point,pointerId:event.pointerId,button:event.button,buttons:event.buttons});}} onPointerMove={event=>{if(qumirExecutor==='robot')return;const point=mapQumirPoint(event.currentTarget,event.clientX,event.clientY);sendExecutorEvent(channel,{type:'pointermove',...point,pointerId:event.pointerId,buttons:event.buttons});}} onPointerUp={event=>{if(qumirExecutor==='robot')return;const point=mapQumirPoint(event.currentTarget,event.clientX,event.clientY);sendExecutorEvent(channel,{type:'pointerup',...point,pointerId:event.pointerId,button:event.button,buttons:0});}} onWheel={event=>{event.preventDefault();if(qumirExecutor==='robot')return;const point=mapQumirPoint(event.currentTarget,event.clientX,event.clientY);sendExecutorEvent(channel,{type:'wheel',...point,deltaY:event.deltaY});}} onKeyDown={event=>{sendExecutorEvent(channel,{type:'keydown',key:event.key,code:event.code});}}/>
+    <canvas ref={qumirCanvas} width={720} height={440} aria-label={qumirExecutor==='robot'&&robotEditing?'Редактируемое поле Робота':qumirExecutor==='robot'?'Поле Робота. Перетаскивай, чтобы переместить обзор.':'Поле исполнителя Кумир'} tabIndex={0} className={qumirExecutor==='robot'?(robotEditing?'robot-field-editing':'robot-field-pannable'):''} onPointerDown={event=>{event.currentTarget.setPointerCapture(event.pointerId);if(qumirExecutor==='robot'){if(robotEditing)editRobotAt(event);else{const point=mapQumirPoint(event.currentTarget,event.clientX,event.clientY);robotDrag.current={x:point.clientX,y:point.clientY};}return;}const point=mapQumirPoint(event.currentTarget,event.clientX,event.clientY);sendExecutorEvent(channel,{type:'pointerdown',...point,pointerId:event.pointerId,button:event.button,buttons:event.buttons});}} onPointerMove={event=>{if(qumirExecutor==='robot'){moveRobotView(event);return;}const point=mapQumirPoint(event.currentTarget,event.clientX,event.clientY);sendExecutorEvent(channel,{type:'pointermove',...point,pointerId:event.pointerId,buttons:event.buttons});}} onPointerUp={event=>{if(qumirExecutor==='robot'){robotDrag.current=null;return;}const point=mapQumirPoint(event.currentTarget,event.clientX,event.clientY);sendExecutorEvent(channel,{type:'pointerup',...point,pointerId:event.pointerId,button:event.button,buttons:0});}} onWheel={event=>{event.preventDefault();if(qumirExecutor==='robot')return;const point=mapQumirPoint(event.currentTarget,event.clientX,event.clientY),rect=event.currentTarget.getBoundingClientRect(),scale=Math.max(.0001,Math.min(rect.width/720,rect.height/440));sendExecutorEvent(channel,{type:'wheel',...point,deltaX:event.deltaX/scale,deltaY:event.deltaY/scale,ctrlKey:event.ctrlKey,metaKey:event.metaKey});}} onKeyDown={event=>{sendExecutorEvent(channel,{type:'keydown',key:event.key,code:event.code});}}/>
    </section>}
    {turtleVisible&&<TurtleCanvas events={turtleEvents} onEvent={event=>sendTurtleEvent(channel,event)} onClear={()=>setTurtleEvents([])}/>}
   </div>
  );
 }
 
-function drawRobotFieldPreview(canvas:HTMLCanvasElement|null,field:RobotFieldState){
+function robotFieldGeometry(field:RobotFieldState,view:RobotView){
+ const cell=Math.min((720-48)/field.width,(440-48)/field.height)*view.zoom;
+ return {cell,left:(720-cell*field.width)/2+view.panX,top:(440-cell*field.height)/2+view.panY};
+}
+
+function drawRobotFieldPreview(canvas:HTMLCanvasElement|null,field:RobotFieldState,view:RobotView){
  if(!canvas)return;const context=canvas.getContext('2d');if(!context)return;
- const cell=Math.max(16,Math.min((canvas.width-48)/field.width,(canvas.height-48)/field.height));
- const left=(canvas.width-cell*field.width)/2,top=(canvas.height-cell*field.height)/2;
+ const {cell,left,top}=robotFieldGeometry(field,view);
  context.setTransform(1,0,0,1,0,0);context.clearRect(0,0,canvas.width,canvas.height);context.fillStyle='#fff';context.fillRect(0,0,canvas.width,canvas.height);
- for(let y=0;y<field.height;y++)for(let x=0;x<field.width;x++){
-  const px=left+x*cell,py=top+y*cell;context.fillStyle=field.painted.includes(`${x},${y}`)?'#e4e8df':'#faf9f5';context.fillRect(px+1,py+1,cell-2,cell-2);context.strokeStyle='#d6d4cc';context.lineWidth=1;context.strokeRect(px,py,cell,cell);
-  if(field.hWalls.includes(`${x},${y}`)){context.strokeStyle='#303238';context.lineWidth=3;context.beginPath();context.moveTo(px,py+cell);context.lineTo(px+cell,py+cell);context.stroke();}
-  if(field.vWalls.includes(`${x},${y}`)){context.strokeStyle='#303238';context.lineWidth=3;context.beginPath();context.moveTo(px+cell,py);context.lineTo(px+cell,py+cell);context.stroke();}
- }
+ const width=field.width*cell,height=field.height*cell,inset=Math.min(1,cell*.08),lineWidth=Math.max(.5,Math.min(3,cell*.12));
+ context.fillStyle='#faf9f5';context.fillRect(left,top,width,height);
+ context.fillStyle='#e4e8df';for(const key of new Set(field.painted)){const [x,y]=key.split(',').map(Number);context.fillRect(left+x*cell+inset,top+y*cell+inset,Math.max(0,cell-inset*2),Math.max(0,cell-inset*2));}
+ context.strokeStyle='#d6d4cc';context.lineWidth=Math.min(1,lineWidth);context.beginPath();
+ for(let x=0;x<=field.width;x++){const px=left+x*cell;context.moveTo(px,top);context.lineTo(px,top+height);}
+ for(let y=0;y<=field.height;y++){const py=top+y*cell;context.moveTo(left,py);context.lineTo(left+width,py);}
+ context.stroke();
+ context.strokeStyle='#303238';context.lineWidth=lineWidth;context.beginPath();
+ for(const key of new Set(field.hWalls)){const [x,y]=key.split(',').map(Number);context.moveTo(left+x*cell,top+(y+1)*cell);context.lineTo(left+(x+1)*cell,top+(y+1)*cell);}
+ for(const key of new Set(field.vWalls)){const [x,y]=key.split(',').map(Number);context.moveTo(left+(x+1)*cell,top+y*cell);context.lineTo(left+(x+1)*cell,top+(y+1)*cell);}
+ context.stroke();
  const cx=left+(field.x+.5)*cell,cy=top+(field.y+.5)*cell;context.fillStyle='#41634d';context.beginPath();context.moveTo(cx,cy-cell*.3);context.lineTo(cx+cell*.28,cy+cell*.25);context.lineTo(cx-cell*.28,cy+cell*.25);context.closePath();context.fill();
 }
 

@@ -254,7 +254,7 @@ function fitToContent() {
   const scaleX = (cssW - padPx * 2) / w;
   const scaleY = (cssH - padPx * 2) / h;
   // Allow much smaller zoom-out for large drawings
-  const s = Math.max(0.15, Math.min(800, Math.min(scaleX, scaleY)));
+  const s = Math.max(0.0001, Math.min(10000, Math.min(scaleX, scaleY)));
   view.scale = s;
   const cx = (minX + maxX) / 2;
   const cy = (minY + maxY) / 2;
@@ -307,7 +307,7 @@ function onWheel(e) {
     // Zoom
     const factor = Math.pow(1.006, -e.deltaY);
     const oldScale = view.scale;
-    const newScale = Math.max(0.15, Math.min(800, oldScale * factor));
+    const newScale = Math.max(0.0001, Math.min(10000, oldScale * factor));
     if (newScale !== oldScale) {
       const w = toWorld(sx, sy);
       view.scale = newScale;
@@ -426,7 +426,7 @@ export function __zoomDrawerView(factor) {
   const sx = rect.width / 2;
   const sy = rect.height / 2;
   const anchor = toWorld(sx, sy);
-  view.scale = Math.max(0.15, Math.min(800, view.scale * Number(factor)));
+  view.scale = Math.max(0.0001, Math.min(10000, view.scale * Number(factor)));
   const screen = toScreen(anchor.x, anchor.y);
   view.ox += sx - screen.x;
   view.oy += sy - screen.y;

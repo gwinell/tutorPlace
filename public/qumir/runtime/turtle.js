@@ -237,7 +237,7 @@ function fitToContent() {
   const scaleX = (cssW - padPx * 2) / w;
   const scaleY = (cssH - padPx * 2) / h;
   // Allow much smaller zoom-out for large fractals
-  const s = Math.max(0.15, Math.min(800, Math.min(scaleX, scaleY)));
+  const s = Math.max(0.0001, Math.min(10000, Math.min(scaleX, scaleY)));
   view.scale = s;
   const cx = (minX + maxX) / 2;
   const cy = (minY + maxY) / 2;
@@ -262,7 +262,7 @@ function onWheel(e) {
     // Slightly faster zoom per wheel delta
     const factor = Math.pow(1.006, -e.deltaY); // slightly faster
     const oldScale = view.scale;
-    const newScale = Math.max(0.15, Math.min(800, oldScale * factor));
+    const newScale = Math.max(0.0001, Math.min(10000, oldScale * factor));
     if (newScale !== oldScale) {
       const w = toWorld(sx, sy);
       view.scale = newScale;
@@ -370,6 +370,21 @@ export function __fitTurtleView() {
   fitCanvasToCss();
   fitToContent();
   scheduleAutoFit();
+}
+
+export function __zoomTurtleView(factor) {
+  if (!canvas || !Number.isFinite(Number(factor)) || Number(factor) <= 0) return;
+  const rect = canvas.getBoundingClientRect();
+  const sx = rect.width / 2;
+  const sy = rect.height / 2;
+  const anchor = toWorld(sx, sy);
+  view.scale = Math.max(0.0001, Math.min(10000, view.scale * Number(factor)));
+  const screen = toScreen(anchor.x, anchor.y);
+  view.ox += sx - screen.x;
+  view.oy += sy - screen.y;
+  userInteracted = true;
+  autoFitPending = false;
+  scheduleDraw();
 }
 
 function moveBy(dist) {
