@@ -138,10 +138,10 @@ jobs:
           trap 'rm -f "$body_file"' EXIT
           routes=(
             '/|Разобраться в коде.'
-            '/python|Индивидуальные занятия по Python'
-            '/oge-informatika|Подготовка к ОГЭ по информатике'
-            '/ege-informatika|Подготовка к ЕГЭ по информатике'
-            '/mcko-informatika|Подготовка к диагностике МЦКО по информатике'
+            '/python|От первых строк Python'
+            '/oge-informatika|ОГЭ по информатике: решаем задачи'
+            '/ege-informatika|ЕГЭ по информатике: теория'
+            '/mcko-informatika|МЦКО по информатике: готовимся'
             '/sitemap.xml|https://code-together.ru/python'
             '/robots.txt|Disallow: /api/'
           )
