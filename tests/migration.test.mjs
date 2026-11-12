@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs';
+import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -8,6 +8,34 @@ import { DatabaseSync } from 'node:sqlite';
 
 const pythonCourseManifest = JSON.parse(readFileSync(new URL('../course-data/python/CODETOGETHER_COURSE.json', import.meta.url), 'utf8'));
 const pythonAssignments = JSON.parse(readFileSync(new URL('../course-data/python/CODETOGETHER_ASSIGNMENTS.json', import.meta.url), 'utf8'));
+
+test('сбой миграции сохраняет исходную ошибку SQLite после завершившегося отката', () => {
+  const directory = mkdtempSync(path.join(os.tmpdir(), 'codetogether-migration-rollback-'));
+  const scriptsDirectory = path.join(directory, 'scripts');
+  const libDirectory = path.join(directory, 'lib');
+  const migrationsDirectory = path.join(directory, 'drizzle');
+  const databasePath = path.join(directory, 'failed.sqlite');
+  mkdirSync(scriptsDirectory);
+  mkdirSync(libDirectory);
+  mkdirSync(migrationsDirectory);
+  copyFileSync(new URL('../scripts/migrate-sqlite.mjs', import.meta.url), path.join(scriptsDirectory, 'migrate-sqlite.mjs'));
+  copyFileSync(new URL('../lib/assignment-prompt-format.mjs', import.meta.url), path.join(libDirectory, 'assignment-prompt-format.mjs'));
+  writeFileSync(path.join(migrationsDirectory, '0001_test_schema.sql'), 'CREATE TABLE assignments (id TEXT PRIMARY KEY, prompt TEXT);');
+  writeFileSync(path.join(migrationsDirectory, '0002_transaction_rolled_back.sql'), 'ROLLBACK;\nSELECT * FROM missing_table;');
+
+  try {
+    const result = spawnSync(process.execPath, ['scripts/migrate-sqlite.mjs'], {
+      cwd: directory, encoding: 'utf8', env: { ...process.env, DATABASE_PATH: databasePath },
+    });
+    const output = `${result.stdout}\n${result.stderr}`;
+    assert.notEqual(result.status, 0, output);
+    assert.match(output, /Failed to apply SQLite migration 0002_transaction_rolled_back\.sql/);
+    assert.match(output, /no such table: missing_table/);
+    assert.doesNotMatch(output, /cannot rollback - no transaction is active/);
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
 
 test('миграции создают таблицу результатов печати и проверяют диапазоны', () => {
   const directory = mkdtempSync(path.join(os.tmpdir(), 'codetogether-migration-'));
