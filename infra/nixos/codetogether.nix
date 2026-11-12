@@ -50,6 +50,9 @@ let
       exit 1
     fi
     if ! systemctl restart codetogether.service; then
+      echo "codeTogether failed to restart; collecting bounded failure diagnostics before rollback" >&2
+      systemctl show codetogether.service -p ActiveState -p SubState -p Result -p ExecMainCode -p ExecMainStatus -p NRestarts >&2 || true
+      journalctl --unit=codetogether.service --priority=err --since="2 minutes ago" --no-pager --lines=20 --output=cat >&2 || true
       restore_previous
       exit 1
     fi
