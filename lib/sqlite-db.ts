@@ -81,6 +81,7 @@ export class SqliteDatabase {
       throw error;
     }
   }
+
 }
 
 let database: SqliteDatabase | undefined;

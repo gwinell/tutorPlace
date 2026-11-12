@@ -11,18 +11,26 @@ export const ASSIGNMENT_IMAGE_TYPES = {
 
 export type AssignmentImageContentType = keyof typeof ASSIGNMENT_IMAGE_TYPES;
 export type R2S3Config = { accountId: string; accessKeyId: string; secretAccessKey: string; bucketName: string };
+export type AssignmentImageStorageBackend = 'filesystem' | 'r2';
 export type AssignmentImageAccess = { role: string; targetBelongsToUser: boolean; lessonBelongsToUser: boolean };
 
 export function canReadAssignmentImage(access: AssignmentImageAccess) {
   return access.role === "teacher" || (access.targetBelongsToUser && access.lessonBelongsToUser);
 }
 
-export class R2StorageError extends Error {
+export class AssignmentImageStorageError extends Error {
   public status?: number;
   constructor(message: string, status?: number) {
     super(message);
     this.status = status;
-    this.name = "R2StorageError";
+    this.name = "AssignmentImageStorageError";
+  }
+}
+
+export class R2StorageError extends AssignmentImageStorageError {
+  constructor(message: string, status?: number) {
+    super(message, status);
+    this.name = 'R2StorageError';
   }
 }
 
@@ -71,6 +79,22 @@ export function r2S3Config(environment: Record<string, unknown>): R2S3Config | n
     throw new R2StorageError("Cloudflare R2 is not configured correctly.");
   }
   return { accountId, accessKeyId, secretAccessKey, bucketName };
+}
+
+export function assignmentImageDirectory(environment: Record<string, unknown>) {
+  return stringValue(environment.ASSIGNMENT_IMAGE_DIRECTORY);
+}
+
+export function assignmentImageStorageBackend(environment: Record<string, unknown>): AssignmentImageStorageBackend | null {
+  if (assignmentImageDirectory(environment)) return 'filesystem';
+  return r2S3Config(environment) ? 'r2' : null;
+}
+
+async function withAssignmentImageStorageLock<T>(environment: Record<string, unknown>, action: () => Promise<T>) {
+  const directory = assignmentImageDirectory(environment);
+  if (!directory) return action();
+  const lock = await import('./assignment-image-lock.mjs');
+  return lock.withAssignmentImageStorageLock(directory, action);
 }
 
 function stringValue(value: unknown) {
@@ -171,8 +195,70 @@ export async function deleteR2Object(key: string, config: R2S3Config, fetchImpl?
   }
 }
 
-type OrphanedAssignmentImage = { id: string; object_key: string };
+export async function putAssignmentImageObject(key: string, body: Uint8Array, contentType: AssignmentImageContentType, backend: AssignmentImageStorageBackend, environment: Record<string, unknown>, fetchImpl?: typeof fetch) {
+  if (backend === 'r2') {
+    const config = r2S3Config(environment);
+    if (!config) throw new AssignmentImageStorageError('Assignment image storage is not configured.');
+    return withAssignmentImageStorageLock(environment, () => putR2Object(key, body, contentType, config, fetchImpl));
+  }
+  const directory = assignmentImageDirectory(environment);
+  if (!directory) throw new AssignmentImageStorageError('Assignment image directory is not configured.');
+  try {
+    const [storage, lock] = await Promise.all([import('./assignment-image-filesystem.ts'), import('./assignment-image-lock.mjs')]);
+    await lock.withAssignmentImageStorageLock(directory, () => storage.writeAssignmentImageFile(directory, key, body));
+  } catch {
+    throw new AssignmentImageStorageError('Assignment image could not be written to the server.');
+  }
+}
+
+export async function getAssignmentImageObject(key: string, backend: AssignmentImageStorageBackend, environment: Record<string, unknown>, fetchImpl?: typeof fetch) {
+  if (backend === 'r2') {
+    const config = r2S3Config(environment);
+    if (!config) throw new AssignmentImageStorageError('Assignment image storage is not configured.');
+    return getR2Object(key, config, fetchImpl);
+  }
+  const directory = assignmentImageDirectory(environment);
+  if (!directory) throw new AssignmentImageStorageError('Assignment image directory is not configured.');
+  try {
+    const storage = await import('./assignment-image-filesystem.ts');
+    const bytes = await storage.readAssignmentImageFile(directory, key);
+    if (!bytes) throw new AssignmentImageStorageError('Assignment image was not found.', 404);
+    return bytes;
+  } catch (error) {
+    if (error instanceof AssignmentImageStorageError) throw error;
+    throw new AssignmentImageStorageError('Assignment image could not be read from the server.');
+  }
+}
+
+export async function deleteAssignmentImageObject(key: string, backend: AssignmentImageStorageBackend, environment: Record<string, unknown>, fetchImpl?: typeof fetch) {
+  if (backend === 'r2') {
+    const config = r2S3Config(environment);
+    if (!config) throw new AssignmentImageStorageError('Assignment image storage is not configured.');
+    return withAssignmentImageStorageLock(environment, () => deleteR2Object(key, config, fetchImpl));
+  }
+  const directory = assignmentImageDirectory(environment);
+  if (!directory) throw new AssignmentImageStorageError('Assignment image directory is not configured.');
+  try {
+    const [storage, lock] = await Promise.all([import('./assignment-image-filesystem.ts'), import('./assignment-image-lock.mjs')]);
+    await lock.withAssignmentImageStorageLock(directory, () => storage.deleteAssignmentImageFile(directory, key));
+  } catch {
+    throw new AssignmentImageStorageError('Assignment image could not be deleted from the server.');
+  }
+}
+
+type OrphanedAssignmentImage = { id: string; object_key: string; storage_backend?: string };
 type QueuedAssignmentImageDelete = { key: string; value: string };
+type QueuedImageValue = { object_key?: unknown; storage_backend?: unknown };
+export const PERSONAL_ASSIGNMENT_REVIEWED_RETENTION_DAYS = 7;
+export const PERSONAL_ASSIGNMENT_UNREVIEWED_RETENTION_DAYS = 14;
+
+function storedBackend(value: unknown): AssignmentImageStorageBackend {
+  return value === 'filesystem' ? 'filesystem' : 'r2';
+}
+
+function validObjectKey(value: string) {
+  return /^assignment-images\/[A-Za-z0-9_-]{1,100}\/[0-9a-f-]{36}\.(?:jpg|png|gif|webp)$/i.test(value);
+}
 
 export async function deleteQueuedR2Object(database: ReturnType<typeof db>, key: string, queueId: string, config: R2S3Config, fetchImpl?: typeof fetch) {
   try {
@@ -185,34 +271,88 @@ export async function deleteQueuedR2Object(database: ReturnType<typeof db>, key:
   }
 }
 
-export async function cleanupOrphanedAssignmentImages(database: ReturnType<typeof db>, environment: Record<string, unknown>, fetchImpl?: typeof fetch) {
-  let config: R2S3Config | null;
+export async function deleteQueuedAssignmentImage(database: ReturnType<typeof db>, settingKey: string, settingValue: string, objectKey: string, backend: AssignmentImageStorageBackend, environment: Record<string, unknown>, fetchImpl?: typeof fetch) {
   try {
-    config = r2S3Config(environment);
+    await deleteAssignmentImageObject(objectKey, backend, environment, fetchImpl);
+    await database.prepare('DELETE FROM settings WHERE key=? AND value=?').bind(settingKey, settingValue).run();
+    return true;
   } catch (error) {
-    console.error('Assignment image cleanup skipped: invalid R2 configuration.', error instanceof Error ? error.message : 'Unknown error');
-    return;
+    console.error('Assignment image object deletion deferred:', settingKey, error instanceof Error ? error.message : 'Unknown error');
+    return false;
   }
-  if (!config) return;
+}
 
+function personalAssignmentExpiry(alias: string) {
+  const latestStatus = `(SELECT json_extract(s.result,'$.status') FROM submissions s WHERE s.assignment_id=${alias}.id ORDER BY julianday(s.created_at) DESC,s.id DESC LIMIT 1)`;
+  const latestCreatedAt = `(SELECT s.created_at FROM submissions s WHERE s.assignment_id=${alias}.id ORDER BY julianday(s.created_at) DESC,s.id DESC LIMIT 1)`;
+  const unreviewedAt = `(CASE WHEN ${latestStatus} IS NULL OR (${latestStatus} IN ('passed','failed','needs_work') AND ${alias}.completed_at IS NULL) THEN ${alias}.created_at ELSE COALESCE(${latestCreatedAt},${alias}.created_at) END)`;
+  return `${alias}.topic_id IS NULL AND ${alias}.student_id IS NOT NULL
+    AND (${alias}.lesson_id IS NULL OR NOT EXISTS (
+      SELECT 1 FROM lessons l WHERE l.id=${alias}.lesson_id AND l.status IN ('scheduled','pending','updating','completing')
+    ))
+    AND NOT EXISTS (
+      SELECT 1 FROM lesson_preparation_items p JOIN lessons l ON l.id=p.lesson_id
+      WHERE p.assignment_id=${alias}.id AND l.status IN ('scheduled','pending','updating','completing')
+    )
+    AND (
+      (${latestStatus} IN ('passed','failed','needs_work') AND julianday(${alias}.completed_at)<=julianday(?))
+      OR ((${latestStatus} IS NULL OR ${latestStatus}='pending' OR (${latestStatus} IN ('passed','failed','needs_work') AND ${alias}.completed_at IS NULL)) AND julianday(${unreviewedAt})<=julianday(?))
+    )`;
+}
+
+export async function cleanupExpiredPersonalAssignments(database: ReturnType<typeof db>, timestamp = Date.now()) {
+  const reviewedCutoff = new Date(timestamp - PERSONAL_ASSIGNMENT_REVIEWED_RETENTION_DAYS * 24 * 60 * 60 * 1000).toISOString();
+  const unreviewedCutoff = new Date(timestamp - PERSONAL_ASSIGNMENT_UNREVIEWED_RETENTION_DAYS * 24 * 60 * 60 * 1000).toISOString();
+  const expiry = personalAssignmentExpiry('assignments');
+  const candidates = await database.prepare(`
+    SELECT id FROM assignments
+    WHERE ${expiry}
+    ORDER BY COALESCE(completed_at,created_at), id LIMIT 10
+  `).bind(reviewedCutoff, unreviewedCutoff).all<{ id: string }>();
+  let deleted = 0;
+  for (const { id: assignmentId } of candidates.results) {
+    const marker = `retention-delete:${timestamp}:${assignmentId}`;
+    const candidateExpiry = personalAssignmentExpiry('a');
+    const results = await database.batch([
+      database.prepare(`
+        INSERT INTO settings (key,value)
+        SELECT 'assignment-image-delete:personal:' || ? || ':' || i.id,
+               json_object('object_key',i.object_key,'storage_backend',i.storage_backend)
+        FROM assignment_images i
+        WHERE i.assignment_id=? AND EXISTS (
+          SELECT 1 FROM assignments a WHERE a.id=? AND ${candidateExpiry}
+        )
+        ON CONFLICT(key) DO NOTHING
+      `).bind(assignmentId, assignmentId, assignmentId, reviewedCutoff, unreviewedCutoff),
+      database.prepare(`UPDATE assignments SET completed_at=? WHERE id=? AND ${expiry}`).bind(marker, assignmentId, reviewedCutoff, unreviewedCutoff),
+      database.prepare(`DELETE FROM lesson_preparation_items WHERE assignment_id=? AND EXISTS (SELECT 1 FROM assignments WHERE id=? AND completed_at=?)`).bind(assignmentId, assignmentId, marker),
+      database.prepare(`DELETE FROM submissions WHERE assignment_id=? AND EXISTS (SELECT 1 FROM assignments WHERE id=? AND completed_at=?)`).bind(assignmentId, assignmentId, marker),
+      database.prepare(`DELETE FROM assignment_images WHERE assignment_id=? AND EXISTS (SELECT 1 FROM assignments WHERE id=? AND completed_at=?)`).bind(assignmentId, assignmentId, marker),
+      database.prepare(`DELETE FROM assignments WHERE id=? AND topic_id IS NULL AND student_id IS NOT NULL AND completed_at=?`).bind(assignmentId, marker),
+    ]);
+    if (results.at(-1)?.meta.changes === 1) deleted++;
+  }
+  return deleted;
+}
+
+/** @deprecated Use cleanupExpiredPersonalAssignments. */
+export const cleanupCompletedPersonalAssignments = cleanupExpiredPersonalAssignments;
+
+export async function cleanupOrphanedAssignmentImages(database: ReturnType<typeof db>, environment: Record<string, unknown>, fetchImpl?: typeof fetch) {
   const queued = await database.prepare("SELECT key,value FROM settings WHERE key LIKE 'assignment-image-delete:%' ORDER BY key LIMIT 10").all<QueuedAssignmentImageDelete>();
   for (const item of queued.results) {
-    let objectKey = '';
-    try { objectKey = String(JSON.parse(item.value)?.object_key || ''); } catch {}
-    if (!/^assignment-images\/[A-Za-z0-9_-]{1,100}\/[0-9a-f-]{36}\.(?:jpg|png|gif|webp)$/i.test(objectKey)) {
+    let queuedValue: QueuedImageValue = {};
+    try { queuedValue = JSON.parse(item.value) as QueuedImageValue; } catch {}
+    const objectKey = typeof queuedValue.object_key === 'string' ? queuedValue.object_key : '';
+    if (!validObjectKey(objectKey)) {
       console.error('Assignment image deletion queue entry is invalid:', item.key);
       continue;
     }
-    try {
-      await deleteR2Object(objectKey, config, fetchImpl);
-      await database.prepare('DELETE FROM settings WHERE key=? AND value=?').bind(item.key, item.value).run();
-    } catch (error) {
-      console.error('Queued assignment image deletion deferred:', item.key, error instanceof Error ? error.message : 'Unknown error');
-    }
+    await deleteQueuedAssignmentImage(database, item.key, item.value, objectKey, storedBackend(queuedValue.storage_backend), environment, fetchImpl);
   }
 
   const result = await database.prepare(`
-    SELECT i.id, i.object_key
+    SELECT i.id, i.object_key, i.storage_backend
     FROM assignment_images i
     LEFT JOIN assignments a ON a.id=i.assignment_id
     WHERE a.id IS NULL
@@ -220,11 +360,29 @@ export async function cleanupOrphanedAssignmentImages(database: ReturnType<typeo
     LIMIT 10
   `).all<OrphanedAssignmentImage>();
   await Promise.all(result.results.map(async image => {
+    if (!validObjectKey(image.object_key)) {
+      console.error('Orphaned assignment image key is invalid:', image.id);
+      return;
+    }
     try {
-      await deleteR2Object(image.object_key, config, fetchImpl);
+      await deleteAssignmentImageObject(image.object_key, storedBackend(image.storage_backend), environment, fetchImpl);
       await database.prepare('DELETE FROM assignment_images WHERE id=? AND NOT EXISTS (SELECT 1 FROM assignments WHERE id=assignment_images.assignment_id)').bind(image.id).run();
     } catch (error) {
       console.error('Assignment image cleanup deferred:', image.id, error instanceof Error ? error.message : 'Unknown error');
     }
   }));
+
+  const directory = assignmentImageDirectory(environment);
+  if (directory) {
+    try {
+      const [storage, lock] = await Promise.all([import('./assignment-image-filesystem.ts'), import('./assignment-image-lock.mjs')]);
+      await lock.withAssignmentImageStorageLock(directory, () => storage.removeUntrackedAssignmentImageFiles(
+        directory,
+        async objectKey => Boolean(await database.prepare('SELECT id FROM assignment_images WHERE object_key=? LIMIT 1').bind(objectKey).first()),
+        { olderThan: Date.now() - 24 * 60 * 60 * 1000, limit: 100 },
+      ));
+    } catch (error) {
+      console.error('Untracked assignment image cleanup deferred:', error instanceof Error ? error.message : 'Unknown error');
+    }
+  }
 }

@@ -32,12 +32,17 @@ test('миграции создают таблицу результатов пе
       const preparationColumns = database.prepare('PRAGMA table_info(lesson_preparation_items)').all();
       assert.deepEqual(preparationColumns.map(column => column.name), ['id', 'lesson_id', 'kind', 'topic_id', 'assignment_id', 'position', 'completed_at']);
       const imageColumns = database.prepare('PRAGMA table_info(assignment_images)').all();
-      assert.deepEqual(imageColumns.map(column => column.name), ['id', 'assignment_id', 'object_key', 'content_type', 'size_bytes', 'original_name', 'created_at']);
+      assert.deepEqual(imageColumns.map(column => column.name), ['id', 'assignment_id', 'object_key', 'content_type', 'size_bytes', 'original_name', 'created_at', 'storage_backend']);
+      assert.ok(imageColumns.some(column => column.name === 'storage_backend' && column.dflt_value === "'r2'"));
+      const assignmentColumns = database.prepare('PRAGMA table_info(assignments)').all();
+      assert.ok(assignmentColumns.some(column => column.name === 'created_at'));
+      assert.ok(assignmentColumns.some(column => column.name === 'completed_at'));
       const notificationColumns = database.prepare('PRAGMA table_info(notifications)').all();
       assert.ok(notificationColumns.some(column => column.name === 'type' && column.dflt_value === "'general'"));
       assert.ok(notificationColumns.some(column => column.name === 'popup' && column.dflt_value === '0'));
       assert.ok(notificationColumns.some(column => column.name === 'popup_dismissed_at'));
       database.prepare("INSERT INTO assignment_images(id,assignment_id,object_key,content_type,size_bytes,original_name,created_at) VALUES ('image','assignment','assignment-images/assignment/image.png','image/png',8,'fixture.png','now')").run();
+      assert.equal(database.prepare("SELECT storage_backend FROM assignment_images WHERE id='image'").get().storage_backend, 'r2');
       assert.throws(() => database.prepare("INSERT INTO assignment_images(id,assignment_id,object_key,content_type,size_bytes,original_name,created_at) VALUES ('bad-type','assignment','bad-type','image/svg+xml',8,'fixture.svg','now')").run());
       assert.throws(() => database.prepare("INSERT INTO assignment_images(id,assignment_id,object_key,content_type,size_bytes,original_name,created_at) VALUES ('too-large','assignment','too-large','image/png',8388609,'fixture.png','now')").run());
       const pythonCourse = database.prepare('SELECT id,title FROM courses WHERE id=?').get('python-course');
@@ -127,6 +132,53 @@ test('миграция цены сохраняет существующих уч
       assert.equal(topic.content, '# Preserve this');
     } finally {
       upgraded.close();
+    }
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
+test('миграция задаёт срок хранения только по последней проверке и нормализует даты', () => {
+  const directory = mkdtempSync(path.join(os.tmpdir(), 'codetogether-assignment-retention-migration-'));
+  const databasePath = path.join(directory, 'legacy.sqlite');
+  const migrationDirectory = new URL('../drizzle/', import.meta.url);
+  const files = readdirSync(migrationDirectory).filter(name => /^\d+_.*\.sql$/.test(name)).sort();
+  try {
+    const database = new DatabaseSync(databasePath);
+    try {
+      database.exec('CREATE TABLE d1_migrations (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL UNIQUE, applied_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)');
+      for (const name of files.filter(name => name < '0018_assignment_image_server_storage_and_retention.sql')) {
+        database.exec(readFileSync(new URL(name, migrationDirectory), 'utf8'));
+        database.prepare('INSERT INTO d1_migrations(name) VALUES (?)').run(name);
+      }
+      database.prepare("INSERT INTO users(id,login,password,name,role,created_at) VALUES ('legacy','legacy','hash','Legacy','student','2024-01-01T00:00:00.000Z')").run();
+      for (const id of ['latest-passed', 'latest-pending', 'latest-needs-work']) {
+        database.prepare('INSERT INTO assignments(id,student_id,title,kind,prompt) VALUES (?,?,?,?,?)').run(id, 'legacy', id, 'text', 'Prompt');
+      }
+      const insertSubmission = database.prepare('INSERT INTO submissions(id,assignment_id,student_id,content,result,created_at) VALUES (?,?,?,?,?,?)');
+      insertSubmission.run('passed-old', 'latest-pending', 'legacy', 'old', '{"status":"passed"}', '2025-01-01T00:00:00.000Z');
+      insertSubmission.run('pending-new', 'latest-pending', 'legacy', 'new', '{"status":"pending"}', '2026-11-12T00:00:00.000Z');
+      insertSubmission.run('passed-current', 'latest-passed', 'legacy', 'answer', '{"status":"passed"}', '2026-11-10T00:00:00.000Z');
+      insertSubmission.run('needs-work-current', 'latest-needs-work', 'legacy', 'answer', '{"status":"needs_work"}', '2026-11-11T00:00:00.000Z');
+      database.prepare('UPDATE submissions SET feedback_at=? WHERE id=?').run('2026-11-11T18:30:00.000Z', 'needs-work-current');
+    } finally {
+      database.close();
+    }
+
+    const result = spawnSync(process.execPath, ['scripts/migrate-sqlite.mjs'], {
+      cwd: process.cwd(), encoding: 'utf8', env: { ...process.env, DATABASE_PATH: databasePath },
+    });
+    assert.equal(result.status, 0, result.stderr || result.stdout);
+    const migrated = new DatabaseSync(databasePath);
+    try {
+      const state = migrated.prepare('SELECT id,created_at,completed_at FROM assignments WHERE id LIKE \'latest-%\' ORDER BY id').all();
+      const byId = Object.fromEntries(state.map(row => [row.id, row]));
+      assert.match(byId['latest-passed'].created_at, /^\d{4}-\d\d-\d\dT/);
+      assert.equal(byId['latest-passed'].completed_at, '2026-11-10T00:00:00.000Z');
+      assert.equal(byId['latest-needs-work'].completed_at, '2026-11-11T18:30:00.000Z');
+      assert.equal(byId['latest-pending'].completed_at, null, 'An older passed attempt must not hide the latest pending submission.');
+    } finally {
+      migrated.close();
     }
   } finally {
     rmSync(directory, { recursive: true, force: true });

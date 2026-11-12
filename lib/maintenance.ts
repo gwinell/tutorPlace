@@ -1,7 +1,7 @@
 import { calendar, calendarConfigured, cleanup, db, eventPath, secrets, type ServerEnv } from "./server";
 import { confirmLessonMove } from "./lesson-move";
 import { createSaluteJazzRoom, disableSaluteJazzRoom, saluteJazzConfigured } from "./salutejazz";
-import { cleanupOrphanedAssignmentImages } from "./assignment-images";
+import { cleanupExpiredPersonalAssignments, cleanupOrphanedAssignmentImages } from "./assignment-images";
 
 type LessonRow = {
   id: string;
@@ -60,6 +60,11 @@ export async function maintain(environment: ServerEnv = secrets as ServerEnv) {
     }
   };
   await retryDeferredJazzRoomClosures();
+  try {
+    await cleanupExpiredPersonalAssignments(database);
+  } catch (error) {
+    console.error("Expired personal assignment cleanup deferred:", error instanceof Error ? error.message : "Unknown error");
+  }
   await cleanupOrphanedAssignmentImages(database, serverEnv);
   const cutoff = new Date(Date.now() - 5 * 60_000).toISOString();
   const stale = await database.prepare("SELECT * FROM lessons WHERE status IN ('pending','updating','completing') AND operation_started_at IS NOT NULL AND operation_started_at<?").bind(cutoff).all<LessonRow>();

@@ -5,7 +5,7 @@ import {Room,User} from '@/lib/domain';
 import {ROOM_STARTERS,starterLanguage,type RoomLanguage,type RoomFile} from '@/lib/room-presets';
 import {Tag,Button,api} from './site-ui';
 import {documentFrom,replaceText,encode,encodeUpdate,decode,Y} from '@/lib/collaboration';
-import CodeEditor, { RuntimeProvider } from './code-editor';
+import CodeEditor, { RuntimeProvider, type CodeEditorHandle, type CodeEditorSelectionRestore } from './code-editor';
 import TypingPractice from './typing-practice';
 export type RoomSaveHandle = { flush: () => Promise<boolean> };
 
@@ -32,6 +32,9 @@ export default function CodeRoom({ initial, demo, user, notify, onExit, onDemoUp
  const restored = useRef(false);
  const touchPending = useRef(false);
  const counter = useRef(0);
+ const selectionRestoreVersion = useRef(0);
+ const studentEditorHandle = useRef<CodeEditorHandle|null>(null), teacherEditorHandle = useRef<CodeEditorHandle|null>(null);
+ const [selectionRestores,setSelectionRestores] = useState<Partial<Record<RoomFile,CodeEditorSelectionRestore>>>({});
  const [docs] = useState(() => ({
    student: documentFrom(initial.student_state, initial.student_code),
    teacher: documentFrom(initial.teacher_state, initial.teacher_code),
@@ -66,8 +69,25 @@ export default function CodeRoom({ initial, demo, user, notify, onExit, onDemoUp
  }
 
  function merge(received: Room) {
-   if (received.student_state) Y.applyUpdate(docs.student, decode(received.student_state));
-   if (received.teacher_state) Y.applyUpdate(docs.teacher, decode(received.teacher_state));
+   const restores:Partial<Record<RoomFile,CodeEditorSelectionRestore>>={};
+   const applyRemoteState=(file:RoomFile,state:string|undefined,editor:{current:CodeEditorHandle|null})=>{
+     if(!state)return;
+     const doc=docs[file],text=doc.getText('code'),before=text.toString(),selection=editor.current?.getSelection();
+     const relativeSelection=selection?.focused?{
+       start:Y.createRelativePositionFromTypeIndex(text,Math.max(0,Math.min(before.length,selection.start))),
+       end:Y.createRelativePositionFromTypeIndex(text,Math.max(0,Math.min(before.length,selection.end))),
+     }:null;
+     Y.applyUpdate(doc,decode(state));
+     const after=text.toString();
+     if(relativeSelection&&after!==before&&selection){
+       const start=Y.createAbsolutePositionFromRelativePosition(relativeSelection.start,doc);
+       const end=Y.createAbsolutePositionFromRelativePosition(relativeSelection.end,doc);
+       if(start&&end)restores[file]={version:++selectionRestoreVersion.current,start:start.index,end:end.index,direction:selection.direction};
+     }
+   };
+   applyRemoteState('student',received.student_state,studentEditorHandle);
+   applyRemoteState('teacher',received.teacher_state,teacherEditorHandle);
+   if(Object.keys(restores).length)setSelectionRestores(current=>({...current,...restores}));
    const latest = received.revision >= current.current.revision ? received : current.current;
    const merged = {
      ...latest,
@@ -254,8 +274,8 @@ export default function CodeRoom({ initial, demo, user, notify, onExit, onDemoUp
     <button type="button" role="tab" aria-selected={mobileFile==='teacher'} className={mobileFile==='teacher'?'active':''} onClick={()=>setMobileFile('teacher')}><FileCode2 size={17}/><span>Файл репетитора<small>{teacher?'Только ты можешь редактировать':'Только чтение'}</small></span></button>
    </div>:<div className="mobile-file-tabs"><button className={mobileFile==='student'?'active':''} onClick={()=>setMobileFile('student')}><FileCode2 size={15}/>Файл ученика</button><button className={mobileFile==='teacher'?'active':''} onClick={()=>setMobileFile('teacher')}><FileCode2 size={15}/>Файл репетитора</button></div>}
    <RuntimeProvider><div className={'room-editors'+(room.language==='kumir'?' kumir-workspace':'')}>
-    <section className={mobileFile==='student'?'selected':''}><div className="room-file-heading"><span className="user-avatar small">У</span><div><strong>Файл ученика</strong><small>Можем редактировать вместе</small></div><Tag color="neutral">Общий доступ</Tag></div><CodeEditor key={'s-'+room.language} value={room.student_code} onChange={v=>change('student',v)} language={room.language} roomId={demo?undefined:room.id} demo={demo} filename={'student.'+(room.language==='lua'?'lua':room.language==='kumir'?'kum':'py')} kumirWorkspace={room.language==='kumir'} onActivity={activity}/></section>
-    <section className={mobileFile==='teacher'?'selected':''}><div className="room-file-heading"><span className="user-avatar small teacher">Р</span><div><strong>Файл репетитора</strong><small>{teacher?'Только ты можешь редактировать':'Смотри, разбирайся и запускай'}</small></div><Tag color="neutral">{teacher?'Твой файл':'Только чтение'}</Tag></div><CodeEditor key={'t-'+room.language} value={room.teacher_code} onChange={v=>change('teacher',v)} language={room.language} roomId={demo?undefined:room.id} demo={demo} filename={'teacher.'+(room.language==='lua'?'lua':room.language==='kumir'?'kum':'py')} readOnly={!teacher} kumirWorkspace={room.language==='kumir'} onActivity={activity}/></section>
+    <section className={mobileFile==='student'?'selected':''}><div className="room-file-heading"><span className="user-avatar small">У</span><div><strong>Файл ученика</strong><small>Можем редактировать вместе</small></div><Tag color="neutral">Общий доступ</Tag></div><CodeEditor key={'s-'+room.language} editorHandle={studentEditorHandle} selectionRestore={selectionRestores.student} value={room.student_code} onChange={v=>change('student',v)} language={room.language} roomId={demo?undefined:room.id} demo={demo} filename={'student.'+(room.language==='lua'?'lua':room.language==='kumir'?'kum':'py')} kumirWorkspace={room.language==='kumir'} onActivity={activity}/></section>
+    <section className={mobileFile==='teacher'?'selected':''}><div className="room-file-heading"><span className="user-avatar small teacher">Р</span><div><strong>Файл репетитора</strong><small>{teacher?'Только ты можешь редактировать':'Смотри, разбирайся и запускай'}</small></div><Tag color="neutral">{teacher?'Твой файл':'Только чтение'}</Tag></div><CodeEditor key={'t-'+room.language} editorHandle={teacherEditorHandle} selectionRestore={selectionRestores.teacher} value={room.teacher_code} onChange={v=>change('teacher',v)} language={room.language} roomId={demo?undefined:room.id} demo={demo} filename={'teacher.'+(room.language==='lua'?'lua':room.language==='kumir'?'kum':'py')} readOnly={!teacher} kumirWorkspace={room.language==='kumir'} onActivity={activity}/></section>
    </div></RuntimeProvider>
    <div className={room.language==='kumir'?'info-box kumir-workspace-info':'info-box'}><Info size={16}/><span>{room.language==='kumir'?'Пиши программу в редакторе и наблюдай за исполнителем на поле. Данные для команды «ввод» укажи в панели «Ввод программы».':'В каждом файле свой терминал. Если программа ожидает ввод, поле появится под выводом. Код выполняется в браузере.'} {demo?'Синхронизацию между ролями можно проверить в двух вкладках демоверсии на этом устройстве.':''}</span></div>
   </> : <TypingPractice roomId={room.id} studentId={room.student_id} teacher={teacher} demo={demo}/>}

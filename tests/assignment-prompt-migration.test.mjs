@@ -36,7 +36,7 @@ test('HTML-условия мигрируют в Markdown один раз, сох
       assert.equal(assignment.title, 'HTML prompt');
       assert.equal(assignment.kind, 'text');
       assert.match(prompt, /## Условие/);
-      assert.match(prompt, /Вычисли \*\*2 \+ 2\*\*/);
+      assert.match(prompt, /Вычисли \*\*2 \\\+ 2\*\*/);
       assert.match(prompt, /!\[Схема\]\(<\/api\/assignment-images\/image-1>\)/);
       assert.equal(databaseAfter.prepare("SELECT COUNT(*) AS count FROM submissions WHERE id='html-submission'").get().count, 1);
       assert.equal(databaseAfter.prepare("SELECT COUNT(*) AS count FROM d1_migrations WHERE name='0018_normalize_assignment_html'").get().count, 1);

@@ -135,9 +135,10 @@ function setup(beforeRecovery = () => {}) {
     'cloudflare:workers': { env },
     '@/lib/runtime-env': { getRuntimeEnvironment: () => env },
     '@/lib/assignment-images': {
-      assignmentImageExtension: () => 'png',
+      assignmentImageExtension: () => 'png', assignmentImageStorageBackend: environment => environment.R2_ACCOUNT_ID ? 'r2' : null,
       canReadAssignmentImage: ({ role, targetBelongsToUser, lessonBelongsToUser }) => role === 'teacher' || (targetBelongsToUser && lessonBelongsToUser),
-      deleteQueuedR2Object: async (_database, key) => network.r2Deletes.push(key), getR2Object: async () => Uint8Array.from([137,80,78,71,13,10,26,10]),
+      deleteQueuedR2Object: async (_database, key) => network.r2Deletes.push(key), deleteQueuedAssignmentImage: async (_database, _settingKey, _settingValue, key) => network.r2Deletes.push(key), getR2Object: async () => Uint8Array.from([137,80,78,71,13,10,26,10]),
+      getAssignmentImageObject: async () => Uint8Array.from([137,80,78,71,13,10,26,10]), putAssignmentImageObject: async (key, bytes, contentType) => network.r2Uploads.push({ key, size: bytes.length, contentType }),
       MAX_ASSIGNMENT_IMAGE_BYTES: 8 * 1024 * 1024, putR2Object: async (key, bytes, contentType) => network.r2Uploads.push({ key, size: bytes.length, contentType }),
       r2S3Config: environment => environment.R2_ACCOUNT_ID ? { fixture: true } : null,
       cleanupOrphanedAssignmentImages: async () => {},
@@ -153,7 +154,7 @@ function setup(beforeRecovery = () => {}) {
       },
       sanitizeAssignmentImageName: fileName => fileName,
       validateAssignmentImage: (bytes, type) => type === 'image/png' && [137,80,78,71,13,10,26,10].every((byte, index) => bytes[index] === byte),
-      R2StorageError: class R2StorageError extends Error {},
+      R2StorageError: class R2StorageError extends Error {}, AssignmentImageStorageError: class AssignmentImageStorageError extends Error {},
     },
     '@/lib/sqlite-db': { getSqliteDatabase: () => { throw new Error('SQLite fallback is not used by booking fixtures'); } },
     '@/lib/salutejazz': {
@@ -519,7 +520,7 @@ test('API сохраняет условия задания в Markdown вмес�
   assert.equal(saved.status, 200);
   const assignment = s.sql.prepare('SELECT id,kind,prompt FROM assignments WHERE id=?').get('normalized-html-assignment');
   assert.equal(assignment.kind, 'text');
-  assert.match(assignment.prompt, /Первая строка\nВторая строка с \*\*выделением\*\*/);
+  assert.match(assignment.prompt, /Первая строка\\\nВторая строка с \*\*выделением\*\*/);
   assert.doesNotMatch(assignment.prompt, /<p>|<br|<strong>/);
 });
 

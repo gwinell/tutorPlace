@@ -28,7 +28,9 @@ jobs:
       - run: npm run check
       - run: npm run lint
       - run: npm test
+      - run: npm run test:backup-snapshot
       - run: npm run build
+      - run: npm run test:assignment-images-api
       - run: npm run test:typing-api
       - name: Apply disposable local D1 migrations
         run: ./node_modules/.bin/wrangler d1 migrations apply DB --local --config wrangler.dev.jsonc --persist-to .wrangler/state
