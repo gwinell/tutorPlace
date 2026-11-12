@@ -5,10 +5,10 @@ const pages = [
   { path: '/', expected: 'Разобраться в коде.' },
   { path: '/offer', expected: 'Публичная оферта' },
   { path: '/privacy', expected: 'Политика обработки персональных данных' },
-  { path: '/python', expected: 'Индивидуальные занятия по Python', service: true },
-  { path: '/oge-informatika', expected: 'Подготовка к ОГЭ по информатике', service: true },
-  { path: '/ege-informatika', expected: 'Подготовка к ЕГЭ по информатике', service: true },
-  { path: '/mcko-informatika', expected: 'Подготовка к диагностике МЦКО по информатике', service: true },
+  { path: '/python', expected: 'От первых строк Python', service: true },
+  { path: '/oge-informatika', expected: 'ОГЭ по информатике: решаем задачи', service: true },
+  { path: '/ege-informatika', expected: 'ЕГЭ по информатике: теория', service: true },
+  { path: '/mcko-informatika', expected: 'МЦКО по информатике: готовимся', service: true },
 ];
 
 function assert(condition, message) {

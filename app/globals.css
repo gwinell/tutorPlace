@@ -1362,3 +1362,109 @@
  .service-links-section{padding-bottom:48px}
  .service-links-section .section-heading{align-items:flex-start;flex-direction:column;gap:8px}
 }
+
+/* Public page motion: brief section entrances and an on-demand code walkthrough. */
+@media (prefers-reduced-motion: no-preference) {
+  html.motion-ready [data-motion="reveal"]:not([data-motion-visible="true"]) {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  [data-motion="reveal"] {
+    transition: opacity .48s ease, transform .58s cubic-bezier(.2,.7,.25,1);
+  }
+}
+
+.service-page .service-hero-copy>.eyebrow,
+.service-page .service-section-heading>.eyebrow,
+.service-page .service-final-cta .eyebrow,
+.service-page .service-teacher-card .eyebrow {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.service-page .service-hero h1 {font-weight: 650;letter-spacing: -.045em}
+.service-page .service-section-heading h2,
+.service-page .service-related-section h2,
+.service-page .service-final-cta h2 {font-weight: 650;letter-spacing: -.04em}
+.service-page .service-topic-card,
+.service-page .service-source-list li {border-radius: 13px}
+.service-page .service-topic-card {transition: border-color .2s ease, background-color .2s ease}
+.service-page .service-topic-card:hover {border-color: color-mix(in srgb, var(--purple) 38%, var(--border));background: var(--surface)}
+.service-link-card {transition: border-color .18s ease, color .18s ease, background-color .18s ease}
+.service-link-card:hover {transform: none;background: var(--lilac-2)}
+.service-link-card svg {transition: transform .18s ease}
+.service-link-card:hover svg {transform: translate(2px,-2px)}
+
+.service-example-section {
+  display: grid;
+  grid-template-columns: minmax(220px,.68fr) minmax(0,1.32fr);
+  align-items: start;
+  gap: clamp(28px,6vw,76px);
+  padding-top: 0;
+  padding-bottom: 82px;
+}
+.service-example-intro {max-width: 420px;padding-top: 7px}
+.service-example-intro .eyebrow {color: var(--purple);font-weight: 650}
+.service-example-intro h2 {margin-top: 13px;font-size: clamp(27px,3vw,38px);line-height: 1.2;font-weight: 650;letter-spacing: -.04em}
+.service-example-intro>p {margin-top: 13px;color: var(--muted);font-size: 15px;line-height: 1.75}
+.service-example-card {display: grid;grid-template-columns: minmax(180px,.78fr) minmax(0,1.22fr);overflow: hidden;border: 1px solid var(--border);border-radius: 14px;background: var(--surface);box-shadow: 0 14px 38px #3023410a}
+.service-example-prompt {padding: 22px 21px}
+.service-example-label {display: inline-block;color: var(--purple);font-size: 12px;font-weight: 700}
+.service-example-prompt h3 {margin-top: 12px;font-size: 17px;line-height: 1.4;font-weight: 650;letter-spacing: -.02em}
+.service-example-prompt p {margin-top: 9px;color: var(--muted);font-size: 14px;line-height: 1.7}
+.service-example-solution {min-width: 0;padding: 17px;background: #28252f;color: #e4e0ed}
+.service-example-code-heading {display: flex;align-items: center;justify-content: space-between;gap: 10px;margin-bottom: 12px;color: #bcb5c9;font-size: 11px}
+.service-example-replay {display: inline-flex;align-items: center;gap: 6px;padding: 5px 7px;border: 1px solid #ffffff26;border-radius: 6px;color: #e9defc;font-size: 11px;white-space: nowrap;transition: background-color .18s ease,border-color .18s ease}
+.service-example-replay:hover {border-color: #bca0ed;background: #ffffff0c}
+.service-example-code {overflow-x: auto;margin: 0;padding: 0;color: #e7e2ee;font-family: 'SFMono-Regular',Consolas,monospace;font-size: 12px;line-height: 1.9;white-space: pre}
+.service-example-code code {display: block}
+.service-code-line {display: block;min-height: 1.9em;padding-right: 8px;border-radius: 3px}
+.service-code-number {display: inline-block;width: 24px;margin-right: 10px;color: #81798c;text-align: right;user-select: none}
+.service-example-output {display: flex;align-items: center;gap: 10px;margin-top: 11px;padding-top: 10px;border-top: 1px solid #ffffff20;color: #bcb5c9;font-size: 11px}
+.service-example-output code {color: #bde1c4;font-family: 'SFMono-Regular',Consolas,monospace;font-size: 12px}
+@keyframes service-line-in {from{background:#bca0ed38;opacity:.35;transform:translateX(-4px)}to{background:transparent;opacity:1;transform:translateX(0)}}
+.service-example-code[data-playing="true"] .service-code-line {animation: service-line-in .38s ease-out both}
+.service-example-code[data-playing="true"] .service-code-line:nth-child(1) {animation-delay: .04s}
+.service-example-code[data-playing="true"] .service-code-line:nth-child(2) {animation-delay: .13s}
+.service-example-code[data-playing="true"] .service-code-line:nth-child(3) {animation-delay: .22s}
+.service-example-code[data-playing="true"] .service-code-line:nth-child(4) {animation-delay: .31s}
+.service-example-code[data-playing="true"] .service-code-line:nth-child(5) {animation-delay: .40s}
+.service-example-code[data-playing="true"] .service-code-line:nth-child(6) {animation-delay: .49s}
+
+/* The homepage's playful previews now hold a clear still; motion is reserved for the lesson walkthrough. */
+.marketing .code-caret,
+.marketing .decor-orbit,
+.marketing .decor-code,
+.marketing .decor-cross,
+.marketing .pong-ball,
+.marketing .paddle-one,
+.marketing .paddle-two,
+.marketing .snake-board .snake-piece,
+.marketing .snake-board .snake-food,
+.marketing .game-caption,
+.marketing .project-code-mark {animation: none}
+.marketing .snake-board .s1 {transform: translate(calc(var(--snake-cell) * 5),0)}
+.marketing .snake-board .s2 {transform: translate(calc(var(--snake-cell) * 4),0)}
+.marketing .snake-board .s3 {transform: translate(calc(var(--snake-cell) * 3),0)}
+.marketing .snake-board .s4 {transform: translate(calc(var(--snake-cell) * 2),0)}
+.marketing .snake-board .s5 {transform: translate(calc(var(--snake-cell) * 1),0)}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-motion="reveal"] {opacity: 1;transform: none;transition: none}
+  .service-example-code[data-playing="true"] .service-code-line {animation: none}
+  .service-page .service-topic-card,
+  .service-link-card,
+  .service-link-card svg {transition: none}
+}
+@media(max-width:800px) {
+  .service-example-section {grid-template-columns: 1fr;gap: 20px;padding-bottom: 60px}
+  .service-example-intro {max-width: 620px}
+}
+@media(max-width:650px) {
+  .service-header-nav a {display: inline-flex;align-items: center;min-height: 40px;padding: 8px 0}
+  .service-example-card {grid-template-columns: 1fr}
+  .service-example-prompt {padding: 18px}
+  .service-example-solution {padding: 15px}
+  .service-example-code {font-size: 11px}
+}
