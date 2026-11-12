@@ -128,7 +128,27 @@ let
   '';
   backupExport = pkgs.writeShellScriptBin "codetogether-backup-export" ''
     set -euo pipefail
-    exec ${pkgs.coreutils}/bin/cat ${appRoot}/backups/latest.sqlite
+    snapshot_id="$1"
+    [[ "$snapshot_id" =~ ^snapshot-[0-9]{17}-[0-9]+$ ]] || { echo "Invalid backup snapshot ID" >&2; exit 2; }
+    exec ${pkgs.coreutils}/bin/cat "${appRoot}/backups/$snapshot_id/database.sqlite"
+  '';
+  backupImagesExport = pkgs.writeShellScriptBin "codetogether-backup-images-export" ''
+    set -euo pipefail
+    snapshot_id="$1"
+    [[ "$snapshot_id" =~ ^snapshot-[0-9]{17}-[0-9]+$ ]] || { echo "Invalid backup snapshot ID" >&2; exit 2; }
+    exec ${pkgs.coreutils}/bin/cat "${appRoot}/backups/$snapshot_id/assignment-images.tar.gz"
+  '';
+  backupManifestExport = pkgs.writeShellScriptBin "codetogether-backup-manifest-export" ''
+    set -euo pipefail
+    snapshot_id="$1"
+    [[ "$snapshot_id" =~ ^snapshot-[0-9]{17}-[0-9]+$ ]] || { echo "Invalid backup snapshot ID" >&2; exit 2; }
+    exec ${pkgs.coreutils}/bin/cat "${appRoot}/backups/$snapshot_id/manifest.json"
+  '';
+  backupSnapshotIdExport = pkgs.writeShellScriptBin "codetogether-backup-id-export" ''
+    set -euo pipefail
+    snapshot_id="$(${pkgs.coreutils}/bin/cat ${appRoot}/backups/latest)"
+    [[ "$snapshot_id" =~ ^snapshot-[0-9]{17}-[0-9]+$ ]] || { echo "Invalid latest backup snapshot ID" >&2; exit 2; }
+    exec ${pkgs.coreutils}/bin/printf '%s\n' "$snapshot_id"
   '';
   r2SecretsDeploy = pkgs.writeShellScriptBin "codetogether-r2-secrets-deploy" ''
     set -euo pipefail
@@ -180,6 +200,7 @@ in
     "d ${appRoot} 0750 root codetogether -"
     "d ${appRoot}/releases 0750 root codetogether -"
     "d ${appRoot}/data 0700 codetogether codetogether -"
+    "d ${appRoot}/data/assignment-images 0700 codetogether codetogether -"
     "d ${appRoot}/backups 2750 codetogether codetogether-backup -"
     "d /etc/codetogether 0700 root root -"
   ];
@@ -215,6 +236,7 @@ in
         "HOST=127.0.0.1"
         "PORT=3000"
         "DATABASE_PATH=${appRoot}/data/codetogether.sqlite"
+        "ASSIGNMENT_IMAGE_DIRECTORY=${appRoot}/data/assignment-images"
         "BACKUP_DIRECTORY=${appRoot}/backups"
         "QUMIR_COMPILER_URL=http://127.0.0.1:3101"
         "NODE_OPTIONS=--disable-warning=ExperimentalWarning"
@@ -270,7 +292,10 @@ in
       User = "codetogether";
       Group = "codetogether";
       WorkingDirectory = "${appRoot}/current";
-      Environment = [ "DATABASE_PATH=${appRoot}/data/codetogether.sqlite" ];
+      Environment = [
+        "DATABASE_PATH=${appRoot}/data/codetogether.sqlite"
+        "ASSIGNMENT_IMAGE_DIRECTORY=${appRoot}/data/assignment-images"
+      ];
       EnvironmentFile = [ "-/etc/codetogether/secrets.env" "-/etc/codetogether/r2.env" ];
       ExecStart = "${pkgs.nodejs_22}/bin/node ${appRoot}/current/maintenance.mjs";
       NoNewPrivileges = true;
@@ -293,13 +318,16 @@ in
       WorkingDirectory = "${appRoot}/current";
       Environment = [
         "DATABASE_PATH=${appRoot}/data/codetogether.sqlite"
+        "ASSIGNMENT_IMAGE_DIRECTORY=${appRoot}/data/assignment-images"
+        "ASSIGNMENT_IMAGE_TAR=${pkgs.gnutar}/bin/tar"
         "BACKUP_DIRECTORY=${appRoot}/backups"
       ];
+      EnvironmentFile = [ "-/etc/codetogether/r2.env" ];
       ExecStart = "${pkgs.nodejs_22}/bin/node ${appRoot}/current/backup-sqlite.mjs";
       NoNewPrivileges = true;
       ProtectSystem = "strict";
       ProtectHome = true;
-      ReadWritePaths = [ "${appRoot}/backups" ];
+      ReadWritePaths = [ "${appRoot}/data" "${appRoot}/backups" ];
     };
   };
   systemd.timers.codetogether-backup = {
@@ -311,7 +339,10 @@ in
     { users = [ deployUser ]; commands = [ { command = "${configDeployScript}/bin/codetogether-config-deploy"; options = [ "NOPASSWD" ]; } ]; }
     { users = [ deployUser ]; commands = [ { command = "${deployScript}/bin/codetogether-deploy"; options = [ "NOPASSWD" ]; } ]; }
     { users = [ deployUser ]; commands = [ { command = "${backupExport}/bin/codetogether-backup-export"; options = [ "NOPASSWD" ]; } ]; }
+    { users = [ deployUser ]; commands = [ { command = "${backupImagesExport}/bin/codetogether-backup-images-export"; options = [ "NOPASSWD" ]; } ]; }
+    { users = [ deployUser ]; commands = [ { command = "${backupManifestExport}/bin/codetogether-backup-manifest-export"; options = [ "NOPASSWD" ]; } ]; }
+    { users = [ deployUser ]; commands = [ { command = "${backupSnapshotIdExport}/bin/codetogether-backup-id-export"; options = [ "NOPASSWD" ]; } ]; }
     { users = [ deployUser ]; commands = [ { command = "${r2SecretsDeploy}/bin/codetogether-r2-secrets-deploy"; options = [ "NOPASSWD" ]; } ]; }
   ];
-  environment.systemPackages = [ configDeployScript deployScript backupExport r2SecretsDeploy pkgs.nodejs_22 pkgs.curl pkgs.sqlite ];
+  environment.systemPackages = [ configDeployScript deployScript backupExport backupImagesExport backupManifestExport backupSnapshotIdExport r2SecretsDeploy pkgs.nodejs_22 pkgs.gnutar pkgs.curl pkgs.sqlite ];
 }

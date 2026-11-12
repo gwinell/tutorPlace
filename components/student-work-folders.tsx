@@ -4,6 +4,7 @@ import {useState} from 'react';
 import {ArrowLeft,BarChart3,Check,ChevronDown,FileCode2,FolderOpen,MessageSquare} from 'lucide-react';
 import {Button,Empty,Tag} from './site-ui';
 import {Assignment,Submission,User,dateLabel,resultStatus} from '@/lib/domain';
+import MarkdownContent from './markdown-content';
 
 type Props={
  submissions:Submission[];
@@ -57,7 +58,7 @@ export default function StudentWorkFolders({submissions,assignments,students,mod
        <div><span className="eyebrow"><FileCode2 size={13}/>{assignment?.kind==='code'?'Код':assignment?.kind==='quiz'?'Квиз':'Ответ'}</span><h3>{assignment?.title||'Задание'}</h3><p>{dateLabel(submission.created_at,{day:'numeric',month:'long',hour:'2-digit',minute:'2-digit'})}{assignment?.lesson_id?' · Привязано к уроку':''}</p></div>
        <Tag color={badge.color}>{badge.label}</Tag>
       </div>
-      {mode==='review'&&assignment?.prompt&&<p className="review-prompt">{assignment.prompt}</p>}
+      {mode==='review'&&assignment?.prompt&&<div className="review-prompt"><MarkdownContent content={assignment.prompt} preserveLineBreaks/></div>}
       <pre className={assignment?.kind==='code'?'submitted-code':''}>{submission.content}</pre>
       {mode==='history'&&submission.feedback&&<div className="feedback-box"><strong><MessageSquare size={13}/>Комментарий репетитора</strong><p>{submission.feedback}</p>{submission.feedback_at&&<small>{dateLabel(submission.feedback_at,{day:'numeric',month:'long',hour:'2-digit',minute:'2-digit'})}</small>}</div>}
       {mode==='review'&&status==='pending'&&onReview&&<div className="review-actions"><textarea placeholder="Комментарий ученику: что получилось, что поправить…" value={feedback[submission.id]||''} onChange={event=>setFeedback(current=>({...current,[submission.id]:event.target.value}))} maxLength={2000} aria-label="Комментарий к работе"/><div className="review-actions-row"><Button className="button-small button-outline" disabled={busy||!(feedback[submission.id]||'').trim()} onClick={async()=>{await onReview(submission,'needs_work',feedback[submission.id]||'');setFeedback(current=>({...current,[submission.id]:''}));}}><ArrowLeft size={15}/>Вернуть на доработку</Button><Button className="button-small" loading={busy} onClick={async()=>{await onReview(submission,'passed',feedback[submission.id]||'');setFeedback(current=>({...current,[submission.id]:''}));}}><Check size={15}/>Принять работу</Button></div></div>}

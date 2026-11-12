@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import ReactMarkdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { remarkLineBreaks } from '@/lib/remark-line-breaks.mjs';
 import { ImageOff, LoaderCircle } from 'lucide-react';
 import { normalizeAssignmentPrompt } from '@/lib/assignment-prompt-format.mjs';
 import { resolveMaterialAssetUrl, resolveMaterialLinkUrl } from '@/lib/material-links';
@@ -42,7 +43,7 @@ function MarkdownImage({ src, alt, baseUrl, allowLocalBlob }: { src?: string; al
   return <img src={currentLoad?.source || imageUrl} alt={alt || ''} loading="lazy" decoding="async" onError={() => setFailedUrl(imageUrl)}/>;
 }
 
-export default function MarkdownContent({ content, baseUrl, allowLocalBlob = false }: { content: string; baseUrl?: string; allowLocalBlob?: boolean }) {
+export default function MarkdownContent({ content, baseUrl, allowLocalBlob = false, preserveLineBreaks = false }: { content: string; baseUrl?: string; allowLocalBlob?: boolean; preserveLineBreaks?: boolean }) {
   const markdownContent = useMemo(() => normalizeAssignmentPrompt(content), [content]);
   const components = useMemo<Components>(() => ({
     a: ({ node, href, children, ...props }) => {
@@ -51,5 +52,5 @@ export default function MarkdownContent({ content, baseUrl, allowLocalBlob = fal
     },
     img: ({ src, alt }) => <MarkdownImage src={typeof src === 'string' ? src : undefined} alt={alt} baseUrl={baseUrl} allowLocalBlob={allowLocalBlob}/>,
   }), [baseUrl, allowLocalBlob]);
-  return <div className="markdown"><ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>{markdownContent}</ReactMarkdown></div>;
+  return <div className="markdown"><ReactMarkdown remarkPlugins={preserveLineBreaks ? [remarkGfm, remarkLineBreaks] : [remarkGfm]} components={components}>{markdownContent}</ReactMarkdown></div>;
 }

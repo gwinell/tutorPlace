@@ -25,7 +25,7 @@ export function AssignmentSheet({ title, kind, prompt, teacher, children, action
       </div>
       {action}
     </header>
-    {available ? <div className="task-prompt"><MarkdownContent content={prompt} allowLocalBlob={allowLocalBlob}/></div> : <div className="task-prompt-missing" role="status"><strong>Условие задания недоступно</strong><p>{teacher ? 'Добавь условие, чтобы ученик мог выполнить задание.' : 'Попроси репетитора восстановить условие задания.'}</p></div>}
+    {available ? <div className="task-prompt"><MarkdownContent content={prompt} allowLocalBlob={allowLocalBlob} preserveLineBreaks/></div> : <div className="task-prompt-missing" role="status"><strong>Условие задания недоступно</strong><p>{teacher ? 'Добавь условие, чтобы ученик мог выполнить задание.' : 'Попроси репетитора восстановить условие задания.'}</p></div>}
     {children}
   </article>;
 }

@@ -1,5 +1,5 @@
 'use client';
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type MouseEvent, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState, type MouseEvent, type PointerEvent as ReactPointerEvent, type ReactNode, type Ref } from 'react';
 import {Play,Square,FileCode2,Terminal,Send,RotateCcw,LockKeyhole,ChevronDown,PenLine,Paintbrush,Bot,ZoomIn,ZoomOut,Maximize2,Minus,Plus} from 'lucide-react';
 import runtimeHost from '../public/runtime-host.js?raw';
 import luaSource from '../public/fengari.js?raw';
@@ -134,13 +134,16 @@ export function RuntimeProvider({children}:{children:ReactNode}){
  return <RuntimeContext.Provider value={controller}>{children}<iframe ref={frame} title="Изолированная среда выполнения" srcDoc={source} onLoad={()=>frame.current?.contentWindow?.postMessage({command:'init'},'*')} sandbox="allow-scripts" className="runtime-frame" aria-hidden="true" tabIndex={-1}/></RuntimeContext.Provider>;
 }
 
-type CodeEditorProps = {value:string;onChange:(v:string)=>void;language?:string;filename?:string;roomId?:string;demo?:boolean;readOnly?:boolean;runnable?:boolean;kumirWorkspace?:boolean;onActivity?:()=>void};
+export type CodeEditorSelectionSnapshot = {start:number;end:number;direction:'forward'|'backward'|'none';focused:boolean};
+export type CodeEditorSelectionRestore = {version:number;start:number;end:number;direction:'forward'|'backward'|'none'};
+export type CodeEditorHandle = {getSelection:()=>CodeEditorSelectionSnapshot|null};
+type CodeEditorProps = {value:string;onChange:(v:string)=>void;language?:string;filename?:string;roomId?:string;demo?:boolean;readOnly?:boolean;runnable?:boolean;kumirWorkspace?:boolean;onActivity?:()=>void;editorHandle?:Ref<CodeEditorHandle>;selectionRestore?:CodeEditorSelectionRestore};
 export default function CodeEditor(props:CodeEditorProps){
  const runtime=useContext(RuntimeContext);
  return runtime?<CodeEditorView {...props}/>:<RuntimeProvider><CodeEditorView {...props}/></RuntimeProvider>;
 }
 
-function CodeEditorView({value,onChange,language='python',filename='student.py',roomId,demo=false,readOnly=false,runnable=true,kumirWorkspace=false,onActivity}:CodeEditorProps){
+function CodeEditorView({value,onChange,language='python',filename='student.py',roomId,demo=false,readOnly=false,runnable=true,kumirWorkspace=false,onActivity,editorHandle,selectionRestore}:CodeEditorProps){
  const runtime=useContext(RuntimeContext);
  if(!runtime)throw new Error('CodeEditorView must be inside a RuntimeProvider.');
  const [channel]=useState(()=>crypto.randomUUID());
@@ -148,11 +151,27 @@ function CodeEditorView({value,onChange,language='python',filename='student.py',
  const [turtleEvents,setTurtleEvents]=useState<TurtleEvent[]>([]),[turtleVisible,setTurtleVisible]=useState(false),[qumirVisible,setQumirVisible]=useState(language==='kumir'),[qumirHasFrame,setQumirHasFrame]=useState(false),[kumirInput,setKumirInput]=useState('');
  const qumirExecutor:KumirExecutor=language==='kumir'?findKumirExecutor(value):'text';
  const [executorMenuOpen,setExecutorMenuOpen]=useState(false),[robotEditing,setRobotEditing]=useState(false),[robotTool,setRobotTool]=useState<'wall'|'paint'|'robot'>('wall'),[robotField,setRobotField]=useState<RobotFieldState>(defaultRobotField),[robotView,setRobotView]=useState<RobotView>(defaultRobotView);
- const inputs=useRef<string[]>([]),timer=useRef<ReturnType<typeof setTimeout>|null>(null),source=useRef(''),outputCharacters=useRef(0),executionElapsed=useRef(0),executionSegmentStarted=useRef<number|null>(null),outputRef=useRef<HTMLPreElement>(null),inputRef=useRef<HTMLInputElement>(null),qumirCanvas=useRef<HTMLCanvasElement>(null),highlightRef=useRef<HTMLPreElement>(null),lineNumbersRef=useRef<HTMLPreElement>(null),robotViewRef=useRef<RobotView>(defaultRobotView),robotDrag=useRef<{x:number;y:number}|null>(null);
+ const inputs=useRef<string[]>([]),timer=useRef<ReturnType<typeof setTimeout>|null>(null),source=useRef(''),outputCharacters=useRef(0),executionElapsed=useRef(0),executionSegmentStarted=useRef<number|null>(null),outputRef=useRef<HTMLPreElement>(null),inputRef=useRef<HTMLInputElement>(null),qumirCanvas=useRef<HTMLCanvasElement>(null),sourceRef=useRef<HTMLTextAreaElement>(null),highlightRef=useRef<HTMLPreElement>(null),lineNumbersRef=useRef<HTMLPreElement>(null),robotViewRef=useRef<RobotView>(defaultRobotView),robotDrag=useRef<{x:number;y:number}|null>(null),appliedSelectionVersion=useRef(0);
  const syntaxTokens=useMemo(()=>language==='python'||language==='kumir'?tokenizeSource(value,language):[],[value,language]);
  const {activeChannel,ready,register,run:runProgram,stop:stopProgram}=runtime;
  const sendTurtleEvent=runtime.turtleEvent;
  const sendExecutorEvent=runtime.executorEvent;
+ useImperativeHandle(editorHandle,()=>({
+  getSelection(){
+   const textarea=sourceRef.current;
+   if(!textarea)return null;
+   return {start:textarea.selectionStart,end:textarea.selectionEnd,direction:textarea.selectionDirection,focused:document.activeElement===textarea};
+  },
+ }),[]);
+ useLayoutEffect(()=>{
+  if(!selectionRestore||selectionRestore.version<=appliedSelectionVersion.current)return;
+  appliedSelectionVersion.current=selectionRestore.version;
+  const textarea=sourceRef.current;
+  if(!textarea||document.activeElement!==textarea)return;
+  const start=Math.max(0,Math.min(value.length,selectionRestore.start));
+  const end=Math.max(start,Math.min(value.length,selectionRestore.end));
+  textarea.setSelectionRange(start,end,selectionRestore.direction);
+ },[selectionRestore,value.length]);
  useEffect(()=>register(channel,message=>{
    if(message.type==='loading')setLoading(true);
    if(message.type==='executing'){setLoading(false);if(timer.current)clearTimeout(timer.current);executionSegmentStarted.current=performance.now();timer.current=setTimeout(()=>{stopProgram(channel);executionElapsed.current=10000;executionSegmentStarted.current=null;setRunning(false);setOutput(current=>(current+'\nПрограмма остановлена: превышено 10 секунд выполнения.').slice(-100000));},Math.max(1,10000-executionElapsed.current));}
@@ -233,7 +252,7 @@ function CodeEditorView({value,onChange,language='python',filename='student.py',
    <div className={'editor-area'+(syntaxTokens.length?' has-syntax-highlighting':'')}>
     <pre ref={lineNumbersRef} className="line-numbers" aria-hidden="true">{value.split('\n').map((_,i)=><span key={i}>{i+1}</span>)}</pre>
     {syntaxTokens.length>0&&<pre ref={highlightRef} className="syntax-highlight" aria-hidden="true">{syntaxTokens.map((token,index)=><span className={'syntax-'+token.type} key={index}>{token.text}</span>)}</pre>}
-    <textarea className={syntaxTokens.length?'syntax-source':''} aria-label={'Код файла '+filename} value={value} onChange={e=>onChange(e.target.value)} readOnly={readOnly} spellCheck={false} autoCapitalize="off" autoComplete="off" autoCorrect="off" onScroll={e=>{const target=e.currentTarget;if(highlightRef.current)highlightRef.current.style.transform=`translate(${-target.scrollLeft}px,${-target.scrollTop}px)`;if(lineNumbersRef.current)lineNumbersRef.current.style.transform=`translateY(${-target.scrollTop}px)`;}} onKeyDown={e=>{if(e.key==='Tab'&&!readOnly){e.preventDefault();const t=e.currentTarget,s=t.selectionStart,end=t.selectionEnd;onChange(value.slice(0,s)+'    '+value.slice(end));requestAnimationFrame(()=>{t.selectionStart=t.selectionEnd=s+4;});}}}/>
+    <textarea ref={sourceRef} className={syntaxTokens.length?'syntax-source':''} aria-label={'Код файла '+filename} value={value} onChange={e=>onChange(e.target.value)} readOnly={readOnly} spellCheck={false} autoCapitalize="off" autoComplete="off" autoCorrect="off" onScroll={e=>{const target=e.currentTarget;if(highlightRef.current)highlightRef.current.style.transform=`translate(${-target.scrollLeft}px,${-target.scrollTop}px)`;if(lineNumbersRef.current)lineNumbersRef.current.style.transform=`translateY(${-target.scrollTop}px)`;}} onKeyDown={e=>{if(e.key==='Tab'&&!readOnly){e.preventDefault();const t=e.currentTarget,s=t.selectionStart,end=t.selectionEnd;onChange(value.slice(0,s)+'    '+value.slice(end));requestAnimationFrame(()=>{t.selectionStart=t.selectionEnd=s+4;});}}}/>
    </div>
    {runnable&&<div className="editor-terminal">
     <div className="terminal-toolbar">

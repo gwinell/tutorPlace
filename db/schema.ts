@@ -64,13 +64,16 @@ export const access = sqliteTable('topic_access', { id: text('id').primaryKey(),
 export const assignments = sqliteTable('assignments', {
   id: text('id').primaryKey(), topicId: text('topic_id'), studentId: text('student_id'), lessonId: text('lesson_id'), title: text('title').notNull(),
   kind: text('kind').notNull(), prompt: text('prompt').notNull(), options: text('options'), answer: text('answer'), tests: text('tests'),
+  createdAt: text('created_at').notNull().default(''), completedAt: text('completed_at'),
 }, t => [check('assignment_target_check', sql`(${t.topicId} IS NOT NULL AND ${t.studentId} IS NULL) OR (${t.topicId} IS NULL AND ${t.studentId} IS NOT NULL)`)]);
 export const assignmentImages = sqliteTable('assignment_images', {
   id: text('id').primaryKey(), assignmentId: text('assignment_id').notNull(), objectKey: text('object_key').notNull().unique(),
   contentType: text('content_type').notNull(), sizeBytes: integer('size_bytes').notNull(), originalName: text('original_name').notNull(), createdAt: text('created_at').notNull(),
+  storageBackend: text('storage_backend').notNull().default('r2'),
 }, t => [
   check('assignment_images_type_check', sql`${t.contentType} IN ('image/jpeg', 'image/png', 'image/gif', 'image/webp')`),
   check('assignment_images_size_check', sql`${t.sizeBytes} BETWEEN 1 AND 8388608`),
+  check('assignment_images_storage_backend_check', sql`${t.storageBackend} IN ('r2', 'filesystem')`),
   index('assignment_images_assignment_created_idx').on(t.assignmentId, t.createdAt),
 ]);
 export const lessonPreparationItems = sqliteTable('lesson_preparation_items', {

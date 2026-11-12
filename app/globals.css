@@ -1030,7 +1030,7 @@
 .code-editor.kumir-workspace-editor>.editor-toolbar{grid-column:1;grid-row:1;min-height:54px;height:auto;padding:0 16px}
 .code-editor.kumir-workspace-editor>.editor-toolbar>span{font-size:14px}
 .code-editor.kumir-workspace-editor>.editor-area{grid-column:1;grid-row:2;height:min(44dvh,420px);min-height:340px;max-height:none;padding:18px 0;border-bottom:1px solid #ffffff13}
-.code-editor.kumir-workspace-editor>.editor-area>textarea{min-height:300px;font-size:16px;line-height:1.75;resize:vertical}
+.code-editor.kumir-workspace-editor>.editor-area>textarea{min-height:300px;font-size:16px;line-height:1.75;resize:none}
 .code-editor.kumir-workspace-editor>.editor-terminal{grid-column:1;grid-row:3;display:flex;flex-direction:column;min-height:170px;margin:0;border-radius:0}
 .code-editor.kumir-workspace-editor>.editor-terminal>.terminal-toolbar{min-height:46px;padding:0 16px}
 .code-editor.kumir-workspace-editor>.editor-terminal>pre{flex:1;min-height:86px;max-height:180px;font-size:14px}
@@ -1497,8 +1497,12 @@
 
 /* The textarea, token overlay and line gutter must share identical editor metrics. */
 .editor-area{--editor-font-size:14px;--editor-line-height:1.9;--editor-gutter-width:43px}
+.editor-area{overflow:hidden}
+.editor-area>.syntax-highlight{overflow:visible}
+.editor-area>textarea{resize:none}
 .editor-area>textarea,.editor-area>.line-numbers,.editor-area>.syntax-highlight{font-family:'SFMono-Regular',Consolas,monospace;font-size:var(--editor-font-size);line-height:var(--editor-line-height);letter-spacing:0;font-kerning:none;font-variant-ligatures:none;tab-size:4}
 .editor-area>.line-numbers{box-sizing:border-box;width:var(--editor-gutter-width)}
+.editor-area>.line-numbers>span{flex:0 0 auto}
 .editor-area>.syntax-highlight{left:var(--editor-gutter-width);font-size:var(--editor-font-size);line-height:var(--editor-line-height)}
 .room-editors .editor-area{--editor-font-size:15px;--editor-line-height:1.75}
 .room-editors .editor-area>textarea{font-size:var(--editor-font-size);line-height:var(--editor-line-height)}
@@ -1507,6 +1511,11 @@
 @media(max-width:600px){.room-editors .editor-area{--editor-font-size:14px;--editor-gutter-width:35px}}
 @media(max-width:680px){.code-editor.kumir-workspace-editor>.editor-area{--editor-font-size:14px;--editor-gutter-width:35px}}
 @media(max-width:480px){.editor-area{--editor-gutter-width:35px}}
+/* Keep the editable surface inside its clipped overlay wrapper at every breakpoint. */
+.room-editors .editor-area{min-height:366px}
+.code-editor.kumir-workspace-editor>.editor-area{min-height:340px}
+@media(max-width:600px){.room-editors .editor-area{min-height:306px}}
+@media(max-width:680px){.code-editor.kumir-workspace-editor>.editor-area{min-height:337px}}
 @media(prefers-reduced-motion:reduce){.markdown-image-loading svg{animation:none}}
 
 @media(max-width:600px){

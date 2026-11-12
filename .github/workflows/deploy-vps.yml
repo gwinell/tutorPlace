@@ -45,7 +45,11 @@ jobs:
       - if: steps.release.outputs.ready == 'true'
         run: npm test
       - if: steps.release.outputs.ready == 'true'
+        run: npm run test:backup-snapshot
+      - if: steps.release.outputs.ready == 'true'
         run: npm run build
+      - if: steps.release.outputs.ready == 'true'
+        run: npm run test:assignment-images-api
       - if: steps.release.outputs.ready == 'true'
         run: npm run test:typing-api
       - name: Package standalone release
