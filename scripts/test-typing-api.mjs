@@ -41,6 +41,14 @@ async function request(pathname, method = 'GET', body, cookie, status = 200) {
   return { data, cookie: response.headers.get('set-cookie')?.split(';')[0] };
 }
 
+async function compileDemo(code, ip) {
+  return fetch(`${origin}/api/demo/compile-kumir`, {
+    method: 'POST',
+    headers: { Origin: origin, 'Content-Type': 'application/json', 'cf-connecting-ip': ip },
+    body: JSON.stringify({ code }),
+  });
+}
+
 try {
   const migration = spawnSync(process.execPath, ['scripts/migrate-sqlite.mjs'], { cwd: process.cwd(), encoding: 'utf8', env: { ...process.env, DATABASE_PATH: databasePath } });
   assert.equal(migration.status, 0, migration.stderr || migration.stdout);
@@ -55,6 +63,7 @@ const fs=require('node:fs');
 const args=process.argv.slice(2);
 const output=args[args.indexOf('-o')+1];
 const source=fs.readFileSync(args.at(-1),'utf8');
+if(source.includes('COMPILER_ERROR')){process.stderr.write('Тестовая ошибка синтаксиса Кумир.');process.exit(1);}
 const symbol=[['использовать Черепаха','turtle_forward'],['использовать Робот','robot_paint'],['использовать Чертежник','drawer_move_to'],['использовать Рисователь','painter_rect']].find(([directive])=>source.includes(directive))?.[1];
 const encodeLength=value=>{const bytes=[];do{let byte=value&127;value>>>=7;if(value)byte|=128;bytes.push(byte);}while(value);return bytes;};
 const encodeString=value=>{const bytes=Buffer.from(value);return [...encodeLength(bytes.length),...bytes];};
@@ -104,8 +113,28 @@ fs.writeFileSync(output,Buffer.from(bytes));
   assert.ok(WebAssembly.Module.imports(painterModule).some(item => item.module === 'env' && item.name.startsWith('painter_')));
   const compileForbidden = await fetch(`${origin}/api/rooms/${room.id}/compile-kumir`, { method: 'POST', headers: { Origin: origin, 'Content-Type': 'application/json', Cookie: other }, body: JSON.stringify({ code: 'алг main' }) });
   assert.equal(compileForbidden.status, 404);
+  const compileUnauthenticated = await fetch(`${origin}/api/rooms/${room.id}/compile-kumir`, { method: 'POST', headers: { Origin: origin, 'Content-Type': 'application/json' }, body: JSON.stringify({ code: 'алг main' }) });
+  assert.equal(compileUnauthenticated.status, 401);
   const compileOversized = await fetch(`${origin}/api/rooms/${room.id}/compile-kumir`, { method: 'POST', headers: { Origin: origin, 'Content-Type': 'application/json', Cookie: student }, body: JSON.stringify({ code: 'x'.repeat(100001) }) });
   assert.equal(compileOversized.status, 400);
+
+  const emptyDemo = await compileDemo('   ', '203.0.113.20');
+  assert.equal(emptyDemo.status, 400);
+  const oversizedDemo = await compileDemo('x'.repeat(100001), '203.0.113.20');
+  assert.equal(oversizedDemo.status, 400);
+  const syntaxErrorDemo = await compileDemo('COMPILER_ERROR', '198.51.100.12');
+  assert.equal(syntaxErrorDemo.status, 422);
+  assert.match((await syntaxErrorDemo.json()).error, /ошибка синтаксиса Кумир/i);
+
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    const demoCompiled = await compileDemo('алг main\nнач\nкон', '203.0.113.20');
+    assert.equal(demoCompiled.status, 200, `Demo compile #${attempt + 1}: ${await demoCompiled.text()}`);
+    assert.equal(demoCompiled.headers.get('content-type'), 'application/wasm');
+  }
+  const demoLimited = await compileDemo('алг main\nнач\nкон', '203.0.113.20');
+  assert.equal(demoLimited.status, 429);
+  assert.equal(demoLimited.headers.get('retry-after'), '60');
+  assert.match((await demoLimited.json()).error, /5 программ в минуту/);
 
   await request(endpoint, 'POST', { language: 'ru', exerciseId: 'ru-first-steps', wpm: 42, accuracy: 98.5, durationMs: 45000 }, student, 201);
   assert.equal((await request(endpoint, 'GET', undefined, student)).data.results.length, 1);

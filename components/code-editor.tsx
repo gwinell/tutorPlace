@@ -51,7 +51,7 @@ function tokenizeSource(source:string,language:string):SyntaxToken[]{
  return tokens;
 }
 type RuntimeMessage = { ctRuntime?: boolean; channel?: string; type?: string; text?: string; event?: TurtleEvent; bitmap?: ImageBitmap; executor?: string; state?:RobotFieldState };
-type RuntimeProgram = { code: string; language: string; inputs: string[]; outputLimit: number; turtleSource: string; roomId?: string; kumirInput?: string; robotField?:RobotFieldState; robotView?:RobotView };
+type RuntimeProgram = { code: string; language: string; inputs: string[]; outputLimit: number; turtleSource: string; roomId?: string; demo?:boolean; kumirInput?: string; robotField?:RobotFieldState; robotView?:RobotView };
 type RuntimeController = {
   ready: boolean;
   activeChannel: string | null;
@@ -76,13 +76,13 @@ export function RuntimeProvider({children}:{children:ReactNode}){
  },[]);
  const run=useCallback((channel:string,program:RuntimeProgram)=>{
    if(!ready||active.current&&active.current!==channel)return false;
-   if(program.language==='kumir'&&!program.roomId)return false;
+   if(program.language==='kumir'&&!program.roomId&&!program.demo)return false;
    active.current=channel;
    setActiveChannel(channel);
    if(program.language==='kumir'){
      activeEngine.current='kumir';
      if(!kumirWorker.current){
-       kumirWorker.current=new Worker('/qumir/worker.js?v=8',{type:'module',name:'codeTogether Kumir'});
+       kumirWorker.current=new Worker('/qumir/worker.js?v=9',{type:'module',name:'codeTogether Kumir'});
        kumirWorker.current.onmessage=event=>{
          const message=event.data as RuntimeMessage;
          if(message.channel)listeners.current.get(message.channel)?.(message);
@@ -134,13 +134,13 @@ export function RuntimeProvider({children}:{children:ReactNode}){
  return <RuntimeContext.Provider value={controller}>{children}<iframe ref={frame} title="Изолированная среда выполнения" srcDoc={source} onLoad={()=>frame.current?.contentWindow?.postMessage({command:'init'},'*')} sandbox="allow-scripts" className="runtime-frame" aria-hidden="true" tabIndex={-1}/></RuntimeContext.Provider>;
 }
 
-type CodeEditorProps = {value:string;onChange:(v:string)=>void;language?:string;filename?:string;roomId?:string;readOnly?:boolean;runnable?:boolean;kumirWorkspace?:boolean;onActivity?:()=>void};
+type CodeEditorProps = {value:string;onChange:(v:string)=>void;language?:string;filename?:string;roomId?:string;demo?:boolean;readOnly?:boolean;runnable?:boolean;kumirWorkspace?:boolean;onActivity?:()=>void};
 export default function CodeEditor(props:CodeEditorProps){
  const runtime=useContext(RuntimeContext);
  return runtime?<CodeEditorView {...props}/>:<RuntimeProvider><CodeEditorView {...props}/></RuntimeProvider>;
 }
 
-function CodeEditorView({value,onChange,language='python',filename='student.py',roomId,readOnly=false,runnable=true,kumirWorkspace=false,onActivity}:CodeEditorProps){
+function CodeEditorView({value,onChange,language='python',filename='student.py',roomId,demo=false,readOnly=false,runnable=true,kumirWorkspace=false,onActivity}:CodeEditorProps){
  const runtime=useContext(RuntimeContext);
  if(!runtime)throw new Error('CodeEditorView must be inside a RuntimeProvider.');
  const [channel]=useState(()=>crypto.randomUUID());
@@ -171,7 +171,7 @@ function CodeEditorView({value,onChange,language='python',filename='student.py',
    onActivity?.();
    const viewForRun=replay?robotView:defaultRobotView;
    if(!replay){inputs.current=[];source.current=value;outputCharacters.current=0;executionElapsed.current=0;executionSegmentStarted.current=null;setTurtleEvents([]);setTurtleVisible(false);setQumirVisible(language==='kumir');setQumirHasFrame(false);setRobotEditing(false);setRobotView(defaultRobotView);robotViewRef.current=defaultRobotView;if(qumirCanvas.current){const context=qumirCanvas.current.getContext('2d');context?.clearRect(0,0,qumirCanvas.current.width,qumirCanvas.current.height);}}
-   if(!runProgram(channel,{code:source.current,language,inputs:inputs.current,outputLimit:Math.max(0,100000-outputCharacters.current),turtleSource,roomId,kumirInput,robotField,robotView:viewForRun}))return;
+   if(!runProgram(channel,{code:source.current,language,inputs:inputs.current,outputLimit:Math.max(0,100000-outputCharacters.current),turtleSource,roomId,demo,kumirInput,robotField,robotView:viewForRun}))return;
    setOutput('');setWaiting(false);setRunning(true);setLoading(false);
    if(timer.current)clearTimeout(timer.current);
    timer.current=setTimeout(()=>{stopProgram(channel);setRunning(false);setLoading(false);setOutput(current=>current+'\nСреда не ответила. Проверь подключение и попробуй запустить снова.');},45000);
@@ -227,7 +227,7 @@ function CodeEditorView({value,onChange,language='python',filename='student.py',
      <span className="editor-language">{language==='lua'?'Lua':language==='kumir'?'Кумир':'Python 3'}</span>
      {runnable&&(running
       ?<button onClick={stop} type="button" className="run-button stop"><Square size={12}/>Стоп</button>
-      :<button onClick={()=>run()} type="button" className="run-button" title={language==='kumir'&&!roomId?'Запуск Кумир доступен в рабочей комнате':''} disabled={!ready||Boolean(activeChannel&&activeChannel!==channel)||(language==='kumir'&&!roomId)}><Play size={12}/>Запустить</button>)}
+      :<button onClick={()=>run()} type="button" className="run-button" title={language==='kumir'&&!roomId&&!demo?'Запуск Кумир доступен в рабочей комнате':''} disabled={!ready||Boolean(activeChannel&&activeChannel!==channel)||(language==='kumir'&&!roomId&&!demo)}><Play size={12}/>Запустить</button>)}
     </div>
    </div>
    <div className={'editor-area'+(syntaxTokens.length?' has-syntax-highlighting':'')}>

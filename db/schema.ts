@@ -42,6 +42,11 @@ export const trialBookingLimits = sqliteTable('trial_booking_limits', {
   windowStart: integer('window_start').notNull(),
   attempts: integer('attempts').notNull(),
 });
+export const demoKumirCompileLimits = sqliteTable('demo_kumir_compile_limits', {
+  clientHash: text('client_hash').primaryKey(),
+  windowStart: integer('window_start').notNull(),
+  attempts: integer('attempts').notNull(),
+}, t => [index('demo_kumir_compile_limits_window_start_idx').on(t.windowStart)]);
 export const slotLocks = sqliteTable('slot_locks', { slot: text('slot').primaryKey(), lessonId: text('lesson_id').notNull() });
 export const courses = sqliteTable('courses', {
   id: text('id').primaryKey(), title: text('title').notNull(), description: text('description'),

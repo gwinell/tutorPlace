@@ -50,6 +50,16 @@ async function readLimitedBytes(request:Request,maxBytes:number){
 }
 function validateNotebook(content:string){let parsed:unknown;try{parsed=JSON.parse(content);}catch{throw new HttpError('Файл .ipynb содержит некорректный JSON.',422);}requireValue(!!parsed&&typeof parsed==='object'&&'cells'in parsed&&Array.isArray((parsed as {cells?:unknown}).cells),'Файл .ipynb не содержит список ячеек.',422);}
 async function studentCanReadTopic(studentId:string,topicId:string){return !!await db().prepare(`SELECT t.id FROM topics t JOIN course_enrollments e ON e.course_id=t.course_id AND e.student_id=? JOIN topic_access a ON a.topic_id=COALESCE(t.parent_topic_id,t.id) AND a.student_id=? WHERE t.id=?`).bind(studentId,studentId,topicId).first();}
+async function compileKumirSource(code:string){
+ const compilerUrl=secrets.QUMIR_COMPILER_URL;
+ requireValue(compilerUrl,'Компилятор Кумир пока не настроен.',503);
+ let compiled:Response;
+ try{compiled=await fetch(new URL('/compile',compilerUrl),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code}),signal:AbortSignal.timeout(6800)});}
+ catch{throw new HttpError('Компилятор не ответил вовремя. Попробуй ещё раз.',503);}
+ if(!compiled.ok){const result=await compiled.json().catch(()=>({error:'Не удалось скомпилировать программу.'})) as {error?:string};throw new HttpError((result.error||'Не удалось скомпилировать программу.').slice(0,4000),compiled.status===422?422:compiled.status===408?408:compiled.status===429?429:503);}
+ const wasm=await compiled.arrayBuffer();requireValue(wasm.byteLength>=8&&wasm.byteLength<=4*1024*1024,'Компилятор вернул некорректный размер программы.',502);
+ return new Response(wasm,{status:200,headers:{'Content-Type':'application/wasm','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}});
+}
 async function retireMeeting(lessonId:string,roomId:string|undefined|null){
  if(!roomId)return;
  try{await disableSaluteJazzRoom(roomId,secrets,2500);await db().prepare('UPDATE lessons SET jazz_room_id=NULL,jazz_room_needs_recreation=0 WHERE id=? AND jazz_room_id=?').bind(lessonId,roomId).run();}
@@ -146,6 +156,23 @@ async function route(request:Request){
    return new Response(bytes.slice().buffer as ArrayBuffer,{headers:{'Content-Type':String(image!.content_type),'Content-Length':String(bytes.byteLength),'Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff','Cross-Origin-Resource-Policy':'same-origin'}});
  }
  const body:ApiBody=method==='GET'?{}:await request.json().catch(()=>({})) as ApiBody;
+ if(path[0]==='demo'&&path[1]==='compile-kumir'){
+   requireValue(method==='POST','Компиляция принимает только POST.',404);
+   requireValue(typeof body.code==='string'&&body.code.trim().length>0&&body.code.length<=100000,'Исходный файл должен содержать от 1 до 100 000 символов.');
+   const ip=request.headers.get('cf-connecting-ip')?.trim()||request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()||'unknown';
+   const clientHash=await hash(`demo-kumir:${ip.slice(0,200)}`),windowStart=Math.floor(Date.now()/60000)*60000,database=db();
+   const [,limit]=await database.batch([
+     database.prepare('DELETE FROM demo_kumir_compile_limits WHERE window_start < ?').bind(windowStart-120000),
+     database.prepare(`INSERT INTO demo_kumir_compile_limits (client_hash,window_start,attempts) VALUES (?, ?, 1)
+       ON CONFLICT(client_hash) DO UPDATE SET window_start=excluded.window_start,
+         attempts=CASE WHEN demo_kumir_compile_limits.window_start<excluded.window_start THEN 1 ELSE demo_kumir_compile_limits.attempts+1 END
+       WHERE demo_kumir_compile_limits.window_start<excluded.window_start
+         OR (demo_kumir_compile_limits.window_start=excluded.window_start AND demo_kumir_compile_limits.attempts<5)`)
+       .bind(clientHash,windowStart),
+   ]);
+   if(limit.meta.changes!==1)return json({error:'Демо-режим ограничивает запуск до 5 программ в минуту. Подожди минуту и попробуй снова.'},429,{'Retry-After':'60'});
+   return compileKumirSource(body.code);
+ }
  if(path[0]==='reviews'&&method==='GET')return json({reviews:await all('SELECT id,name,body,rating FROM reviews WHERE published=1')});
  if(path[0]==='reviews'&&method==='POST'){await teacher(request);requireValue(text(body.name)&&text(body.body,5000)&&Number.isInteger(body.rating)&&body.rating!>=1&&body.rating!<=5,'Проверь имя, текст и оценку.');await db().prepare('INSERT INTO reviews (id,name,body,rating,published) VALUES (?,?,?,?,?)').bind(id(),text(body.name),text(body.body,5000),body.rating,body.published?1:0).run();return json({ok:true});}
  if(path[0]==='me')return json({user:await currentUser(request)});
@@ -632,14 +659,7 @@ async function route(request:Request){
     requireValue(method==='POST','Компиляция принимает только POST.',404);
     requireValue(r!.language==='kumir','В этой комнате не выбран КуМир.',409);
     requireValue(typeof body.code==='string'&&body.code.length>0&&body.code.length<=100000,'Исходный файл должен содержать от 1 до 100 000 символов.');
-    const compilerUrl=secrets.QUMIR_COMPILER_URL;
-    requireValue(compilerUrl,'Компилятор Кумир пока не настроен.',503);
-    let compiled:Response;
-    try{compiled=await fetch(new URL('/compile',compilerUrl),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:body.code}),signal:AbortSignal.timeout(6800)});}
-    catch{throw new HttpError('Компилятор не ответил вовремя. Попробуй ещё раз.',503);}
-    if(!compiled.ok){const result=await compiled.json().catch(()=>({error:'Не удалось скомпилировать программу.'})) as {error?:string};throw new HttpError((result.error||'Не удалось скомпилировать программу.').slice(0,4000),compiled.status===422?422:compiled.status===408?408:compiled.status===429?429:503);}
-    const wasm=await compiled.arrayBuffer();requireValue(wasm.byteLength>=8&&wasm.byteLength<=4*1024*1024,'Компилятор вернул некорректный размер программы.',502);
-    return new Response(wasm,{status:200,headers:{'Content-Type':'application/wasm','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}});
+    return compileKumirSource(body.code);
    }
    if(path[2]==='typing-results'){
     if(method==='GET'){
