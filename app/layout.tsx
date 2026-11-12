@@ -18,7 +18,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ru" suppressHydrationWarning>
-      <script src="https://mcp.figma.com/mcp/html-to-design/capture.js" async />
+      {process.env.NODE_ENV === "development" && (
+        <script src="https://mcp.figma.com/mcp/html-to-design/capture.js" async />
+      )}
       <body className="antialiased">{children}</body>
     </html>
   );

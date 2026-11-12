@@ -1,10 +1,11 @@
-import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowUpRight, Clock3, Video } from 'lucide-react';
 import { serviceLinks } from '@/lib/service-links';
 import type { ServicePageData } from '@/lib/service-pages';
 import { SITE_URL } from '@/lib/seo';
 import { TrialBookingButton } from '@/components/trial-booking-button';
+
+/* eslint-disable @next/next/no-img-element -- local WebP already has the right dimensions and needs no image runtime */
 
 function safeJsonLd(value: unknown) {
   return JSON.stringify(value).replace(/</g, '\\u003c');
@@ -59,19 +60,19 @@ export function ServiceLandingPage({ page }: { page: ServicePageData }) {
   return <div className="marketing service-page">
     <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(schema) }}/>
     <header className="site-header"><div className="container service-header-inner">
-      <Link className="brand" href="/" aria-label="codeTogether — главная">
+      <Link className="brand" href="/" prefetch={false} aria-label="codeTogether — главная">
         <span className="brand-mark" aria-hidden="true">&lt;/&gt;</span><span>code<span className="brand-accent">Together</span><span className="brand-dot">.</span></span>
       </Link>
       <nav className="service-header-nav" aria-label="Направления занятий">
-        {serviceLinks.map((item) => <Link href={item.href} aria-current={item.href === page.path ? 'page' : undefined} key={item.href}>{item.label}</Link>)}
-        <Link href="/#pricing">Стоимость</Link>
+        {serviceLinks.map((item) => <Link href={item.href} prefetch={false} aria-current={item.href === page.path ? 'page' : undefined} key={item.href}>{item.label}</Link>)}
+        <Link href="/#pricing" prefetch={false}>Стоимость</Link>
       </nav>
-      <Link className="button button-outline service-cabinet-link" href="/?view=cabinet">Личный кабинет</Link>
+      <Link className="button button-outline service-cabinet-link" href="/?view=cabinet" prefetch={false}>Личный кабинет</Link>
     </div></header>
 
     <main>
       <nav className="container service-breadcrumbs" aria-label="Хлебные крошки">
-        <Link href="/">Главная</Link><span aria-hidden="true">/</span><span aria-current="page">{page.label}</span>
+        <Link href="/" prefetch={false}>Главная</Link><span aria-hidden="true">/</span><span aria-current="page">{page.label}</span>
       </nav>
 
       <section className="container service-hero">
@@ -85,11 +86,11 @@ export function ServiceLandingPage({ page }: { page: ServicePageData }) {
           </div>
           <div className="service-hero-actions">
             <TrialBookingButton/>
-            <Link className="text-link" href="/#pricing">Посмотреть стоимость <ArrowUpRight size={15} aria-hidden="true"/></Link>
+            <Link className="text-link" href="/#pricing" prefetch={false}>Посмотреть стоимость <ArrowUpRight size={15} aria-hidden="true"/></Link>
           </div>
         </div>
         <aside className="service-teacher-card" aria-label="О преподавателе">
-          <Image src="/tutor.webp" width={1537} height={1023} alt="Руслан Гильметдинов, репетитор по информатике и Python" priority/>
+          <img src="/tutor-1024.webp" width={1024} height={682} alt="Руслан Гильметдинов, репетитор по информатике и Python" fetchPriority="high" decoding="async"/>
           <div><span className="eyebrow">Преподаватель</span><h2>Руслан Гильметдинов</h2><p>{personDescription}</p></div>
         </aside>
       </section>
@@ -126,7 +127,7 @@ export function ServiceLandingPage({ page }: { page: ServicePageData }) {
 
       <section className="container service-related-section" aria-labelledby="service-related-title">
         <div><span className="eyebrow">Другие направления</span><h2 id="service-related-title">Занятия по информатике и программированию</h2></div>
-        <nav className="service-related-links" aria-label="Другие направления занятий">{related.map((item) => <Link href={item.href} key={item.href}>{item.label}<ArrowUpRight size={15} aria-hidden="true"/></Link>)}</nav>
+        <nav className="service-related-links" aria-label="Другие направления занятий">{related.map((item) => <Link href={item.href} prefetch={false} key={item.href}>{item.label}<ArrowUpRight size={15} aria-hidden="true"/></Link>)}</nav>
       </section>
 
       <section className="container service-final-cta">
@@ -136,8 +137,8 @@ export function ServiceLandingPage({ page }: { page: ServicePageData }) {
     </main>
 
     <footer className="container footer service-footer">
-      <div><Link className="brand" href="/"><span className="brand-mark" aria-hidden="true">&lt;/&gt;</span><span>code<span className="brand-accent">Together</span><span className="brand-dot">.</span></span></Link><p>Репетитор по информатике и Python. Индивидуальные онлайн-занятия.</p></div>
-      <nav className="footer-links" aria-label="Ссылки сайта"><Link href="/">Главная</Link><Link href="/#pricing">Стоимость</Link><Link href="/offer">Оферта</Link><Link href="/privacy">Обработка данных</Link></nav>
+      <div><Link className="brand" href="/" prefetch={false}><span className="brand-mark" aria-hidden="true">&lt;/&gt;</span><span>code<span className="brand-accent">Together</span><span className="brand-dot">.</span></span></Link><p>Репетитор по информатике и Python. Индивидуальные онлайн-занятия.</p></div>
+      <nav className="footer-links" aria-label="Ссылки сайта"><Link href="/" prefetch={false}>Главная</Link><Link href="/#pricing" prefetch={false}>Стоимость</Link><Link href="/offer" prefetch={false}>Оферта</Link><Link href="/privacy" prefetch={false}>Обработка данных</Link></nav>
       <div className="footer-bottom"><span>© {new Date().getFullYear()} codeTogether · Руслан Гильметдинов</span><span>Информация о форматах занятий размещена на сайте.</span></div>
     </footer>
   </div>;
