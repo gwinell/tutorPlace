@@ -1,6 +1,7 @@
 import { DatabaseSync } from "node:sqlite";
 import { readdirSync, mkdirSync } from "node:fs";
 import path from "node:path";
+import { normalizeAssignmentPrompt } from "../lib/assignment-prompt-format.mjs";
 
 const databasePath = process.env.DATABASE_PATH || path.resolve(".data/codetogether.sqlite");
 mkdirSync(path.dirname(databasePath), { recursive: true, mode: 0o700 });
@@ -20,6 +21,27 @@ for (const name of migrations) {
     database.prepare("INSERT INTO d1_migrations (name) VALUES (?)").run(name);
     database.exec("COMMIT");
     console.log(`Applied ${name}`);
+  } catch (error) {
+    database.exec("ROLLBACK");
+    throw error;
+  }
+}
+
+const promptMigration = "0018_normalize_assignment_html";
+if (!database.prepare("SELECT 1 AS applied FROM d1_migrations WHERE name=?").get(promptMigration)) {
+  database.exec("BEGIN IMMEDIATE");
+  try {
+    const assignments = database.prepare("SELECT id,prompt FROM assignments").all();
+    const update = database.prepare("UPDATE assignments SET prompt=? WHERE id=? AND prompt=?");
+    let changed = 0;
+    for (const assignment of assignments) {
+      const prompt = String(assignment.prompt || "");
+      const normalized = normalizeAssignmentPrompt(prompt);
+      if (normalized !== prompt) changed += update.run(normalized, assignment.id, assignment.prompt).changes;
+    }
+    database.prepare("INSERT INTO d1_migrations (name) VALUES (?)").run(promptMigration);
+    database.exec("COMMIT");
+    console.log(`Applied ${promptMigration}: normalized ${changed} assignment prompts`);
   } catch (error) {
     database.exec("ROLLBACK");
     throw error;
