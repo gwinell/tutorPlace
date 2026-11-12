@@ -21,7 +21,7 @@ test('сбой миграции сохраняет исходную ошибку
   copyFileSync(new URL('../scripts/migrate-sqlite.mjs', import.meta.url), path.join(scriptsDirectory, 'migrate-sqlite.mjs'));
   copyFileSync(new URL('../lib/assignment-prompt-format.mjs', import.meta.url), path.join(libDirectory, 'assignment-prompt-format.mjs'));
   writeFileSync(path.join(migrationsDirectory, '0001_test_schema.sql'), 'CREATE TABLE assignments (id TEXT PRIMARY KEY, prompt TEXT);');
-  writeFileSync(path.join(migrationsDirectory, '0002_transaction_rolled_back.sql'), 'ROLLBACK;\nSELECT * FROM missing_table;');
+  writeFileSync(path.join(migrationsDirectory, '0002_transaction_rolled_back.sql'), 'ROLLBACK;--> statement-breakpoint\nSELECT * FROM missing_table;');
 
   try {
     const result = spawnSync(process.execPath, ['scripts/migrate-sqlite.mjs'], {
@@ -29,8 +29,9 @@ test('сбой миграции сохраняет исходную ошибку
     });
     const output = `${result.stdout}\n${result.stderr}`;
     assert.notEqual(result.status, 0, output);
-    assert.match(output, /Failed to apply SQLite migration 0002_transaction_rolled_back\.sql/);
+    assert.match(output, /Failed to apply SQLite migration 0002_transaction_rolled_back\.sql at SQL chunk 2\/2/);
     assert.match(output, /no such table: missing_table/);
+    assert.match(output, /SQLite status: quick_check=ok/);
     assert.doesNotMatch(output, /cannot rollback - no transaction is active/);
   } finally {
     rmSync(directory, { recursive: true, force: true });
