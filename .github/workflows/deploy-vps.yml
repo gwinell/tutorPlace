@@ -105,3 +105,26 @@ jobs:
             printf '%s\n' "$R2_ACCOUNT_ID" "$R2_ACCESS_KEY_ID" "$R2_SECRET_ACCESS_KEY" "$R2_BUCKET_NAME" | ssh -i ~/.ssh/codetogether_deploy -o BatchMode=yes -o StrictHostKeyChecking=yes "$VPS_USER@$VPS_HOST" "sudo -n \$(readlink -f /run/current-system/sw/bin/codetogether-r2-secrets-deploy)"
           fi
           ssh -i ~/.ssh/codetogether_deploy -o BatchMode=yes -o StrictHostKeyChecking=yes "$VPS_USER@$VPS_HOST" "sudo -n \$(readlink -f /run/current-system/sw/bin/codetogether-deploy) ${GITHUB_SHA} && curl --fail --silent http://127.0.0.1:3101/health && curl --fail --silent http://127.0.0.1:3000/api/health"
+
+      - name: Smoke test public demo Qumir compilation
+        if: steps.release.outputs.ready == 'true'
+        shell: bash
+        run: |
+          wasm="$RUNNER_TEMP/demo-kumir-smoke.wasm"
+          trap 'rm -f "$wasm"' EXIT
+          content_type=$(curl --fail --silent --show-error --connect-timeout 5 --max-time 20 \
+            --output "$wasm" --write-out '%{content_type}' \
+            --header 'Origin: https://code-together.ru' \
+            --header 'Content-Type: application/json' \
+            --data-binary '{"code":"алг main\nнач\nкон"}' \
+            https://code-together.ru/api/demo/compile-kumir)
+          if [[ "$content_type" != 'application/wasm' || ! -s "$wasm" ]]; then
+            echo "Demo compiler returned an unexpected response (content type: $content_type)." >&2
+            exit 1
+          fi
+          wasm_magic=$(od -An -tx1 -N8 "$wasm" | tr -d '[:space:]')
+          if [[ "$wasm_magic" != '0061736d01000000' ]]; then
+            echo 'Demo compiler response is not a valid WebAssembly module.' >&2
+            exit 1
+          fi
+          echo 'Public demo Qumir compilation returned WebAssembly.'
