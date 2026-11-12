@@ -128,3 +128,38 @@ jobs:
             exit 1
           fi
           echo 'Public demo Qumir compilation returned WebAssembly.'
+
+      - name: Verify public pages and log response times
+        if: steps.release.outputs.ready == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          body_file="$RUNNER_TEMP/codetogether-public-page.html"
+          trap 'rm -f "$body_file"' EXIT
+          routes=(
+            '/|Разобраться в коде.'
+            '/python|Индивидуальные занятия по Python'
+            '/oge-informatika|Подготовка к ОГЭ по информатике'
+            '/ege-informatika|Подготовка к ЕГЭ по информатике'
+            '/mcko-informatika|Подготовка к диагностике МЦКО по информатике'
+            '/sitemap.xml|https://code-together.ru/python'
+            '/robots.txt|Disallow: /api/'
+          )
+          for route in "${routes[@]}"; do
+            path="${route%%|*}"
+            expected="${route#*|}"
+            result=$(curl --fail --silent --show-error --connect-timeout 5 --max-time 20 \
+              --output "$body_file" --write-out '%{http_code} %{time_starttransfer} %{time_total}' \
+              "https://code-together.ru${path}")
+            read -r status response_time total_time <<< "$result"
+            printf 'Public GET %s: HTTP %s, first byte %ss, total %ss\n' \
+              "$path" "$status" "$response_time" "$total_time"
+            if ! grep --fixed-strings --quiet "$expected" "$body_file"; then
+              echo "Expected public content missing from ${path}." >&2
+              exit 1
+            fi
+            if [[ "$path" == '/robots.txt' ]] && ! grep --fixed-strings --quiet 'Disallow: /?demo=' "$body_file"; then
+              echo 'robots.txt no longer disallows demo routes.' >&2
+              exit 1
+            fi
+          done

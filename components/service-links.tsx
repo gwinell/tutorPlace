@@ -9,7 +9,7 @@ export function ServiceLinks() {
       <p>Отдельно о занятиях по Python и подготовке по информатике.</p>
     </div>
     <nav className="service-links-grid" aria-label="Направления занятий">
-      {serviceLinks.map((service) => <Link className="service-link-card" href={service.href} key={service.href}>
+      {serviceLinks.map((service) => <Link className="service-link-card" href={service.href} prefetch={false} key={service.href}>
         <span>{service.label}</span><ArrowUpRight size={17} aria-hidden="true"/>
       </Link>)}
     </nav>
