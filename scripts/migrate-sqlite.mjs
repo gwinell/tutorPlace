@@ -18,22 +18,48 @@ function rollbackIfActive() {
   }
 }
 
+function sqliteDiagnostics() {
+  const readPragma = (sql) => {
+    try {
+      const row = database.prepare(sql).get();
+      return row ? String(Object.values(row)[0]) : "unavailable";
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      return `error:${message.replace(/\s+/g, " ").slice(0, 120)}`;
+    }
+  };
+
+  return [
+    `quick_check=${readPragma("PRAGMA quick_check(1)")}`,
+    `page_count=${readPragma("PRAGMA page_count")}`,
+    `freelist_count=${readPragma("PRAGMA freelist_count")}`,
+    `journal_mode=${readPragma("PRAGMA journal_mode")}`,
+  ].join(" ");
+}
+
 const directory = path.resolve("drizzle");
 const migrations = readdirSync(directory).filter((name) => /^\d+_.*\.sql$/.test(name)).sort();
 for (const name of migrations) {
   const existing = database.prepare("SELECT 1 AS applied FROM d1_migrations WHERE name=?").get(name);
   if (existing) continue;
   const source = await (await import("node:fs/promises")).readFile(path.join(directory, name), "utf8");
-  database.exec("BEGIN IMMEDIATE");
+  const statements = source.split(/--> statement-breakpoint/g).map((statement) => statement.trim()).filter(Boolean);
+  let step = "begin transaction";
   try {
-    database.exec(source);
+    database.exec("BEGIN IMMEDIATE");
+    for (let index = 0; index < statements.length; index += 1) {
+      step = `SQL chunk ${index + 1}/${statements.length}`;
+      database.exec(statements[index]);
+    }
+    step = "record migration";
     database.prepare("INSERT INTO d1_migrations (name) VALUES (?)").run(name);
+    step = "commit transaction";
     database.exec("COMMIT");
     console.log(`Applied ${name}`);
   } catch (error) {
     rollbackIfActive();
     const message = error instanceof Error ? error.message : String(error);
-    throw new Error(`Failed to apply SQLite migration ${name}: ${message}`, { cause: error });
+    throw new Error(`Failed to apply SQLite migration ${name} at ${step}: ${message}; SQLite status: ${sqliteDiagnostics()}`, { cause: error });
   }
 }
 
@@ -55,7 +81,7 @@ if (!database.prepare("SELECT 1 AS applied FROM d1_migrations WHERE name=?").get
   } catch (error) {
     rollbackIfActive();
     const message = error instanceof Error ? error.message : String(error);
-    throw new Error(`Failed to apply SQLite migration ${promptMigration}: ${message}`, { cause: error });
+    throw new Error(`Failed to apply SQLite migration ${promptMigration}: ${message}; SQLite status: ${sqliteDiagnostics()}`, { cause: error });
   }
 }
 
