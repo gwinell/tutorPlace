@@ -6,6 +6,7 @@ import remarkGfm from 'remark-gfm';
 import { remarkLineBreaks } from '@/lib/remark-line-breaks.mjs';
 import { ImageOff, LoaderCircle } from 'lucide-react';
 import { normalizeAssignmentPrompt } from '@/lib/assignment-prompt-format.mjs';
+import { markdownUrlTransform } from '@/lib/markdown-url-transform';
 import { resolveMaterialAssetUrl, resolveMaterialLinkUrl } from '@/lib/material-links';
 
 function MarkdownImage({ src, alt, baseUrl, allowLocalBlob }: { src?: string; alt?: string; baseUrl?: string; allowLocalBlob?: boolean }) {
@@ -52,5 +53,5 @@ export default function MarkdownContent({ content, baseUrl, allowLocalBlob = fal
     },
     img: ({ src, alt }) => <MarkdownImage src={typeof src === 'string' ? src : undefined} alt={alt} baseUrl={baseUrl} allowLocalBlob={allowLocalBlob}/>,
   }), [baseUrl, allowLocalBlob]);
-  return <div className="markdown"><ReactMarkdown remarkPlugins={preserveLineBreaks ? [remarkGfm, remarkLineBreaks] : [remarkGfm]} components={components}>{markdownContent}</ReactMarkdown></div>;
+  return <div className="markdown"><ReactMarkdown remarkPlugins={preserveLineBreaks ? [remarkGfm, remarkLineBreaks] : [remarkGfm]} components={components} urlTransform={(url, key) => markdownUrlTransform(url, key, allowLocalBlob)}>{markdownContent}</ReactMarkdown></div>;
 }
