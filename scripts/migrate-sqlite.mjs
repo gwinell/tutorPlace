@@ -9,6 +9,15 @@ const database = new DatabaseSync(databasePath);
 database.exec("PRAGMA journal_mode=WAL; PRAGMA foreign_keys=ON; PRAGMA busy_timeout=5000;");
 database.exec("CREATE TABLE IF NOT EXISTS d1_migrations (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL UNIQUE, applied_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)");
 
+function rollbackIfActive() {
+  if (typeof database.isTransaction === "boolean" && !database.isTransaction) return;
+  try {
+    database.exec("ROLLBACK");
+  } catch {
+    // Preserve the migration error; rollback can fail after SQLite already ended the transaction.
+  }
+}
+
 const directory = path.resolve("drizzle");
 const migrations = readdirSync(directory).filter((name) => /^\d+_.*\.sql$/.test(name)).sort();
 for (const name of migrations) {
@@ -22,8 +31,9 @@ for (const name of migrations) {
     database.exec("COMMIT");
     console.log(`Applied ${name}`);
   } catch (error) {
-    database.exec("ROLLBACK");
-    throw error;
+    rollbackIfActive();
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to apply SQLite migration ${name}: ${message}`, { cause: error });
   }
 }
 
@@ -43,8 +53,9 @@ if (!database.prepare("SELECT 1 AS applied FROM d1_migrations WHERE name=?").get
     database.exec("COMMIT");
     console.log(`Applied ${promptMigration}: normalized ${changed} assignment prompts`);
   } catch (error) {
-    database.exec("ROLLBACK");
-    throw error;
+    rollbackIfActive();
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to apply SQLite migration ${promptMigration}: ${message}`, { cause: error });
   }
 }
 
