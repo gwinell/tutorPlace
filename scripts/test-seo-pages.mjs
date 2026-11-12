@@ -72,9 +72,12 @@ for (const page of pages) {
     for (const type of ['Person', 'Service', 'WebPage', 'BreadcrumbList']) assert(types.includes(type), `${page.path} JSON-LD is missing ${type}`);
     const person = graph.find((node) => node['@type'] === 'Person');
     const service = graph.find((node) => node['@type'] === 'Service');
+    const webPage = graph.find((node) => node['@type'] === 'WebPage');
     const breadcrumb = graph.find((node) => node['@type'] === 'BreadcrumbList');
     assert(text.includes(person.name) && text.includes(person.description), `${page.path} Person markup is not supported by visible text`);
-    assert(text.includes(service.name) && text.includes(service.description), `${page.path} Service markup is not supported by visible text`);
+    assert(text.includes(person.jobTitle), `${page.path} Person job title is not supported by visible text`);
+    assert(text.includes(service.name) && text.includes(service.description) && text.includes(service.serviceType), `${page.path} Service markup is not supported by visible text`);
+    assert(webPage.name === service.name && text.includes(webPage.description) && webPage.inLanguage === 'ru', `${page.path} WebPage markup is not supported by visible content`);
     assert(breadcrumb.itemListElement.length === 2 && breadcrumb.itemListElement[0].item === siteUrl, `${page.path} breadcrumb does not match visible navigation`);
   }
 
