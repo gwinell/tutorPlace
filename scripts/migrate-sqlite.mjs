@@ -1,5 +1,5 @@
 import { DatabaseSync } from "node:sqlite";
-import { readdirSync, mkdirSync } from "node:fs";
+import { readdirSync, mkdirSync, statSync } from "node:fs";
 import path from "node:path";
 import { normalizeAssignmentPrompt } from "../lib/assignment-prompt-format.mjs";
 
@@ -28,13 +28,36 @@ function sqliteDiagnostics() {
       return `error:${message.replace(/\s+/g, " ").slice(0, 120)}`;
     }
   };
+  const fileMetadata = (file) => {
+    try {
+      const metadata = statSync(file);
+      return `${path.basename(file)}=${metadata.size}B/mode-${metadata.mode.toString(8).slice(-3)}`;
+    } catch (error) {
+      const code = error && typeof error === "object" && "code" in error ? String(error.code) : "unavailable";
+      return `${path.basename(file)}=${code}`;
+    }
+  };
 
   return [
     `quick_check=${readPragma("PRAGMA quick_check(1)")}`,
     `page_count=${readPragma("PRAGMA page_count")}`,
     `freelist_count=${readPragma("PRAGMA freelist_count")}`,
     `journal_mode=${readPragma("PRAGMA journal_mode")}`,
+    `assignments=${readPragma("SELECT COUNT(*) FROM assignments")}`,
+    `assignment_triggers=${readPragma("SELECT group_concat(name, ',') FROM sqlite_schema WHERE type='trigger' AND tbl_name='assignments'")}`,
+    fileMetadata(databasePath),
+    fileMetadata(`${databasePath}-wal`),
+    fileMetadata(`${databasePath}-shm`),
   ].join(" ");
+}
+
+function sqliteErrorMessage(error) {
+  const message = error instanceof Error ? error.message : String(error);
+  if (!error || typeof error !== "object") return message;
+  const details = [];
+  if ("errcode" in error) details.push(`errcode=${String(error.errcode)}`);
+  if ("errstr" in error) details.push(`errstr=${String(error.errstr).replace(/\s+/g, " ").slice(0, 80)}`);
+  return details.length ? `${message} (SQLite ${details.join(" ")})` : message;
 }
 
 const directory = path.resolve("drizzle");
@@ -58,7 +81,7 @@ for (const name of migrations) {
     console.log(`Applied ${name}`);
   } catch (error) {
     rollbackIfActive();
-    const message = error instanceof Error ? error.message : String(error);
+    const message = sqliteErrorMessage(error);
     throw new Error(`Failed to apply SQLite migration ${name} at ${step}: ${message}; SQLite status: ${sqliteDiagnostics()}`, { cause: error });
   }
 }
@@ -80,7 +103,7 @@ if (!database.prepare("SELECT 1 AS applied FROM d1_migrations WHERE name=?").get
     console.log(`Applied ${promptMigration}: normalized ${changed} assignment prompts`);
   } catch (error) {
     rollbackIfActive();
-    const message = error instanceof Error ? error.message : String(error);
+    const message = sqliteErrorMessage(error);
     throw new Error(`Failed to apply SQLite migration ${promptMigration}: ${message}; SQLite status: ${sqliteDiagnostics()}`, { cause: error });
   }
 }

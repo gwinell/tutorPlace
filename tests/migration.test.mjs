@@ -31,6 +31,7 @@ test('сбой миграции сохраняет исходную ошибку
     assert.notEqual(result.status, 0, output);
     assert.match(output, /Failed to apply SQLite migration 0002_transaction_rolled_back\.sql at SQL chunk 2\/2/);
     assert.match(output, /no such table: missing_table/);
+    assert.match(output, /SQLite errcode=1/);
     assert.match(output, /SQLite status: quick_check=ok/);
     assert.doesNotMatch(output, /cannot rollback - no transaction is active/);
   } finally {
