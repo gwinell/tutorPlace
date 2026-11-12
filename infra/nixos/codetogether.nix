@@ -53,8 +53,8 @@ let
       echo "codeTogether failed to restart; collecting bounded failure diagnostics before rollback" >&2
       systemctl show codetogether.service -p ActiveState -p SubState -p Result -p ExecStartPre -p ExecMainCode -p ExecMainStatus -p NRestarts >&2 || true
       journalctl --unit=codetogether.service --since="2 minutes ago" --no-pager --lines=60 --output=cat 2>/dev/null \
-        | grep --ignore-case --extended-regexp 'migrate-sqlite|ExecStartPre|node:internal|SQLITE_|SQLite|database is locked|no such|malformed|integrity_check|ENOENT|EACCES|EPERM|MODULE_NOT_FOUND|ERR_MODULE_NOT_FOUND|Cannot find (module|package)|^SyntaxError:|Failed to start codeTogether' \
-        | tail --lines=20 >&2 || true
+        | grep --ignore-case --before-context=3 --after-context=1 --extended-regexp 'migrate-sqlite\.mjs' \
+        | tail --lines=25 >&2 || true
       restore_previous
       exit 1
     fi
