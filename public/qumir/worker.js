@@ -245,7 +245,10 @@ async function run(message) {
   frameHandlers.clear();
   installWorkerBrowserShims();
   post('loading');
-  const response = await fetch(`/api/rooms/${encodeURIComponent(message.roomId)}/compile-kumir`, {
+  const compileUrl = message.demo
+    ? '/api/demo/compile-kumir'
+    : `/api/rooms/${encodeURIComponent(message.roomId)}/compile-kumir`;
+  const response = await fetch(compileUrl, {
     method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code: message.code }),
   });
   if (!response.ok) {

@@ -120,6 +120,13 @@
       "when": 1794438391000,
       "tag": "0016_course_deletion_payment_reminders",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "6",
+      "when": 1794474855000,
+      "tag": "0017_demo_kumir_compile_limits",
+      "breakpoints": true
     }
   ]
 }
