@@ -1,5 +1,5 @@
 'use client';
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type FormEvent, type MouseEvent, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type MouseEvent, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react';
 import {Play,Square,FileCode2,Terminal,Send,RotateCcw,LockKeyhole,ChevronDown,PenLine,Paintbrush,Bot,ZoomIn,ZoomOut,Maximize2,Minus,Plus} from 'lucide-react';
 import runtimeHost from '../public/runtime-host.js?raw';
 import luaSource from '../public/fengari.js?raw';
@@ -177,7 +177,7 @@ function CodeEditorView({value,onChange,language='python',filename='student.py',
    timer.current=setTimeout(()=>{stopProgram(channel);setRunning(false);setLoading(false);setOutput(current=>current+'\nСреда не ответила. Проверь подключение и попробуй запустить снова.');},45000);
  }
  function stop(){stopProgram(channel);if(timer.current)clearTimeout(timer.current);setRunning(false);setLoading(false);setWaiting(false);setOutput(current=>current+'\nВыполнение остановлено.');}
- function sendInput(event:FormEvent){event.preventDefault();inputs.current.push(input);setInput('');run(true);}
+ function sendInput(){inputs.current.push(input);setInput('');run(true);}
  function chooseExecutor(executor:Exclude<KumirExecutor,'text'>){
    setExecutorMenuOpen(false);setQumirVisible(true);setQumirHasFrame(false);setRobotEditing(false);setRobotView(defaultRobotView);robotViewRef.current=defaultRobotView;robotDrag.current=null;
    const directive=executor==='robot'?'Робот':executor==='turtle'?'Черепаха':executor==='painter'?'Рисователь':'Чертежник';
@@ -242,7 +242,7 @@ function CodeEditorView({value,onChange,language='python',filename='student.py',
     </div>
     {language==='kumir'&&<details className="kumir-stdin"><summary>Ввод программы</summary><textarea aria-label="Ввод для программы Кумир" value={kumirInput} onChange={event=>setKumirInput(event.target.value)} placeholder="Введи данные по одному на строке" rows={3}/></details>}
     <pre ref={outputRef} className={output?'':'terminal-placeholder'}>{output||(running?(loading?'Компиляция программы на сервере…':'Запускаем программу…'):'Нажми «Запустить», чтобы увидеть результат.')}{running&&<span className="terminal-caret"> ▍</span>}</pre>
-    {waiting&&<form className="terminal-input" onSubmit={sendInput}><span>›</span><input ref={inputRef} aria-label="Ввод данных для программы" placeholder="Программа ждёт ввод…" value={input} onChange={e=>setInput(e.target.value)}/><button type="submit" aria-label="Отправить ввод"><Send size={15}/></button></form>}
+    {waiting&&<div className="terminal-input" onKeyDown={event=>{if(event.key==='Enter'&&!event.nativeEvent.isComposing){event.preventDefault();event.stopPropagation();sendInput();}}}><span>›</span><input ref={inputRef} aria-label="Ввод данных для программы" placeholder="Программа ждёт ввод…" value={input} onChange={e=>setInput(e.target.value)}/><button type="button" onClick={sendInput} aria-label="Отправить ввод"><Send size={15}/></button></div>}
    </div>}
    {language==='kumir'&&qumirVisible&&<section className="qumir-executor">
     <header>

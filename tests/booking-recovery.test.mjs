@@ -12,6 +12,7 @@ const migrations = readdirSync(migrationDir).filter(name => name.endsWith('.sql'
 const require = createRequire(import.meta.url);
 const sources = [
   ['@/lib/domain', 'lib/domain.ts'],
+  ['@/lib/assignment-prompt-format.mjs', 'lib/assignment-prompt-format.mjs'],
   ['@/lib/github-source', 'lib/github-source.ts'],
   ['@/lib/room-presets', 'lib/room-presets.ts'],
   ['@/lib/server', 'lib/server.ts'],
@@ -505,6 +506,21 @@ test('Удаление ученика работает через DELETE и уд
   assert.equal(qa.sql.prepare('SELECT COUNT(*) AS n FROM sessions WHERE user_id=?').get(student.id).n, 0);
   assert.equal(qa.sql.prepare('SELECT COUNT(*) AS n FROM payment_requests WHERE student_id=?').get(student.id).n, 0);
   assert.equal((await qa.request('workspace', undefined, cookie)).status, 401);
+});
+
+test('API сохраняет условия задания в Markdown вместо HTML', async () => {
+  const s = setup();
+  const teacher = await s.teacherSession();
+  const student = await s.createStudent(teacher);
+  const saved = await s.request('assignments', {
+    id: 'normalized-html-assignment', student_id: student.student.id, title: 'Условие из HTML', kind: 'text',
+    prompt: '<p>Первая строка<br>Вторая строка с <strong>выделением</strong>.</p>',
+  }, teacher);
+  assert.equal(saved.status, 200);
+  const assignment = s.sql.prepare('SELECT id,kind,prompt FROM assignments WHERE id=?').get('normalized-html-assignment');
+  assert.equal(assignment.kind, 'text');
+  assert.match(assignment.prompt, /Первая строка\nВторая строка с \*\*выделением\*\*/);
+  assert.doesNotMatch(assignment.prompt, /<p>|<br|<strong>/);
 });
 
 test('Изображение задания выдаётся только ученику с доступом к заданию и его уроку', async () => {
