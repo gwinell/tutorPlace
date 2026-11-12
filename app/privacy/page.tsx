@@ -1,9 +1,11 @@
 import Link from "next/link";
+import { createPageMetadata } from "@/lib/seo";
 
-export const metadata = {
+export const metadata = createPageMetadata({
+  path: "/privacy",
   title: "Обработка персональных данных — codeTogether",
   description: "Политика обработки персональных данных Code Together и индивидуального предпринимателя Гильметдинова Руслана Айдаровича.",
-};
+});
 
 export default function PrivacyPage() {
   return (

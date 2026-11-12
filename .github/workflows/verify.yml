@@ -43,6 +43,8 @@ jobs:
           done
           cat "$RUNNER_TEMP/codetogether-dev.log"
           exit 1
+      - name: Check public SEO pages, robots, sitemap, and structured data
+        run: npm run test:seo-pages
       - name: Run D1 course integration checks
         run: npm run test:integration
       - name: Stop local app

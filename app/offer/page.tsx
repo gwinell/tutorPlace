@@ -1,9 +1,11 @@
 import Link from "next/link";
+import { createPageMetadata } from "@/lib/seo";
 
-export const metadata = {
+export const metadata = createPageMetadata({
+  path: "/offer",
   title: "Публичная оферта — codeTogether",
   description: "Публичная оферта на оказание платных образовательных услуг Code Together.",
-};
+});
 
 type OfferBlock =
   | { type: "paragraph"; text: string }
