@@ -52,13 +52,13 @@ jobs:
           echo '== application data volume =='
           data_directory=/var/lib/codetogether/data
           database_file="$data_directory/codetogether.sqlite"
-          df -hP "$data_directory" 2>/dev/null || true
-          df -iP "$data_directory" 2>/dev/null || true
+          df -hP / /var /var/lib 2>/dev/null || true
+          df -iP / /var /var/lib 2>/dev/null || true
           for file in "$database_file" "$database_file-wal" "$database_file-shm"; do
-            if [ -e "$file" ]; then
-              stat -c '%n size=%s mode=%a owner=%U:%G' "$file" 2>/dev/null || echo 'database_file_metadata=unavailable'
+            if metadata=$(stat -c '%n size=%s mode=%a owner=%U:%G' "$file" 2>/dev/null); then
+              printf '%s\n' "$metadata"
             else
-              printf '%s=missing\n' "${file##*/}"
+              printf '%s=unavailable-to-diagnostic-user-or-missing\n' "${file##*/}"
             fi
           done
           namei -l "$database_file" 2>/dev/null | tail --lines=6 || true
