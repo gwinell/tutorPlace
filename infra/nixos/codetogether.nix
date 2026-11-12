@@ -252,6 +252,7 @@ in
       Restart = "always";
       RestartSec = 3;
       NoNewPrivileges = true;
+      PrivateTmp = true;
       ProtectSystem = "strict";
       ProtectHome = true;
       ReadWritePaths = [ "${appRoot}/data" "${appRoot}/backups" ];
@@ -304,6 +305,7 @@ in
       EnvironmentFile = [ "-/etc/codetogether/secrets.env" "-/etc/codetogether/r2.env" ];
       ExecStart = "${pkgs.nodejs_22}/bin/node ${appRoot}/current/maintenance.mjs";
       NoNewPrivileges = true;
+      PrivateTmp = true;
       ProtectSystem = "strict";
       ProtectHome = true;
       ReadWritePaths = [ "${appRoot}/data" ];
@@ -330,6 +332,7 @@ in
       EnvironmentFile = [ "-/etc/codetogether/r2.env" ];
       ExecStart = "${pkgs.nodejs_22}/bin/node ${appRoot}/current/backup-sqlite.mjs";
       NoNewPrivileges = true;
+      PrivateTmp = true;
       ProtectSystem = "strict";
       ProtectHome = true;
       ReadWritePaths = [ "${appRoot}/data" "${appRoot}/backups" ];
