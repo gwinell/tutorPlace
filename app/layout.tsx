@@ -1,4 +1,6 @@
+/* eslint-disable @next/next/no-img-element -- the noscript counter uses a 1×1 remote tracking pixel. */
 import type { Metadata } from "next";
+import YandexMetrika from "@/components/yandex-metrika";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -21,7 +23,13 @@ export default function RootLayout({
       {process.env.NODE_ENV === "development" && (
         <script src="https://mcp.figma.com/mcp/html-to-design/capture.js" async />
       )}
-      <body className="antialiased">{children}</body>
+      <body className="antialiased">
+        <YandexMetrika />
+        {children}
+        <noscript>
+          <div><img className="yandex-metrika-pixel" src="https://mc.yandex.ru/watch/114240976" alt="" /></div>
+        </noscript>
+      </body>
     </html>
   );
 }

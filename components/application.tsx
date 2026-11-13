@@ -6,6 +6,7 @@ import Login from './login';
 import Booking from './booking';
 const Platform=lazy(()=>import('./platform'));
 import {api} from './site-ui';
+import {setAnalyticsPrivate} from '@/lib/analytics-scope';
 import {Role,User} from '@/lib/domain';
 import {demoStudent,demoTeacher} from '@/lib/demo';
 
@@ -29,15 +30,18 @@ export default function Application(){
  const activeUser=demoRole==='student'?demoStudent:demoRole==='teacher'?demoTeacher:user;
  const platformVisible=demo||view==='platform';
  useEffect(()=>{if(demo)return;let active=true;void api<{user?:User}>('me').then(result=>{if(active&&result.user){setUser(result.user);if(cabinetView)setView('platform');}}).catch(()=>{});return()=>{active=false;};},[demo,cabinetView,location]);
+ useEffect(()=>{setAnalyticsPrivate('application',demo||cabinetView||platformVisible||login||booking);},[demo,cabinetView,platformVisible,login,booking]);
  useEffect(()=>{document.documentElement.dataset.theme=dark?'dark':'light';},[dark]);
  useEffect(()=>{if(!toast)return;const id=setTimeout(()=>setToast(''),4500);return()=>clearTimeout(id);},[toast]);
  const toggle=()=>{localStorage.setItem('ct-theme',dark?'light':'dark');window.dispatchEvent(new Event('codetogether:theme'));};
- const openDemo=(role:Role)=>{setView('platform');setLogin(false);replaceLocation('?demo='+role);window.scrollTo(0,0);};
- const home=()=>{setView('home');replaceLocation('/');window.scrollTo(0,0);};
+ const openDemo=(role:Role)=>{setAnalyticsPrivate('application',true);setView('platform');setLogin(false);replaceLocation('?demo='+role);window.scrollTo(0,0);};
+ const home=()=>{setAnalyticsPrivate('application',false);setView('home');replaceLocation('/');window.scrollTo(0,0);};
+ const openLogin=()=>{setAnalyticsPrivate('application',true);if(activeUser)setView('platform');else setLogin(true);};
+ const openBooking=()=>{setAnalyticsPrivate('application',true);setBooking(true);};
  const closeBooking=useCallback(()=>setBooking(false),[]);
  const closeLogin=useCallback(()=>setLogin(false),[]);
  async function logout(){if(!demo)await api('logout','POST');setUser(null);home();}
- return <>{!platformVisible?<Marketing book={()=>setBooking(true)} login={()=>activeUser?setView('platform'):setLogin(true)} dark={dark} toggle={toggle} openDemo={()=>openDemo('student')}/>:activeUser&&<Suspense fallback={<div className="empty-state">Открываем твоё пространство…</div>}><Platform key={demo?'demo-'+activeUser.role:activeUser.id} user={activeUser} demo={demo} dark={dark} toggle={toggle} home={home} logout={logout} notify={setToast} onUser={setUser} refresh={refresh}/></Suspense>}
+ return <>{!platformVisible?<Marketing book={openBooking} login={openLogin} dark={dark} toggle={toggle} openDemo={()=>openDemo('student')}/>:activeUser&&<Suspense fallback={<div className="empty-state">Открываем твоё пространство…</div>}><Platform key={demo?'demo-'+activeUser.role:activeUser.id} user={activeUser} demo={demo} dark={dark} toggle={toggle} home={home} logout={logout} notify={setToast} onUser={setUser} refresh={refresh}/></Suspense>}
  {login&&<Login onClose={closeLogin} onLogin={loggedIn=>{setUser(loggedIn);setView('platform');setLogin(false);replaceLocation('?view=cabinet');}} onDemo={openDemo}/>}
  {booking&&<Booking onClose={closeBooking} onBooked={()=>setRefresh(n=>n+1)}/>}
  {toast&&<div className="toast" role="status"><Check size={16}/>{toast}</div>}
