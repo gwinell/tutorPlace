@@ -146,7 +146,21 @@ const progress=studentProgress.get(user.id)||{per:[],total:0,passed:0,percent:0}
  async function openRoom(summary:Room){if(demo){setRoom(summary);return;}setBusy(true);try{const result=await api<{room:Room}>('rooms/'+summary.id);setRoom(result.room);}catch(e){notify((e as Error).message);}finally{setBusy(false);}}
  async function saveTool(payload:Record<string,unknown>){
    if(!tool)return;
-   if(!demo){await api(tool.type,'POST',payload);await reload();}
+   if(!demo){
+     try{await api(tool.type,'POST',payload);}
+     catch(error){
+       // Saving an existing course is idempotent: its ID and complete enrollment
+       // list are part of the request, so retrying a lost response cannot create
+       // a duplicate course or add duplicate enrollments.
+       if(tool.type!=='courses'||typeof payload.id!=='string'||!(error instanceof TypeError))throw error;
+       try{await api(tool.type,'POST',payload);}
+       catch(retryError){
+         if(retryError instanceof TypeError)throw new Error('Сервер не подтвердил сохранение курса. Обнови список и проверь, появился ли ученик; если нет — повтори сохранение.');
+         throw retryError;
+       }
+     }
+     await reload();
+   }
    else mutate(current=>{
      if(tool.type==='students'){
        const studentId=typeof payload.id==='string'?payload.id:crypto.randomUUID();
