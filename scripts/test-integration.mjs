@@ -26,6 +26,12 @@ try{
  const newId=prefix+'-new';await request('students','POST',{id:undefined,name:'QA new',age:15,parent_name:'QA parent',login:newId,password,balance:4},t);
  const newStudentLogin=await request('login','POST',{login:newId,password});const n=newStudentLogin.cookie,newStudentId=newStudentLogin.data.user.id;assert.ok(n);pass('Созданный репетитором ученик может войти');
  const courseId=prefix+'-course';await request('courses','POST',{id:courseId,title:'QA course',description:'Course isolation',studentIds:[studentId,newStudentId]},t);
+ let enrollmentWorkspace=(await request('workspace','GET',null,t)).data;assert.deepEqual(enrollmentWorkspace.courseEnrollments.filter(item=>item.course_id===courseId).map(item=>item.student_id).sort(),[studentId,newStudentId].sort());
+ await request('courses','POST',{id:courseId,title:'QA course updated',description:'Course isolation updated',studentIds:[studentId]},t);
+ enrollmentWorkspace=(await request('workspace','GET',null,t)).data;assert.deepEqual(enrollmentWorkspace.courseEnrollments.filter(item=>item.course_id===courseId).map(item=>item.student_id),[studentId]);assert.equal((await request('workspace','GET',null,n)).data.courses.some(item=>item.id===courseId),false);
+ await request('courses','POST',{id:courseId,title:'QA course updated',description:'Course isolation updated',studentIds:[studentId,newStudentId]},t);
+ await request('courses','POST',{id:courseId,title:'QA course updated',description:'Course isolation updated',studentIds:[studentId,newStudentId]},t);
+ enrollmentWorkspace=(await request('workspace','GET',null,t)).data;assert.deepEqual(enrollmentWorkspace.courseEnrollments.filter(item=>item.course_id===courseId).map(item=>item.student_id).sort(),[studentId,newStudentId].sort());pass('Существующий курс сохраняет состав учеников, а повтор запроса не создаёт дубликаты');
  await request('topics','POST',{id:prefix+'-topic',course_id:courseId,title:'QA topic',content:'# Private material',description:'test',format:'md',position:0},t);
  await request('topics','POST',{id:prefix+'-topic-2',course_id:courseId,title:'Second topic',content:'# Second',description:'test',format:'md',position:1},t);
  await request('topics','POST',{id:prefix+'-child',course_id:courseId,parent_topic_id:prefix+'-topic',title:'QA subtopic',content:'# Child material',description:'nested',format:'md',position:0},t);
