@@ -1517,6 +1517,7 @@
 @media(max-width:600px){.room-editors .editor-area{min-height:306px}}
 @media(max-width:680px){.code-editor.kumir-workspace-editor>.editor-area{min-height:337px}}
 @media(prefers-reduced-motion:reduce){.markdown-image-loading svg{animation:none}}
+.yandex-metrika-pixel{position:absolute;left:-9999px}
 
 @media(max-width:600px){
  .assignment-sheet .task-heading h3{font-size:22px;letter-spacing:-.3px}
