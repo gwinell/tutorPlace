@@ -182,7 +182,7 @@ function setup(beforeRecovery = () => {}) {
       headers: { Origin: origin, 'Content-Type': 'application/json', 'cf-connecting-ip': ip, ...(cookie ? { Cookie: cookie } : {}) },
       body: body === undefined ? undefined : JSON.stringify(body),
     }));
-    return { status: response.status, data: await response.json() };
+    return { status: response.status, data: await response.json(), headers: response.headers };
   }
 
   async function teacherSession() {
@@ -213,7 +213,7 @@ function setup(beforeRecovery = () => {}) {
   }
 
   const book = (phone, hour, ip) => request('book', {
-    name: 'Synthetic QA', phone, start: at(hour), minutes: 45, consent: true,
+    name: 'Synthetic QA', phone, start: at(hour), minutes: 45, consent: true, goals: ['Python'],
   }, undefined, ip);
   const lesson = id => sql.prepare('SELECT * FROM lessons WHERE id=?').get(id);
   const locks = id => sql.prepare('SELECT COUNT(*) AS n FROM slot_locks WHERE lesson_id=?').get(id).n;
@@ -287,6 +287,74 @@ test('Запись отклоняет пустой номер, атомарно 
   assert.equal((await qa.book('+79161234568', 14)).status, 201);
   assert.equal((await qa.book('+79161234569', 16)).status, 429);
   assert.equal((await qa.book('+79161234569', 16, '192.0.2.2')).status, 201);
+});
+
+test('Пробная запись создаёт кабинет, сохраняет цели занятий и автоматически входит в него', async () => {
+  const qa = setup();
+  const booked = await qa.request('book', {
+    name: 'Synthetic Trial', phone: '+7 (916) 123-45-67', start: qa.at(10), minutes: 45,
+    consent: true, goals: ['ЕГЭ', 'Python', 'Pandas', 'МЦКО', 'ОГЭ', 'Информатика', 'Повышение успеваемости'],
+    comment: 'Нужно подготовиться к экзамену и повторить основы.',
+  });
+  assert.equal(booked.status, 201);
+  assert.equal(booked.data.trialAccount.autoLogin, true);
+  assert.match(booked.data.trialAccount.credentials.login, /^trial_[a-z2-9]{10}$/);
+  assert.equal(booked.data.trialAccount.credentials.password.length, 16);
+  assert.equal(booked.data.trialAccount.user.account_type, 'trial');
+  assert.match(booked.headers.get('set-cookie') || '', /^ct-session=.+HttpOnly/);
+
+  const student = qa.sql.prepare('SELECT * FROM users WHERE id=?').get(booked.data.trialAccount.user.id);
+  assert.equal(student.role, 'student');
+  assert.equal(student.account_type, 'trial');
+  assert.equal(student.phone, '+79161234567');
+  assert.equal(student.balance, 0);
+  assert.equal(student.price_per_lesson, 1000);
+  assert.notEqual(student.password, booked.data.trialAccount.credentials.password);
+  assert.equal(await qa.modules['@/lib/server'].verifyPassword(booked.data.trialAccount.credentials.password, student.password), true);
+
+  const lesson = qa.lesson(booked.data.lesson.id);
+  assert.equal(lesson.student_id, student.id);
+  assert.deepEqual(JSON.parse(lesson.trial_goals), ['ЕГЭ', 'Python', 'Pandas', 'МЦКО', 'ОГЭ', 'Информатика', 'Повышение успеваемости']);
+  assert.equal(lesson.trial_comment, 'Нужно подготовиться к экзамену и повторить основы.');
+
+  const cookie = booked.headers.get('set-cookie').split(';')[0];
+  const workspace = await qa.request('workspace', undefined, cookie);
+  assert.equal(workspace.status, 200);
+  assert.equal(workspace.data.user.id, student.id);
+  assert.equal(workspace.data.lessons.length, 1);
+  assert.equal(workspace.data.lessons[0].id, lesson.id);
+  const teacher = await qa.teacherSession();
+  const teacherWorkspace = await qa.request('workspace', undefined, teacher);
+  assert.ok(teacherWorkspace.data.students.some(account => account.id === student.id && account.account_type === 'trial'));
+  assert.ok(teacherWorkspace.data.lessons.some(item => item.id === lesson.id && item.trial_comment === lesson.trial_comment));
+
+  const missingGoal = await qa.request('book', { name: 'No Goal', phone: '+79161234568', start: qa.at(12), minutes: 45, consent: true });
+  assert.equal(missingGoal.status, 400);
+});
+
+test('Репетитор выдаёт доступ к будущим старым пробным записям один раз и переводит аккаунт', async () => {
+  const qa = setup();
+  const teacher = await qa.teacherSession();
+  const phone = '+79161234567';
+  for (const [id, hour] of [['old-trial-one', 10], ['old-trial-two', 12]]) {
+    qa.sql.prepare("INSERT INTO lessons (id,name,phone,trial_phone,start,end,type,status) VALUES (?,'Legacy QA',?,?,?,?,'trial','scheduled')")
+      .run(id, '8 (916) 123-45-67', phone, qa.at(hour), new Date(Date.parse(qa.at(hour)) + 45 * 60000).toISOString());
+  }
+
+  const migrated = await qa.request('trial-accounts/backfill', {}, teacher);
+  assert.equal(migrated.status, 200, JSON.stringify(migrated.data));
+  assert.equal(migrated.data.linked, 2);
+  assert.equal(migrated.data.accounts.length, 1);
+  const [{ id: studentId, login, password }] = migrated.data.accounts;
+  assert.match(login, /^trial_[a-z2-9]{10}$/);
+  assert.equal(password.length, 16);
+  assert.equal(qa.sql.prepare('SELECT COUNT(*) AS count FROM lessons WHERE student_id=?').get(studentId).count, 2);
+
+  const repeated = await qa.request('trial-accounts/backfill', {}, teacher);
+  assert.deepEqual({ linked: repeated.data.linked, accounts: repeated.data.accounts.length }, { linked: 0, accounts: 0 });
+  const promoted = await qa.request('students/' + studentId + '/promote', {}, teacher);
+  assert.equal(promoted.status, 200);
+  assert.equal(qa.sql.prepare('SELECT account_type FROM users WHERE id=?').get(studentId).account_type, 'regular');
 });
 
 test('Потерянный ответ PATCH сверяется с календарём и подтверждает перенос', async () => {

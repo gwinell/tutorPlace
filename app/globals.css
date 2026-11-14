@@ -1524,3 +1524,31 @@
  .assignment-sheet .task-prompt{padding-left:12px;margin-bottom:20px}
  .assignment-editor-preview .assignment-sheet{padding:16px}
 }
+
+.trial-credentials{margin:20px 0;padding:18px;text-align:left;border:1px solid var(--border);border-radius:12px;background:var(--bg)}
+.trial-credentials>strong{display:block;color:var(--ink);font-size:16px}
+.trial-credentials>p{margin:7px 0 14px;font-size:13px;line-height:1.6}
+.trial-credential-row{display:grid;grid-template-columns:64px minmax(0,1fr) auto;align-items:center;gap:9px;padding:8px 0;border-top:1px solid var(--border)}
+.trial-credential-row>span{font-size:13px;color:var(--muted)}
+.trial-credential-row code{min-width:0;overflow-wrap:anywhere;font-size:14px;color:var(--ink)}
+.trial-credential-row .button{min-height:34px;padding:7px 9px}
+@media(max-width:600px){.trial-credential-row{grid-template-columns:55px minmax(0,1fr)}.trial-credential-row .button{grid-column:2;justify-self:start}}
+.trial-goal-field{min-width:0;margin:18px 0 16px;padding:0;border:0}
+.trial-goal-field legend{margin-bottom:10px;color:var(--ink);font-size:14px;font-weight:650}
+.trial-goal-field legend small,.trial-goal-field>.field-hint{margin-left:6px;color:var(--muted);font-size:12px;font-weight:400}
+.trial-goal-options{display:flex;flex-wrap:wrap;gap:8px}
+.trial-goal-option{display:inline-flex;align-items:center;gap:7px;min-height:38px;padding:8px 12px;border:1px solid var(--border);border-radius:999px;background:var(--surface);color:var(--ink);font-size:13px;cursor:pointer;transition:background .16s,border-color .16s,color .16s}
+.trial-goal-option.selected{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,var(--surface));color:var(--accent)}
+.trial-goal-option input{width:15px;height:15px;margin:0;accent-color:var(--accent)}
+.trial-goal-field>.field-hint{display:block;margin:8px 0 0}
+.trial-contact{display:flex;align-items:center;gap:6px;margin:5px 0 0;color:var(--muted);font-size:12px}
+.trial-goals,.trial-comment{margin:8px 0 0;color:var(--muted);font-size:13px;line-height:1.55;overflow-wrap:anywhere}
+.trial-goals strong,.trial-comment strong{color:var(--ink)}
+.trial-backfill-list{display:grid;gap:10px;max-height:45vh;overflow:auto}
+.trial-backfill-card{display:grid;gap:5px;padding:14px;border:1px solid var(--border);border-radius:10px;background:var(--bg);text-align:left}
+.trial-backfill-card strong{color:var(--ink)}
+.trial-backfill-card span{color:var(--muted);font-size:13px}
+.trial-backfill-card code{font-size:13px;overflow-wrap:anywhere}
+.workspace-heading-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px}
+.student-actions{flex-wrap:wrap}
+@media(max-width:760px){.workspace-heading-actions{justify-content:flex-start}.workspace-heading-actions .button{font-size:13px}}

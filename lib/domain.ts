@@ -1,5 +1,5 @@
 export type Role = 'student' | 'teacher';
-export type User = { id: string; name: string; role: Role; login?: string; age?: number; parent_name?: string; phone?: string; parent_phone?: string; balance: number; price_per_lesson?: number };
+export type User = { id: string; name: string; role: Role; account_type?: 'regular' | 'trial'; login?: string; age?: number; parent_name?: string; phone?: string; parent_phone?: string; balance: number; price_per_lesson?: number };
 export type PaymentRequest = {
   id: string;
   student_id: string;
@@ -13,7 +13,7 @@ export type PaymentRequest = {
   created_at: string;
   reviewed_at: string | null;
 };
-export type Lesson = { id: string; student_id?: string; name: string; start: string; end: string; type: string; status: string; meet_url?: string; jazz_room_id?: string | null; jazz_room_needs_recreation?: number; topic?: string; cancelled_at?: string; cancelled_by?: Role | null; charged?: number; homework?: string; move_id?: string | null; move_start?: string | null; operation_started_at?: string | null; privacy_consent_at?: string | null; privacy_policy_version?: string | null };
+export type Lesson = { id: string; student_id?: string; name: string; phone?: string | null; trial_goals?: string | null; trial_comment?: string | null; start: string; end: string; type: string; status: string; meet_url?: string; jazz_room_id?: string | null; jazz_room_needs_recreation?: number; topic?: string; cancelled_at?: string; cancelled_by?: Role | null; charged?: number; homework?: string; move_id?: string | null; move_start?: string | null; operation_started_at?: string | null; privacy_consent_at?: string | null; privacy_policy_version?: string | null };
 export type Course = { id: string; title: string; description?: string; position: number };
 export type CourseEnrollment = { course_id: string; student_id: string };
 export type Topic = { id: string; course_id: string; title: string; description: string; content?: string; format: string; colab_url?: string; github_url?: string | null; parent_topic_id?: string | null; locked?: boolean | number; position?: number };
