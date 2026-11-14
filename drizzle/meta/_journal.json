@@ -134,6 +134,13 @@
       "when": 1794517367072,
       "tag": "0018_assignment_image_server_storage_and_retention",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "6",
+      "when": 1794681706738,
+      "tag": "0019_trial_accounts",
+      "breakpoints": true
     }
   ]
 }

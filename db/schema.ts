@@ -6,6 +6,7 @@ export const users = sqliteTable('users', {
   name: text('name').notNull(), role: text('role').notNull(), age: integer('age'), parentName: text('parent_name'),
   phone: text('phone'), parentPhone: text('parent_phone'), balance: integer('balance').notNull().default(0),
   pricePerLesson: integer('price_per_lesson').notNull().default(1000), createdAt: text('created_at').notNull(),
+  accountType: text('account_type').notNull().default('regular'),
 });
 export const sessions = sqliteTable('sessions', { id: text('id').primaryKey(), userId: text('user_id').notNull(), expiresAt: integer('expires_at').notNull() }, t => [index('sessions_expires_at_idx').on(t.expiresAt)]);
 export const settings = sqliteTable('settings', { key: text('key').primaryKey(), value: text('value').notNull() });
@@ -27,6 +28,7 @@ export const lessons = sqliteTable('lessons', {
   start: text('start').notNull(), end: text('end').notNull(), type: text('type').notNull(), status: text('status').notNull(),
   eventId: text('event_id'), meetUrl: text('meet_url'), jazzRoomId: text('jazz_room_id'), jazzRoomNeedsRecreation: integer('jazz_room_needs_recreation').notNull().default(0), topic: text('topic'), cancelledAt: text('cancelled_at'), cancelledBy: text('cancelled_by'), charged: integer('charged').default(0),
   trialPhone: text('trial_phone'), operationStartedAt: text('operation_started_at'),
+  trialGoals: text('trial_goals'), trialComment: text('trial_comment'),
   privacyConsentAt: text('privacy_consent_at'), privacyPolicyVersion: text('privacy_policy_version'),
   moveId: text('move_id'), moveStart: text('move_start'), moveEnd: text('move_end'),
 }, t => [

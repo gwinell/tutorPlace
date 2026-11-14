@@ -43,7 +43,7 @@ export default function Application(){
  async function logout(){if(!demo)await api('logout','POST');setUser(null);home();}
  return <>{!platformVisible?<Marketing book={openBooking} login={openLogin} dark={dark} toggle={toggle} openDemo={()=>openDemo('student')}/>:activeUser&&<Suspense fallback={<div className="empty-state">Открываем твоё пространство…</div>}><Platform key={demo?'demo-'+activeUser.role:activeUser.id} user={activeUser} demo={demo} dark={dark} toggle={toggle} home={home} logout={logout} notify={setToast} onUser={setUser} refresh={refresh}/></Suspense>}
  {login&&<Login onClose={closeLogin} onLogin={loggedIn=>{setUser(loggedIn);setView('platform');setLogin(false);replaceLocation('?view=cabinet');}} onDemo={openDemo}/>}
- {booking&&<Booking onClose={closeBooking} onBooked={()=>setRefresh(n=>n+1)}/>}
+ {booking&&<Booking onClose={closeBooking} onBooked={()=>setRefresh(n=>n+1)} onTrialAccountCreated={account=>{setUser(account);setView('platform');replaceLocation('?view=cabinet');window.scrollTo(0,0);}}/>}
  {toast&&<div className="toast" role="status"><Check size={16}/>{toast}</div>}
  </>;
 }
