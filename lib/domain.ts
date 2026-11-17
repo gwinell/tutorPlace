@@ -50,7 +50,7 @@ export const dateLabel = (value: string | number | Date, options?: Intl.DateTime
   const key = JSON.stringify(options ?? {});
   let formatter = dateLabelFormatters.get(key);
   if (!formatter) {
-    formatter = new Intl.DateTimeFormat('ru-RU', { timeZone:'Europe/Moscow', ...options });
+    formatter = new Intl.DateTimeFormat('ru-RU', { timeZone:'Europe/Moscow', ...options, hourCycle:'h23' });
     dateLabelFormatters.set(key, formatter);
   }
   return formatter.format(new Date(value));
@@ -74,6 +74,26 @@ export function addDaysToDateKey(value: string, days: number) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) throw new Error('Некорректная календарная дата.');
   const [year, month, day] = value.split('-').map(Number);
   return new Date(Date.UTC(year, month - 1, day + days)).toISOString().slice(0, 10);
+}
+export function addMonthsToMonthKey(value: string, months: number) {
+  if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(value) || !Number.isInteger(months)) throw new Error('Некорректный месяц.');
+  const [year, month] = value.split('-').map(Number);
+  const absoluteMonth = year * 12 + month - 1 + months;
+  const nextYear = Math.floor(absoluteMonth / 12);
+  const nextMonth = absoluteMonth - nextYear * 12 + 1;
+  if (nextYear < 1 || nextYear > 9999) throw new Error('Некорректный месяц.');
+  return `${String(nextYear).padStart(4, '0')}-${String(nextMonth).padStart(2, '0')}`;
+}
+export function calendarMonthGrid(value: string): (string | null)[] {
+  if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(value)) throw new Error('Некорректный месяц.');
+  const [year, month] = value.split('-').map(Number);
+  const firstWeekday = new Date(Date.UTC(year, month - 1, 1)).getUTCDay();
+  const offset = (firstWeekday + 6) % 7;
+  const dayCount = new Date(Date.UTC(year, month, 0)).getUTCDate();
+  const cells: (string | null)[] = Array.from({ length: offset }, () => null);
+  for (let day = 1; day <= dayCount; day++) cells.push(`${value}-${String(day).padStart(2, '0')}`);
+  while (cells.length % 7) cells.push(null);
+  return cells;
 }
 export function resultStatus(submission: Pick<Submission, 'result'> | string | null | undefined): string {
   if (!submission) return 'unknown';

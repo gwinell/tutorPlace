@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {addDaysToDateKey,cancellationPolicy,canReschedule,createSlots,dateKeyInTimeZone,monthBounds,monthKey,overlaps,resultStatus,serializeLessonPreparation,type Lesson} from '../lib/domain.ts';
+import {addDaysToDateKey,addMonthsToMonthKey,calendarMonthGrid,cancellationPolicy,canReschedule,createSlots,dateKeyInTimeZone,dateLabel,monthBounds,monthKey,overlaps,resultStatus,serializeLessonPreparation,type Lesson} from '../lib/domain.ts';
 import {isGithubMaterialContentType,normalizeGithubSource} from '../lib/github-source.ts';
 const lesson=(extra:Partial<Lesson>={}):Lesson=>({id:'test',name:'test',start:'2026-11-07T13:00:00.000Z',end:'2026-11-07T13:55:00.000Z',type:'paid',status:'scheduled',...extra});
 test('Пункты подготовки формы сериализуются в API-контракт',()=>{
@@ -73,6 +73,16 @@ test('Расчёт слотов учитывает временную зону �
 test('Календарные поля формы используют московскую дату и переход через месяц',()=>{
  assert.equal(dateKeyInTimeZone(new Date('2026-11-08T21:30:00.000Z')),'2026-11-09');
  assert.equal(addDaysToDateKey('2026-12-31',1),'2027-01-01');
+});
+test('Месяцы календаря начинаются с понедельника и показывают русское 24-часовое время',()=>{
+ const november=calendarMonthGrid('2026-11');
+ assert.equal(november.length%7,0);
+ assert.deepEqual(november.slice(0,6),[null,null,null,null,null,null]);
+ assert.equal(november[6],'2026-11-01');
+ assert.equal(november[7],'2026-11-02');
+ assert.equal(addMonthsToMonthKey('2026-12',1),'2027-01');
+ assert.equal(addMonthsToMonthKey('2027-01',-1),'2026-12');
+ assert.equal(dateLabel('2026-11-15T16:00:00.000Z',{hour:'2-digit',minute:'2-digit'}),'19:00');
 });
 test('Повреждённый результат отправки не ломает отображение статуса',()=>{
  assert.equal(resultStatus('{broken'),'unknown');
