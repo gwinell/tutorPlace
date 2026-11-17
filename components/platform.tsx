@@ -33,12 +33,41 @@ export default function Platform({user,demo,dark,toggle,home,logout,notify,onUse
  const [tab,setTab]=useState('calendar'),[data,setData]=useState<Data>(demo?demoData():emptyData),[loading,setLoading]=useState(!demo),[error,setError]=useState(''),[mobileNav,setMobileNav]=useState(false),[booking,setBooking]=useState(false),[manualLessonStudentId,setManualLessonStudentId]=useState<string|null>(null),[reschedule,setReschedule]=useState<Lesson>(),[cancel,setCancel]=useState<Lesson>(),[busy,setBusy]=useState(false),[notifications,setNotifications]=useState(false),[tool,setTool]=useState<{type:string;value?:object}|null>(null),[room,setRoom]=useState<Room|null>(null),[search,setSearch]=useState(''),[backfillingTrials,setBackfillingTrials]=useState(false),[promotingStudentId,setPromotingStudentId]=useState(''),[backfillCredentials,setBackfillCredentials]=useState<TrialAccountCredential[]|null>(null);
  const roomSaveHandle=useRef<RoomSaveHandle>(null);
  const seenPaymentReminderIds=useRef(new Set<string>());
+ const balanceSyncInFlight=useRef(false);
  const [activePaymentReminder,setActivePaymentReminder]=useState<Notice|null>(null);
  const leavingRoom=useRef(false);
  const teacher=user.role==='teacher';
  const currentTime=useSyncExternalStore(subscribeClock,clockSnapshot,()=>0);
  const reload=useCallback(async()=>{if(demo)return;try{const d=await api<WorkspaceData>('workspace');setData(d);if(d.user)onUser(d.user);setError('');}catch(e){setError((e as Error).message);}finally{setLoading(false);}},[demo,onUser]);
  useEffect(()=>{if(demo){const loadSaved=()=>{try{const saved=localStorage.getItem('ct-demo-v2');if(saved){const normalized=normalizeDemoData(JSON.parse(saved));setData(normalized);const migrated=JSON.stringify(normalized);if(migrated!==saved)localStorage.setItem('ct-demo-v2',migrated);}}catch{}};const timer=window.setTimeout(loadSaved,0);const update=(e:StorageEvent)=>{if(e.key==='ct-demo-v2'&&e.newValue){try{setData(normalizeDemoData(JSON.parse(e.newValue)));}catch{}}};window.addEventListener('storage',update);return()=>{window.clearTimeout(timer);window.removeEventListener('storage',update);};}const request=window.setTimeout(()=>{void reload();},0);return()=>window.clearTimeout(request);},[demo,refresh,reload]);
+ useEffect(()=>{
+   if(demo)return;
+   let active=true;
+   const syncBalance=async()=>{
+     if(!active||document.visibilityState==='hidden'||balanceSyncInFlight.current)return;
+     balanceSyncInFlight.current=true;
+     try{
+       if(teacher){
+         const result=await api<{balances:{id:string;balance:number}[]}>('balances');
+         if(!active)return;
+         const balances=new Map(result.balances.map(item=>[item.id,item.balance]));
+         setData(current=>({...current,students:current.students.map(student=>balances.has(student.id)?{...student,balance:balances.get(student.id)!}:student)}));
+       }else{
+         const result=await api<{user:User|null}>('me');
+         const latest=result.user;
+         if(!active||!latest||latest.id!==user.id)return;
+         onUser(latest);
+         setData(current=>({...current,students:current.students.some(student=>student.id===latest.id)?current.students.map(student=>student.id===latest.id?{...student,balance:latest.balance}:student):[{...latest},...current.students]}));
+       }
+     }catch{/* Keep the last known balance until the next refresh. */}
+     finally{balanceSyncInFlight.current=false;}
+   };
+   const onVisibilityChange=()=>{if(document.visibilityState==='visible')void syncBalance();};
+   window.addEventListener('focus',syncBalance);
+   document.addEventListener('visibilitychange',onVisibilityChange);
+   const timer=window.setInterval(()=>void syncBalance(),15000);
+   return()=>{active=false;window.clearInterval(timer);window.removeEventListener('focus',syncBalance);document.removeEventListener('visibilitychange',onVisibilityChange);};
+ },[demo,teacher,user.id,onUser]);
  useEffect(()=>{if(demo||room||tab!=='rooms')return;let active=true;const refreshRooms=async()=>{try{const result=await api<{rooms:Room[]}>('rooms');if(active)setData(current=>({...current,rooms:result.rooms}));}catch{}};void refreshRooms();const poll=setInterval(()=>void refreshRooms(),8000);return()=>{active=false;clearInterval(poll);};},[demo,room,tab]);
  useEffect(()=>{if(demo||teacher||!data.paymentReminderPopupEnabled)return;let active=true;const poll=async()=>{try{const result=await api<{notifications:Notice[]}>('notifications/pending');if(!active)return;const pending=result.notifications||[];setData(current=>({...current,notifications:[...pending.filter(item=>!current.notifications.some(existing=>existing.id===item.id)),...current.notifications]}));}catch{/* Актуальность списка обновится при следующем опросе. */}};void poll();const timer=window.setInterval(()=>void poll(),10000);return()=>{active=false;window.clearInterval(timer);};},[demo,teacher,data.paymentReminderPopupEnabled]);
  useEffect(()=>{if(teacher||!data.paymentReminderPopupEnabled||activePaymentReminder)return;const reminder=data.notifications.find(item=>item.type==='payment_reminder'&&item.popup===1&&!item.read&&!item.popup_dismissed_at&&!seenPaymentReminderIds.current.has(item.id));if(reminder){seenPaymentReminderIds.current.add(reminder.id);setActivePaymentReminder(reminder);}},[teacher,data.paymentReminderPopupEnabled,data.notifications,activePaymentReminder]);

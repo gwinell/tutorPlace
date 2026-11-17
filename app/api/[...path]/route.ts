@@ -391,6 +391,10 @@ async function route(request:Request){
    const cookie=sessionToken?'ct-session='+sessionToken+'; Path=/; HttpOnly; SameSite=Strict; Max-Age=604800'+(url.protocol==='https:'?'; Secure':''):undefined;
    return json({lesson,...(trialAccount?{trialAccount}:{})},201,cookie?{'Set-Cookie':cookie}:{});
  }
+ if(path[0]==='balances'&&method==='GET'){
+   await teacher(request);
+   return json({balances:await all("SELECT id,balance FROM users WHERE role='student'")});
+ }
  if(path[0]==='workspace'&&method==='GET'){
    const u=await auth(request);await cleanup();const isTeacher=u.role==='teacher';
    const courses=isTeacher?await all('SELECT * FROM courses ORDER BY position,title'):await all('SELECT c.* FROM courses c JOIN course_enrollments e ON e.course_id=c.id WHERE e.student_id=? ORDER BY c.position,c.title',u.id);

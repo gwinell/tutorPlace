@@ -227,6 +227,19 @@ test('parseSdkKey принимает Base64 SDK key и отклоняет пов
   assert.throws(() => setup().modules['@/lib/salutejazz-real'].parseSdkKey('not a key'), /SDK key is invalid/);
 });
 
+test('Снимок балансов доступен репетитору и запрещён ученикам', async () => {
+  const qa = setup();
+  const teacher = await qa.teacherSession();
+  const { student, cookie } = await qa.createStudent(teacher, { balance: 4 });
+  qa.sql.prepare('UPDATE users SET balance=-2 WHERE id=?').run(student.id);
+
+  const teacherResult = await qa.request('balances', undefined, teacher);
+  assert.equal(teacherResult.status, 200);
+  assert.deepEqual(teacherResult.data.balances, [{ id: student.id, balance: -2 }]);
+  assert.equal((await qa.request('balances', undefined, cookie)).status, 403);
+  assert.equal((await qa.request('balances')).status, 401);
+});
+
 test('SaluteJazz кеширует access token и не запрашивает его для каждой комнаты', async () => {
   const keys = await crypto.subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, true, ['sign', 'verify']);
   const jwk = { ...await crypto.subtle.exportKey('jwk', keys.privateKey), kid: 'fixture-key' };
