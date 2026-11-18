@@ -385,6 +385,22 @@ test('Потерянный ответ PATCH сверяется с календа
   assert.equal(qa.locks(id), 9);
 });
 
+test('Репетитор может перенести платный урок без подтверждения роли ученика', async () => {
+  const qa = setup();
+  const teacher = await qa.teacherSession();
+  const { student, cookie } = await qa.createStudent(teacher, { balance: 1 });
+  const booked = await qa.request('book', { start: qa.at(10), minutes: 55 }, cookie);
+  assert.equal(booked.status, 201, JSON.stringify(booked.data));
+
+  const moved = await qa.request('lessons/' + booked.data.lesson.id, { start: qa.at(12) }, teacher);
+  assert.equal(moved.status, 200, JSON.stringify(moved.data));
+  assert.equal(moved.data.lesson.student_id, student.id);
+  assert.equal(moved.data.lesson.start, qa.at(12));
+  assert.equal(moved.data.lesson.status, 'scheduled');
+  assert.equal(moved.data.lesson.move_id, null);
+  assert.equal(qa.events.get(booked.data.lesson.event_id).start.dateTime, qa.at(12));
+});
+
 test('При недоступной сверке оба окна удерживаются, повторная проверка завершает перенос', async () => {
   const qa = setup();
   const created = await qa.book('+79161234567', 10);

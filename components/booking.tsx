@@ -2,7 +2,7 @@
 import {useState,useEffect,useMemo} from 'react';
 import { CalendarDays, Clock3, Video, Check, Info, ArrowRight, ArrowUpRight, CalendarPlus, Copy, ChevronLeft, ChevronRight } from 'lucide-react';
 import {Modal,Button,Tag,api} from './site-ui';
-import {Lesson,User,createSlots,dateLabel,dateKeyInTimeZone,addDaysToDateKey,addMonthsToMonthKey,calendarMonthGrid,googleCalendarUrl,downloadIcs} from '@/lib/domain';
+import {Lesson,User,createSlots,dateLabel,dateKeyInTimeZone,addDaysToDateKey,addMonthsToMonthKey,calendarMonthGrid,lessonDurationMinutes,googleCalendarUrl,downloadIcs} from '@/lib/domain';
 const TRIAL_GOALS=['ЕГЭ','Python','Pandas','МЦКО','ОГЭ','Информатика','Повышение успеваемости'];
 const WEEKDAYS=['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
 export default function Booking({onClose,onBooked,onTrialAccountCreated,student=false,demo=false,reschedule,students}:{onClose:()=>void;onBooked:(lesson?:Lesson)=>void;onTrialAccountCreated?:(user:User)=>void;student?:boolean;demo?:boolean;reschedule?:Lesson;students?:User[]}){
@@ -10,7 +10,7 @@ export default function Booking({onClose,onBooked,onTrialAccountCreated,student=
  const tomorrow=()=>addDaysToDateKey(today(),1);
  const [date,setDate]=useState(tomorrow),[calendarMonth,setCalendarMonth]=useState(()=>tomorrow().slice(0,7)),[slots,setSlots]=useState<{start:string;end:string}[]>([]),[selected,setSelected]=useState(''),[loading,setLoading]=useState(!demo),[saving,setSaving]=useState(false),[error,setError]=useState(''),[configured,setConfigured]=useState(true),[example,setExample]=useState(demo),[name,setName]=useState(''),[phone,setPhone]=useState(''),[goals,setGoals]=useState<string[]>([]),[comment,setComment]=useState(''),[consent,setConsent]=useState(false),[success,setSuccess]=useState(false),[bookedLesson,setBookedLesson]=useState<Lesson|null>(null),[trialCredentials,setTrialCredentials]=useState<{login:string;password:string;autoLogin:boolean}|null>(null),[copied,setCopied]=useState('');
  const [studentId,setStudentId]=useState(reschedule?.student_id||students?.[0]?.id||'');
- const minutes=reschedule?.type==='trial'?45:student?55:45;
+ const minutes=reschedule?lessonDurationMinutes(reschedule.type):student?55:45;
  const minDate=tomorrow(),maxDate=addDaysToDateKey(today(),60),minMonth=minDate.slice(0,7),maxMonth=maxDate.slice(0,7);
  const calendarDays=useMemo(()=>calendarMonthGrid(calendarMonth),[calendarMonth]);
  const calendarMonthLabel=dateLabel(`${calendarMonth}-15T12:00:00Z`,{month:'long',year:'numeric'});
