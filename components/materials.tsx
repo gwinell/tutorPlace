@@ -6,6 +6,7 @@ import {Course,Topic,Assignment,Submission,User,topicProgress,dateLabel,resultSt
 import {isGithubMaterialContentType,normalizeGithubSource} from '@/lib/github-source';
 import {githubMaterialBaseUrl} from '@/lib/material-links';
 import {normalizeAssignmentPrompt} from '@/lib/assignment-prompt-format.mjs';
+import {canSubmitAssignmentResponse} from '@/lib/assignment-permissions';
 import MarkdownContent from './markdown-content';
 import {AssignmentFeedback,AssignmentResult,AssignmentSheet,assignmentTypeIcon} from './assignment-sheet';
 import CodeEditor from './code-editor';
@@ -80,12 +81,12 @@ export default function Materials({courses,topics,assignments,submissions,teache
      {task?<div className="task-detail">
       <button className="text-link" onClick={()=>{setTask(null);setAnswer('');setCode('');setResult(null);}}><ArrowLeft size={14}/>Все задания</button>
       <AssignmentSheet title={task.title} kind={task.kind} prompt={taskPrompt} teacher={teacher} action={teacher&&<Button type="button" className="button-outline button-small" onClick={()=>onAssignment(task)}><Settings size={13}/>Изменить задание</Button>}>
-       {taskPrompt&&<form className="task-response-form" onSubmit={submit}>
+       {canSubmitAssignmentResponse(teacher?'teacher':'student',taskPrompt)?<form className="task-response-form" onSubmit={submit}>
         <div className="task-response">
          {task.kind==='quiz'?<fieldset className="quiz-options"><legend>Выбери ответ</legend>{(typeof task.options==='string'?JSON.parse(task.options):task.options||[]).map((option:string,i:number)=><label key={i} className={answer===String(i)?'selected':''}><input type="radio" name="quiz" value={i} checked={answer===String(i)} onChange={e=>setAnswer(e.target.value)} required/><span>{option}</span></label>)}</fieldset>:task.kind==='code'?<div className="task-code-answer"><span className="task-answer-label">Твоё решение</span><CodeEditor value={code} onChange={setCode} language="python" filename="solution.py" runnable={Boolean(code.trim())}/></div>:<label className="field task-text-answer"><span>Твоё решение</span><textarea placeholder="Напиши свой ответ…" value={answer} onChange={e=>setAnswer(e.target.value)} minLength={3} maxLength={20000} required/></label>}
         </div>
         <Button type="submit" loading={loading} className="button-small" disabled={loading||(task.kind==='code'?!code.trim():!answer.trim())}><Send size={15}/>{task.kind==='code'?'Отправить на проверку':'Отправить ответ'}</Button>
-       </form>}
+       </form>:teacher?<div className="info-box" role="status"><Info size={16}/><span>Предпросмотр задания. Отправить ответ может ученик.</span></div>:null}
        {result&&<AssignmentResult status={result.status} message={result.message} tests={result.tests}/>}
        {(()=>{const last=latest(task);return last?.feedback?<AssignmentFeedback feedback={last.feedback} date={last.feedback_at?dateLabel(last.feedback_at,{day:'numeric',month:'long'}):undefined}/>:null;})()}
       </AssignmentSheet>

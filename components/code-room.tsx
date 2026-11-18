@@ -4,6 +4,7 @@ import {ArrowLeft,Clock3,Users,FileCode2,Keyboard,Info,Check,RefreshCw} from 'lu
 import {Room,User} from '@/lib/domain';
 import {ROOM_STARTERS,starterLanguage,type RoomLanguage,type RoomFile} from '@/lib/room-presets';
 import {Tag,Button,api} from './site-ui';
+import {ROOM_ACTIVITY_TOUCH_INTERVAL_MS,shouldTouchRoomActivity} from '@/lib/room-activity';
 import {documentFrom,replaceText,encode,encodeUpdate,decode,Y} from '@/lib/collaboration';
 import CodeEditor, { RuntimeProvider, type CodeEditorHandle, type CodeEditorSelectionRestore } from './code-editor';
 import TypingPractice from './typing-practice';
@@ -26,11 +27,13 @@ export default function CodeRoom({ initial, demo, user, notify, onExit, onDemoUp
  const [status, setStatus] = useState('saved');
  const [expired, setExpired] = useState(false);
  const current = useRef(initial);
+ const serverVersion = useRef({revision:initial.revision,lastActive:initial.last_active});
  const pending = useRef(new Map<RoomFile, { version: number; persisted: boolean; keys: string[] }>());
  const inFlight = useRef<Promise<boolean> | null>(null);
  const mounted = useRef(false);
  const restored = useRef(false);
  const touchPending = useRef(false);
+ const lastTouchAt = useRef(initial.last_active-ROOM_ACTIVITY_TOUCH_INTERVAL_MS);
  const counter = useRef(0);
  const selectionRestoreVersion = useRef(0);
  const studentEditorHandle = useRef<CodeEditorHandle|null>(null), teacherEditorHandle = useRef<CodeEditorHandle|null>(null);
@@ -68,7 +71,13 @@ export default function CodeRoom({ initial, demo, user, notify, onExit, onDemoUp
    }
  }
 
- function merge(received: Room) {
+ function merge(received: Room, fromServer=false) {
+   if(fromServer){
+     const known=serverVersion.current;
+     if(received.revision>known.revision||received.revision===known.revision&&received.last_active>=known.lastActive){
+       serverVersion.current={revision:received.revision,lastActive:received.last_active};
+     }
+   }
    const restores:Partial<Record<RoomFile,CodeEditorSelectionRestore>>={};
    const applyRemoteState=(file:RoomFile,state:string|undefined,editor:{current:CodeEditorHandle|null})=>{
      if(!state)return;
@@ -109,15 +118,16 @@ export default function CodeRoom({ initial, demo, user, notify, onExit, onDemoUp
        if (!mounted.current) return true;
        if (pending.current.get(file)?.version === edit.version) pending.current.delete(file);
        removeDrafts(edit.keys);
-       merge(data.room);
+       merge(data.room,true);
        setStatus(pending.current.size ? 'saving' : 'saved');
      } else if (touchPending.current) {
        touchPending.current = false;
        const data = await api<{ room: Room }>(endpoint, 'POST', {}, signal);
-       if (mounted.current) merge(data.room);
+       if (mounted.current) merge(data.room,true);
      } else {
-       const data = await api<{ room: Room } | null>(endpoint, 'GET', undefined, signal, { 'If-None-Match': `W/"${current.current.revision}"` });
-       if (mounted.current && data?.room) merge(data.room);
+       const known=serverVersion.current;
+       const data = await api<{ room: Room } | null>(endpoint, 'GET', undefined, signal, { 'If-None-Match': `W/"room-${known.revision}-${known.lastActive}"` });
+       if (mounted.current && data?.room) merge(data.room,true);
      }
      return true;
    } catch (error) {
@@ -239,7 +249,7 @@ export default function CodeRoom({ initial, demo, user, notify, onExit, onDemoUp
      setStatus('saved');
    }
  }
- function activity(){const n={...current.current,last_active:Date.now()};current.current=n;setRoom(n);if(demo)persistDemo(n);else touchPending.current=true;}
+ function activity(){const timestamp=Date.now();current.current={...current.current,last_active:timestamp};if(shouldTouchRoomActivity(lastTouchAt.current,timestamp)){lastTouchAt.current=timestamp;setRoom(current.current);if(demo)persistDemo(current.current);else touchPending.current=true;}}
  async function language(value:string){
   const previous=current.current.language as RoomLanguage;
   const next=value as RoomLanguage;
@@ -253,7 +263,7 @@ export default function CodeRoom({ initial, demo, user, notify, onExit, onDemoUp
     }
    }else{
     updated=(await api<{room:Room}>('rooms/'+room.id,'POST',{language:next})).room;
-    merge(updated);
+    merge(updated,true);
    }
    const untouched=['student','teacher'].some(file=>starterLanguage(docs[file as RoomFile].getText('code').toString(),file as RoomFile)===previous);
    const custom=['student','teacher'].some(file=>starterLanguage(docs[file as RoomFile].getText('code').toString(),file as RoomFile)===null);
@@ -278,6 +288,6 @@ export default function CodeRoom({ initial, demo, user, notify, onExit, onDemoUp
     <section className={mobileFile==='teacher'?'selected':''}><div className="room-file-heading"><span className="user-avatar small teacher">Р</span><div><strong>Файл репетитора</strong><small>{teacher?'Только ты можешь редактировать':'Смотри, разбирайся и запускай'}</small></div><Tag color="neutral">{teacher?'Твой файл':'Только чтение'}</Tag></div><CodeEditor key={'t-'+room.language} editorHandle={teacherEditorHandle} selectionRestore={selectionRestores.teacher} value={room.teacher_code} onChange={v=>change('teacher',v)} language={room.language} roomId={demo?undefined:room.id} demo={demo} filename={'teacher.'+(room.language==='lua'?'lua':room.language==='kumir'?'kum':'py')} readOnly={!teacher} kumirWorkspace={room.language==='kumir'} onActivity={activity}/></section>
    </div></RuntimeProvider>
    <div className={room.language==='kumir'?'info-box kumir-workspace-info':'info-box'}><Info size={16}/><span>{room.language==='kumir'?'Пиши программу в редакторе и наблюдай за исполнителем на поле. Данные для команды «ввод» укажи в панели «Ввод программы».':'В каждом файле свой терминал. Если программа ожидает ввод, поле появится под выводом. Код выполняется в браузере.'} {demo?'Синхронизацию между ролями можно проверить в двух вкладках демоверсии на этом устройстве.':''}</span></div>
-  </> : <TypingPractice roomId={room.id} studentId={room.student_id} teacher={teacher} demo={demo}/>}
+  </> : <TypingPractice roomId={room.id} studentId={room.student_id} teacher={teacher} demo={demo} onActivity={activity}/>}
  </div>;
 }
