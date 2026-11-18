@@ -10,7 +10,7 @@ function matches(event: CalendarEvent, interval: Interval) {
     Date.parse(event.end?.dateTime ?? '') === Date.parse(interval.end);
 }
 
-export async function reserveLessonMove(move: Move) {
+export async function reserveLessonMove(move: Move, { allowOverlappingSlots = false }: { allowOverlappingSlots?: boolean } = {}) {
   const database = db();
   const oldKeys = new Set(slotKeys(move.original.start, move.original.end));
   const newKeys = slotKeys(move.target.start, move.target.end).filter(key => !oldKeys.has(key));
@@ -21,10 +21,10 @@ export async function reserveLessonMove(move: Move) {
 
   const [result] = await database.batch([
     claim,
-    ...newKeys.map(key => database.prepare(`
+    ...(allowOverlappingSlots ? [] : newKeys.map(key => database.prepare(`
       INSERT INTO slot_locks (slot, lesson_id)
       SELECT ?, ? WHERE EXISTS (SELECT 1 FROM lessons WHERE id = ? AND move_id = ?)
-    `).bind(key, move.lessonId, move.lessonId, move.operationId)),
+    `).bind(key, move.lessonId, move.lessonId, move.operationId))),
   ]);
   requireValue(result.meta.changes, 'Урок уже изменён. Обнови расписание.', 409);
 }

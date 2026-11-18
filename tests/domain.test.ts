@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {addDaysToDateKey,addMonthsToMonthKey,calendarMonthGrid,cancellationPolicy,canReschedule,createSlots,dateKeyInTimeZone,dateLabel,monthBounds,monthKey,overlaps,resultStatus,serializeLessonPreparation,type Lesson} from '../lib/domain.ts';
+import {addDaysToDateKey,addMonthsToMonthKey,calendarMonthGrid,cancellationPolicy,canReschedule,createSlots,dateKeyInTimeZone,dateLabel,lessonDurationMinutes,monthBounds,monthKey,overlaps,resultStatus,serializeLessonPreparation,type Lesson} from '../lib/domain.ts';
 import {isGithubMaterialContentType,normalizeGithubSource} from '../lib/github-source.ts';
 const lesson=(extra:Partial<Lesson>={}):Lesson=>({id:'test',name:'test',start:'2026-11-07T13:00:00.000Z',end:'2026-11-07T13:55:00.000Z',type:'paid',status:'scheduled',...extra});
 test('Пункты подготовки формы сериализуются в API-контракт',()=>{
@@ -26,6 +26,10 @@ test('GitHub материалы принимают поддерживаемые 
 test('Перенос разрешён ровно за два часа, за миллисекунду позднее запрещён',()=>{
  const l=lesson();const start=Date.parse(l.start);
  assert.equal(canReschedule(l,start-7200000),true);assert.equal(canReschedule(l,start-7199999),false);assert.equal(canReschedule(lesson({status:'cancelled'}),start-86400000),false);
+});
+test('Длительность переноса берётся из типа урока, а не роли пользователя',()=>{
+ assert.equal(lessonDurationMinutes('trial'),45);
+ assert.equal(lessonDurationMinutes('paid'),55);
 });
 test('Три бесплатных отмены, четвёртая со списанием; пробные не входят в счётчик',()=>{
  const cancelled=lesson({status:'cancelled',cancelled_at:'2026-11-06T10:00:00Z'});

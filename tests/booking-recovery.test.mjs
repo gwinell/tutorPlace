@@ -382,7 +382,44 @@ test('Потерянный ответ PATCH сверяется с календа
   assert.equal(qa.lesson(id).start, qa.at(12));
   assert.equal(qa.events.get(event_id).start.dateTime, qa.at(12));
   assert.equal(qa.lesson(id).move_id, null);
-  assert.equal(qa.locks(id), 9);
+  assert.equal(qa.locks(id), 0);
+});
+
+test('Репетитор может перенести урок поверх чужой брони, вне рабочих часов и занятого календаря', async () => {
+  const qa = setup();
+  const teacher = await qa.teacherSession();
+  const { student, cookie } = await qa.createStudent(teacher, { balance: 1 });
+  const booked = await qa.request('book', { start: qa.at(10), minutes: 55 }, cookie);
+  assert.equal(booked.status, 201, JSON.stringify(booked.data));
+  const { cookie: conflictingCookie } = await qa.createStudent(teacher, { balance: 1 });
+  const conflictingBooking = await qa.request('book', { start: qa.at(12), minutes: 55 }, conflictingCookie);
+  assert.equal(conflictingBooking.status, 201, JSON.stringify(conflictingBooking.data));
+  qa.sql.prepare("UPDATE settings SET value=? WHERE key='schedule'").run(JSON.stringify({ days: [0, 1, 2, 3, 4, 5, 6], from: '10:00', to: '11:00', timezone: 'Europe/Moscow', meetUrl: '' }));
+  qa.network.busy = [{ start: qa.at(12), end: qa.at(13) }];
+
+  const moved = await qa.request('lessons/' + booked.data.lesson.id, { start: qa.at(12) }, teacher);
+  assert.equal(moved.status, 200, JSON.stringify(moved.data));
+  assert.equal(moved.data.lesson.student_id, student.id);
+  assert.equal(moved.data.lesson.start, qa.at(12));
+  assert.equal(moved.data.lesson.end, new Date(Date.parse(qa.at(12)) + 55 * 60000).toISOString());
+  assert.equal(moved.data.lesson.status, 'scheduled');
+  assert.equal(moved.data.lesson.move_id, null);
+  assert.equal(qa.events.get(booked.data.lesson.event_id).start.dateTime, qa.at(12));
+  assert.equal(qa.lesson(conflictingBooking.data.lesson.id).start, qa.at(12));
+});
+
+test('Ученик по-прежнему не может перенести урок на занятое календарём время', async () => {
+  const qa = setup();
+  const { cookie, student } = await qa.createStudent(await qa.teacherSession(), { balance: 1 });
+  const booked = await qa.request('book', { start: qa.at(10), minutes: 55 }, cookie);
+  assert.equal(booked.status, 201, JSON.stringify(booked.data));
+  qa.network.busy = [{ start: qa.at(12), end: qa.at(13) }];
+
+  const moved = await qa.request('lessons/' + booked.data.lesson.id, { start: qa.at(12) }, cookie);
+  assert.equal(moved.status, 409);
+  assert.equal(qa.lesson(booked.data.lesson.id).start, qa.at(10));
+  assert.equal(qa.lesson(booked.data.lesson.id).status, 'scheduled');
+  assert.equal(qa.lesson(booked.data.lesson.id).student_id, student.id);
 });
 
 test('При недоступной сверке оба окна удерживаются, повторная проверка завершает перенос', async () => {
@@ -395,7 +432,9 @@ test('При недоступной сверке оба окна удержив�
   assert.equal(qa.lesson(id).status, 'updating');
   assert.equal(qa.lesson(id).start, qa.at(10));
   assert.equal(qa.lesson(id).move_start, qa.at(12));
-  assert.equal(qa.locks(id), 18);
+  assert.equal(qa.locks(id), 9);
+  const pendingSlots = await qa.request('slots?date=' + qa.date + '&minutes=45');
+  assert.ok(!pendingSlots.data.slots.some(slot => slot.start === qa.at(10) || slot.start === qa.at(12)));
   const slots = await qa.request('slots?date=' + qa.date);
   assert.ok(!slots.data.slots.some(slot => slot.start === qa.at(10) || slot.start === qa.at(12)));
 
@@ -404,7 +443,7 @@ test('При недоступной сверке оба окна удержив�
   assert.equal(retried.status, 200);
   assert.equal(qa.lesson(id).start, qa.at(12));
   assert.equal(qa.events.get(event_id).start.dateTime, qa.at(12));
-  assert.equal(qa.locks(id), 9);
+  assert.equal(qa.locks(id), 0);
 });
 
 test('Репетитор вручную назначает уроки вне доступности, поверх занятых событий и без баланса', async () => {

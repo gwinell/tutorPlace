@@ -1,5 +1,5 @@
 import {db,secrets,HttpError,requireValue,auth,currentUser,safeUser,passwordHash,verifyPassword,hash,now,id,schedule,normalizeSchedule,calendarConfigured,calendar,eventPath,slots,slotKeys,httpsUrl,cleanup} from '@/lib/server';
-import {Lesson,canReschedule,monthBounds,resultStatus,PYTHON_START,TEACHER_START} from '@/lib/domain';
+import {Lesson,canReschedule,lessonDurationMinutes,monthBounds,resultStatus,PYTHON_START,TEACHER_START} from '@/lib/domain';
 import {documentFrom,encode,decode,replaceText,Y} from '@/lib/collaboration';
 import {ROOM_STARTERS,starterLanguage,type RoomLanguage} from '@/lib/room-presets';
 import {normalizeTrialPhone,limitTrialBooking} from '@/lib/trial-booking';
@@ -709,18 +709,26 @@ async function route(request:Request){
      requireValue(canReschedule(l as Lesson),'До начала осталось менее 2 часов. Перенос недоступен, но можно отменить урок.');
      const start=text(body.start,40);
      requireValue(Number.isFinite(Date.parse(start)),'Выбери время.');
-     const date=new Intl.DateTimeFormat('sv-SE',{timeZone:'Europe/Moscow'}).format(new Date(start));
-     const available=await slots(date,l.type==='trial'?45:55,l.id);
-     const slot=available.slots.find(s=>s.start===start);
-     requireValue(slot,'Это время уже занято.',409);
-     if(slot.start===l.start&&slot.end===l.end)return json({lesson:l});
+     requireValue(Date.parse(start)>Date.now(),'Укажи будущее время.');
+     let target:{start:string;end:string};
+     if(u.role==='teacher'){
+       const normalizedStart=new Date(start).toISOString();
+       target={start:normalizedStart,end:new Date(Date.parse(normalizedStart)+lessonDurationMinutes(l.type)*60_000).toISOString()};
+     }else{
+       const date=new Intl.DateTimeFormat('sv-SE',{timeZone:'Europe/Moscow'}).format(new Date(start));
+       const available=await slots(date,lessonDurationMinutes(l.type),l.id);
+       const slot=available.slots.find(s=>s.start===start);
+       requireValue(slot,'Это время уже занято.',409);
+       target=slot!;
+     }
+     if(target.start===l.start&&target.end===l.end)return json({lesson:l});
      requireValue(canReschedule(l as Lesson),'До начала осталось менее 2 часов. Перенос недоступен, но можно отменить урок.');
      const move={
        lessonId:l.id,eventId:l.event_id,operationId:id(),
-       original:{start:l.start,end:l.end},target:slot,
+       original:{start:l.start,end:l.end},target,
      };
      try{
-       await reserveLessonMove(move);
+       await reserveLessonMove(move,{allowOverlappingSlots:u.role==='teacher'});
      }catch(e){
        if(e instanceof HttpError)throw e;
        throw new HttpError('Это окно только что заняли. Выбери другое время.',409);
