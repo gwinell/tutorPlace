@@ -71,7 +71,21 @@ export async function slots(date:string,minutes:number,exclude?:string){requireV
  const appendFreeBusy=async(ids:string[],subtract?:{start:string;end:string})=>{
    if(!ids.length)return;
    const response=await calendar('freeBusy','POST',{timeMin:min,timeMax:max,timeZone:s.timezone,items:ids.map(id=>({id}))});
-   for(const calendarId of ids){const item=response?.calendars?.[calendarId];if(!item||item.errors?.length){console.warn('Skipping unavailable availability calendar:',calendarId,item?.errors||'No calendar response');continue;}for(const interval of item.busy||[]){let pieces=[{start:new Date(interval.start).toISOString(),end:new Date(interval.end).toISOString()}];if(subtract&&calendarId===targetCalendarId)pieces=pieces.flatMap(piece=>{if(subtract.end<=piece.start||subtract.start>=piece.end)return[piece];const remaining:{start:string;end:string}[]=[];if(subtract.start>piece.start)remaining.push({start:piece.start,end:subtract.start});if(subtract.end<piece.end)remaining.push({start:subtract.end,end:piece.end});return remaining;});busy.push(...pieces);}}
+   for(const calendarId of ids){
+     const item=response?.calendars?.[calendarId];
+     if(!item||item.errors?.length)throw new HttpError('Не удалось проверить доступность календаря. Запись временно недоступна.',503);
+     for(const interval of item.busy||[]){
+       let pieces=[{start:new Date(interval.start).toISOString(),end:new Date(interval.end).toISOString()}];
+       if(subtract&&calendarId===targetCalendarId)pieces=pieces.flatMap(piece=>{
+         if(subtract.end<=piece.start||subtract.start>=piece.end)return[piece];
+         const remaining:{start:string;end:string}[]=[];
+         if(subtract.start>piece.start)remaining.push({start:piece.start,end:subtract.start});
+         if(subtract.end<piece.end)remaining.push({start:subtract.end,end:piece.end});
+         return remaining;
+       });
+       busy.push(...pieces);
+     }
+   }
  };
  if(ignored?.event_id){
    const ownWindow=await db().prepare('SELECT start,end FROM lessons WHERE id=?').bind(exclude).first<{start:string;end:string}>();

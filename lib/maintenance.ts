@@ -12,7 +12,7 @@ type LessonRow = {
   move_id: string | null;
   move_start: string | null;
   move_end: string | null;
-  student_id: string;
+  student_id: string | null;
   type: string;
   charged?: number | null;
   jazz_room_id: string | null;
@@ -35,6 +35,31 @@ export async function maintain(environment: ServerEnv = secrets as ServerEnv) {
       console.error("SaluteJazz room cleanup:", lesson.id, error instanceof Error ? error.message : "Unknown error");
       return false;
     }
+  };
+  const removeStalePendingLesson = async (lesson: LessonRow, cutoff: string) => {
+    // Assignments have no foreign key to lessons, so retain referenced lessons and relations while releasing their slots.
+    const statements = [
+      database.prepare("DELETE FROM slot_locks WHERE lesson_id=? AND EXISTS (SELECT 1 FROM lessons WHERE id=? AND status='pending' AND operation_started_at<?)").bind(lesson.id, lesson.id, cutoff),
+      database.prepare("DELETE FROM lesson_preparation_items WHERE lesson_id=? AND EXISTS (SELECT 1 FROM lessons WHERE id=? AND status='pending' AND operation_started_at<?) AND NOT EXISTS (SELECT 1 FROM assignments WHERE lesson_id=?)").bind(lesson.id, lesson.id, cutoff, lesson.id),
+      database.prepare("DELETE FROM lessons WHERE id=? AND status='pending' AND operation_started_at<? AND NOT EXISTS (SELECT 1 FROM assignments WHERE lesson_id=?)").bind(lesson.id, cutoff, lesson.id),
+      database.prepare("UPDATE lessons SET status='cancelled',cancelled_at=COALESCE(cancelled_at,operation_started_at),operation_started_at=NULL WHERE id=? AND status='pending' AND operation_started_at<? AND EXISTS (SELECT 1 FROM assignments WHERE lesson_id=?)").bind(lesson.id, cutoff, lesson.id),
+    ];
+    if (lesson.student_id) statements.push(database.prepare(`
+      DELETE FROM users WHERE id=? AND role='student' AND account_type='trial'
+        AND NOT EXISTS (SELECT 1 FROM sessions WHERE user_id=users.id)
+        AND NOT EXISTS (SELECT 1 FROM lessons WHERE student_id=users.id)
+        AND NOT EXISTS (SELECT 1 FROM rooms WHERE student_id=users.id)
+        AND NOT EXISTS (SELECT 1 FROM typing_results WHERE student_id=users.id)
+        AND NOT EXISTS (SELECT 1 FROM course_enrollments WHERE student_id=users.id)
+        AND NOT EXISTS (SELECT 1 FROM topic_access WHERE student_id=users.id)
+        AND NOT EXISTS (SELECT 1 FROM submissions WHERE student_id=users.id)
+        AND NOT EXISTS (SELECT 1 FROM assignments WHERE student_id=users.id OR lesson_id IN (SELECT id FROM lessons WHERE student_id=users.id))
+        AND NOT EXISTS (SELECT 1 FROM notifications WHERE student_id=users.id)
+        AND NOT EXISTS (SELECT 1 FROM payment_requests WHERE student_id=users.id)
+        AND NOT EXISTS (SELECT 1 FROM assignments WHERE lesson_id=?)
+        AND NOT EXISTS (SELECT 1 FROM lesson_preparation_items WHERE lesson_id IN (SELECT id FROM lessons WHERE student_id=users.id) OR assignment_id IN (SELECT id FROM assignments WHERE student_id=users.id OR lesson_id IN (SELECT id FROM lessons WHERE student_id=users.id)))
+    `).bind(lesson.student_id, lesson.id));
+    await database.batch(statements);
   };
   const deferJazzRoomClose = async (roomId: string, error: unknown) => {
     const key = `salutejazz-close:${roomId}`;
@@ -80,10 +105,7 @@ export async function maintain(environment: ServerEnv = secrets as ServerEnv) {
       }
       if (!calendarConfigured(serverEnv)) continue;
       if (!lesson.event_id) {
-        if (lesson.status === "pending" && await closeJazzRoom(lesson)) await database.batch([
-          database.prepare("DELETE FROM slot_locks WHERE lesson_id=?").bind(lesson.id),
-          database.prepare("DELETE FROM lessons WHERE id=? AND status='pending' AND operation_started_at<?").bind(lesson.id, cutoff),
-        ]);
+        if (lesson.status === "pending" && await closeJazzRoom(lesson)) await removeStalePendingLesson(lesson, cutoff);
         else if (lesson.status === "updating" && !lesson.move_id) await database.batch([
           database.prepare("UPDATE users SET balance=balance-1 WHERE id=(SELECT student_id FROM lessons WHERE id=? AND status='updating' AND type='paid' AND charged=1)").bind(lesson.id),
           database.prepare("UPDATE lessons SET status='cancelled',cancelled_at=COALESCE(cancelled_at,operation_started_at),operation_started_at=NULL WHERE id=? AND status='updating' AND move_id IS NULL").bind(lesson.id),
@@ -124,10 +146,7 @@ export async function maintain(environment: ServerEnv = secrets as ServerEnv) {
             throw error;
           }
         } else if (matches) await database.prepare("UPDATE lessons SET status='scheduled',operation_started_at=NULL WHERE id=? AND status='pending'").bind(lesson.id).run();
-        else if ((!event || event.status === "cancelled") && await closeJazzRoom(lesson)) await database.batch([
-          database.prepare("DELETE FROM slot_locks WHERE lesson_id=?").bind(lesson.id),
-          database.prepare("DELETE FROM lessons WHERE id=? AND status='pending' AND operation_started_at<?").bind(lesson.id, cutoff),
-        ]);
+        else if ((!event || event.status === "cancelled") && await closeJazzRoom(lesson)) await removeStalePendingLesson(lesson, cutoff);
         continue;
       }
       if (lesson.move_id && lesson.move_start && lesson.move_end) {

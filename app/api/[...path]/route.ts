@@ -27,6 +27,40 @@ type ApiBody = {
 type CalendarItem={id?:string;accessRole?:string;summary?:string;summaryOverride?:string;primary?:boolean};
 const PRIVACY_POLICY_VERSION='2026-11-14';
 function json(data:unknown,status=200,headers:Record<string,string>={}){return Response.json(data,{status,headers:{'Cache-Control':'no-store','X-Content-Type-Options':'nosniff',...headers}});}
+function ifNoneMatchMatches(header:string|null,etag:string){
+ if(!header)return false;
+ const value=header.trim();
+ if(value==='*')return true;
+ const current=etag.startsWith('W/')?etag.slice(2):etag;
+ let index=0;
+ while(index<value.length){
+  while(index<value.length&&(value[index]===' '||value[index]==='\t'||value[index]===','))index++;
+  if(index>=value.length)break;
+  const start=index;
+  if(value.startsWith('W/',index))index+=2;
+  if(value[index]!=='"'){
+   while(index<value.length&&value[index]!==',')index++;
+   continue;
+  }
+  index++;
+  let valid=true;
+  while(index<value.length&&value[index]!=='"'){
+   const code=value.charCodeAt(index);
+   if(!(code===0x21||(code>=0x23&&code<=0x7e)||code>=0x80))valid=false;
+   index++;
+  }
+  if(index>=value.length)break;
+  index++;
+  const candidate=value.slice(start,index).replace(/^W\//,'');
+  if(valid&&candidate===current)return true;
+  while(index<value.length&&(value[index]===' '||value[index]==='\t'))index++;
+  if(index<value.length&&value[index]===',')index++;
+  else if(index<value.length){
+   while(index<value.length&&value[index]!==',')index++;
+  }
+ }
+ return false;
+}
 async function all(sql:string,...values:unknown[]){return (await db().prepare(sql).bind(...values).all<Row>()).results;}
 const text=(v:unknown,max=200)=>typeof v==='string'?v.trim().slice(0,max):'';
 const TRIAL_GOALS=['ЕГЭ','Python','Pandas','МЦКО','ОГЭ','Информатика','Повышение успеваемости'] as const;
@@ -602,6 +636,11 @@ async function route(request:Request){
    const notifications=await all("SELECT id,student_id,title,body,created_at,read,type,popup,popup_dismissed_at FROM notifications WHERE student_id=? AND type='payment_reminder' AND popup=1 AND COALESCE(read,0)=0 AND popup_dismissed_at IS NULL ORDER BY created_at LIMIT 20",u.id);
    return json({notifications});
  }
+ if(path[0]==='notifications'&&path[1]==='read'&&method==='POST'){
+   const u=await auth(request);requireValue(u.role==='student','Отметить уведомления прочитанными может только ученик.',403);
+   await db().prepare('UPDATE notifications SET read=1 WHERE student_id=? AND COALESCE(read,0)=0').bind(u.id).run();
+   return json({ok:true});
+ }
  if(path[0]==='notifications'&&path[1]&&path[2]==='dismiss'&&method==='POST'){
    const u=await auth(request);requireValue(u.role==='student','Уведомление может закрыть только ученик.',403);
    const result=await db().prepare('UPDATE notifications SET read=1,popup_dismissed_at=COALESCE(popup_dismissed_at,?) WHERE id=? AND student_id=?').bind(now(),path[1],u.id).run();
@@ -616,17 +655,20 @@ async function route(request:Request){
    await teacher(request);const title=text(body.title),rawPrompt=text(body.prompt,20001);requireValue(title&&rawPrompt&&rawPrompt.length<=20000&&['code','quiz','text'].includes(body.kind||''),'Проверь данные задания.');const prompt=normalizeAssignmentPrompt(rawPrompt);requireValue(prompt.length<=20000&&prompt.trim(),'Условие после форматирования должно содержать от 1 до 20 000 символов.');const topicId=text(body.topic_id,100)||null,studentId=text(body.student_id,100)||null;requireValue(Boolean(topicId)!==Boolean(studentId),'Выбери тему курса или одного ученика.');if(topicId)requireValue(await db().prepare('SELECT id FROM topics WHERE id=?').bind(topicId).first(),'Тема не найдена.');if(studentId)requireValue(await db().prepare("SELECT id FROM users WHERE id=? AND role='student'").bind(studentId).first(),'Ученик не найден.');if(body.kind==='quiz')requireValue(Array.isArray(body.options)&&body.options.length>=2&&body.options.length<=20&&Number(body.answer)>=0&&Number(body.answer)<body.options.length,'Проверь варианты и номер правильного ответа.');const lessonId=text(body.lesson_id,100)||null;if(lessonId){const lesson=await db().prepare('SELECT student_id FROM lessons WHERE id=?').bind(lessonId).first<Row>();requireValue(lesson,'Урок не найден.');if(studentId)requireValue(lesson!.student_id===studentId,'Урок не принадлежит выбранному ученику.');if(topicId)requireValue(!!lesson!.student_id&&await studentCanReadTopic(lesson!.student_id,topicId),'У ученика нет доступа к теме, связанной с уроком.',403);}
    const assignmentId=text(body.id,100)||id(),existingAssignment=await db().prepare('SELECT id FROM assignments WHERE id=?').bind(assignmentId).first();
    if(!existingAssignment)requireValue(!await db().prepare('SELECT id FROM assignment_images WHERE assignment_id=?').bind(assignmentId).first(),'Этот идентификатор уже использовался. Создай задание заново.',409);
-   const savedAt=now();
-   await db().batch([
-     db().prepare('INSERT INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests,created_at,completed_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,NULL) ON CONFLICT(id) DO UPDATE SET topic_id=excluded.topic_id,student_id=excluded.student_id,lesson_id=excluded.lesson_id,title=excluded.title,kind=excluded.kind,prompt=excluded.prompt,options=excluded.options,answer=excluded.answer,tests=NULL,created_at=excluded.created_at,completed_at=NULL').bind(assignmentId,topicId,studentId,lessonId,title,body.kind,prompt,body.kind==='quiz'?JSON.stringify(body.options):null,body.kind==='quiz'?String(body.answer):null,null,savedAt),
+   const savedAt=now(),lessonExists=lessonId?'EXISTS (SELECT 1 FROM lessons WHERE id=?)':'1',lessonBindings=lessonId?[lessonId]:[];
+   const saved=await db().batch([
+     db().prepare(`INSERT INTO assignments (id,topic_id,student_id,lesson_id,title,kind,prompt,options,answer,tests,created_at,completed_at)
+       SELECT ?,?,?,?,?,?,?,?,?,?,?,NULL WHERE ${lessonExists}
+       ON CONFLICT(id) DO UPDATE SET topic_id=excluded.topic_id,student_id=excluded.student_id,lesson_id=excluded.lesson_id,title=excluded.title,kind=excluded.kind,prompt=excluded.prompt,options=excluded.options,answer=excluded.answer,tests=NULL,created_at=excluded.created_at,completed_at=NULL`).bind(assignmentId,topicId,studentId,lessonId,title,body.kind,prompt,body.kind==='quiz'?JSON.stringify(body.options):null,body.kind==='quiz'?String(body.answer):null,null,savedAt,...lessonBindings),
      db().prepare(`INSERT INTO settings (key,value)
        SELECT 'assignment-image-delete:edit:' || ? || ':' || i.id,
               json_object('object_key',i.object_key,'storage_backend',i.storage_backend)
        FROM assignment_images i
-       WHERE i.assignment_id=? AND instr(?, '/api/assignment-images/' || i.id)=0
-       ON CONFLICT(key) DO NOTHING`).bind(assignmentId,assignmentId,prompt),
-     db().prepare("DELETE FROM assignment_images WHERE assignment_id=? AND instr(?, '/api/assignment-images/' || id)=0").bind(assignmentId,prompt),
+       WHERE i.assignment_id=? AND ${lessonExists} AND instr(?, '/api/assignment-images/' || i.id)=0
+       ON CONFLICT(key) DO NOTHING`).bind(assignmentId,assignmentId,...lessonBindings,prompt),
+     db().prepare(`DELETE FROM assignment_images WHERE assignment_id=? AND ${lessonExists} AND instr(?, '/api/assignment-images/' || id)=0`).bind(assignmentId,...lessonBindings,prompt),
    ]);
+   requireValue(saved[0]?.meta.changes===1,'Урок уже изменён. Обнови страницу и повтори попытку.',409);
    try{await cleanupOrphanedAssignmentImages(db(),secrets);}catch(error){console.error('Assignment image cleanup deferred after assignment edit:',assignmentId,error instanceof Error?error.message:'Unknown error');}
    return json({ok:true});
  }
@@ -754,10 +796,10 @@ async function route(request:Request){
    const u=await auth(request);await cleanup();
    if(!path[1]&&method==='GET'){
      const rooms=await all('SELECT id,student_id,name,language,revision,last_active FROM rooms WHERE last_active>?'+(u.role==='teacher'?'':' AND student_id=?')+' ORDER BY id',Date.now()-1800000,...(u.role==='teacher'?[]:[u.id]));
-     const revisionKey=rooms.map(room=>`${room.id}:${room.revision}`).join('|');
-     const etag=`W/"rooms-${await hash(`${u.role}:${u.id}:${revisionKey}`)}"`;
+     const summaryKey=JSON.stringify(rooms);
+     const etag=`W/"rooms-${await hash(`${u.role}:${u.id}:${summaryKey}`)}"`;
      const headers={'ETag':etag,'Cache-Control':'private, no-cache'};
-     if(request.headers.get('if-none-match')?.split(',').map(value=>value.trim()).includes(etag))return new Response(null,{status:304,headers});
+     if(ifNoneMatchMatches(request.headers.get('if-none-match'),etag))return new Response(null,{status:304,headers});
      return json({rooms},200,headers);
    }
    if(!path[1]&&method==='POST'){requireValue(u.role==='student','Комнату создаёт ученик.',403);const count=await db().prepare('SELECT COUNT(*) n FROM rooms WHERE student_id=?').bind(u.id).first<{n:number}>();requireValue(Number(count?.n)<3,'Можно открыть до трёх комнат одновременно.');const r={id:id(),student_id:u.id,name:'Комната · '+u.name,language:'python',student_code:PYTHON_START,teacher_code:TEACHER_START,revision:0,last_active:Date.now()};const created=await db().prepare("INSERT INTO rooms (id,student_id,name,language,student_code,teacher_code,revision,last_active) SELECT ?,id,?,?,?,?,?,? FROM users WHERE id=? AND role='student'").bind(r.id,r.name,r.language,r.student_code,r.teacher_code,r.revision,r.last_active,u.id).run();requireValue(created.meta.changes===1,'Ученик не найден.',404);return json({room:r},201);}
@@ -787,7 +829,12 @@ async function route(request:Request){
     ]);
     return json({result:{id:resultId,language:body.language,exercise_id:body.exerciseId,wpm:body.wpm,accuracy:body.accuracy,duration_ms:body.durationMs,created_at:createdAt}},201);
    }
-   if(method==='GET')return json({room:r});
+   if(method==='GET'){
+    const etag=`W/"room-${r!.revision}-${r!.last_active}"`;
+    const headers={'ETag':etag,'Cache-Control':'private, no-cache'};
+    if(ifNoneMatchMatches(request.headers.get('if-none-match'),etag))return new Response(null,{status:304,headers});
+    return json({room:r},200,headers);
+   }
    if(method==='POST'){
     requireValue(!body.language||['python','lua','kumir'].includes(body.language),'Поддерживаются Python, Lua и Кумир.');
     requireValue(body.file!=='teacher'||u.role==='teacher','Файл репетитора доступен ученику только для чтения.',403);

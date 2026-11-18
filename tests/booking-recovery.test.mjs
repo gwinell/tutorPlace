@@ -19,6 +19,7 @@ const sources = [
   ['@/lib/collaboration', 'lib/collaboration.ts'],
   ['@/lib/trial-booking', 'lib/trial-booking.ts'],
   ['@/lib/lesson-move', 'lib/lesson-move.ts'],
+  ['@/lib/maintenance', 'lib/maintenance.ts'],
   ['@/lib/salutejazz-real', 'lib/salutejazz.ts'],
   ['route', 'app/api/[...path]/route.ts'],
 ].map(([name, file]) => [
@@ -40,7 +41,15 @@ function setup(beforeRecovery = () => {}) {
     function command(args) {
       return {
         bind: (...bound) => command(bound),
-        first: async () => statement.get(...args) ?? null,
+        first: async () => {
+          const result = statement.get(...args) ?? null;
+          if (query === 'SELECT student_id FROM lessons WHERE id=?' && network.afterAssignmentLessonRead) {
+            const callback = network.afterAssignmentLessonRead;
+            network.afterAssignmentLessonRead = null;
+            await callback();
+          }
+          return result;
+        },
         all: async () => ({ results: statement.all(...args) }),
         run: () => {
           if (query.startsWith('DELETE FROM assignment_images') && network.beforeAssignmentImageMetadataDelete) {
@@ -93,7 +102,7 @@ function setup(beforeRecovery = () => {}) {
   }));
   const events = new Map();
   let etag = 0;
-  const network = { lostResponse: false, unavailableAfterPatch: false, unavailable: false, skipPatch: false, failDelete: false, failJazzDisable: false, afterFreeBusy: null, beforeManualInsert: null, beforeRoomInsert: null, beforeAssignmentImageMetadataDelete: null, jazzEnabled: false, jazzRoom: null, disabledRooms: [], busy: [], r2Uploads: [], r2Deletes: [] };
+  const network = { lostResponse: false, unavailableAfterPatch: false, unavailable: false, skipPatch: false, failDelete: false, failJazzDisable: false, afterFreeBusy: null, freeBusyCalendars: null, afterAssignmentLessonRead: null, beforeManualInsert: null, beforeRoomInsert: null, beforeAssignmentImageMetadataDelete: null, jazzEnabled: false, jazzRoom: null, disabledRooms: [], busy: [], r2Uploads: [], r2Deletes: [] };
   const calendarFetch = async (url, options) => {
     const path = new URL(url).pathname;
     if (path === '/token') return Response.json({ access_token: 'fixture', expires_in: 3600 });
@@ -101,7 +110,7 @@ function setup(beforeRecovery = () => {}) {
       const callback = network.afterFreeBusy;
       network.afterFreeBusy = null;
       callback?.();
-      return Response.json({ calendars: { 'fixture-calendar': { busy: network.busy } } });
+      return Response.json({ calendars: network.freeBusyCalendars || { 'fixture-calendar': { busy: network.busy } } });
     }
     if (path.endsWith('/events') && options.method === 'GET') return Response.json({ items: [...events.values()] });
     if (path.endsWith('/events') && options.method === 'POST') {
@@ -141,7 +150,7 @@ function setup(beforeRecovery = () => {}) {
       getAssignmentImageObject: async () => Uint8Array.from([137,80,78,71,13,10,26,10]), putAssignmentImageObject: async (key, bytes, contentType) => network.r2Uploads.push({ key, size: bytes.length, contentType }),
       MAX_ASSIGNMENT_IMAGE_BYTES: 8 * 1024 * 1024, putR2Object: async (key, bytes, contentType) => network.r2Uploads.push({ key, size: bytes.length, contentType }),
       r2S3Config: environment => environment.R2_ACCOUNT_ID ? { fixture: true } : null,
-      cleanupOrphanedAssignmentImages: async () => {},
+      cleanupExpiredPersonalAssignments: async () => {}, cleanupOrphanedAssignmentImages: async () => {},
       pendingAssignmentImageId: placeholder => {
         const marker = /^!\[([^\]\r\n]{0,180})\]\(codetogether-pending:([0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})\)$/i.exec(placeholder);
         return marker ? { id: marker[2], alt: marker[1] } : null;
@@ -174,15 +183,15 @@ function setup(beforeRecovery = () => {}) {
     modules[name] = loaded.exports;
   }
 
-  async function request(path, body, cookie, ip = '192.0.2.1', requestedMethod) {
+  async function request(path, body, cookie, ip = '192.0.2.1', requestedMethod, extraHeaders = {}) {
     const method = requestedMethod || (body === undefined ? 'GET' : 'POST');
     const send = modules.route[method];
     const response = await send(new Request(origin + '/api/' + path, {
       method,
-      headers: { Origin: origin, 'Content-Type': 'application/json', 'cf-connecting-ip': ip, ...(cookie ? { Cookie: cookie } : {}) },
+      headers: { Origin: origin, 'Content-Type': 'application/json', 'cf-connecting-ip': ip, ...(cookie ? { Cookie: cookie } : {}), ...extraHeaders },
       body: body === undefined ? undefined : JSON.stringify(body),
     }));
-    return { status: response.status, data: await response.json(), headers: response.headers };
+    return { status: response.status, data: response.status === 304 ? null : await response.json(), headers: response.headers };
   }
 
   async function teacherSession() {
@@ -217,7 +226,7 @@ function setup(beforeRecovery = () => {}) {
   }, undefined, ip);
   const lesson = id => sql.prepare('SELECT * FROM lessons WHERE id=?').get(id);
   const locks = id => sql.prepare('SELECT COUNT(*) AS n FROM slot_locks WHERE lesson_id=?').get(id).n;
-  return { sql, request, teacherSession, studentSession, createStudent, book, lesson, locks, events, network, at, date, modules };
+  return { sql, request, teacherSession, studentSession, createStudent, book, lesson, locks, events, network, at, date, modules, env };
 }
 
 test('parseSdkKey принимает Base64 SDK key и отклоняет повреждённые данные', () => {
@@ -275,6 +284,120 @@ test('normalizeSchedule переводит старый формат дней и
   assert.deepEqual(JSON.parse(JSON.stringify(normalized.days)), [1, 4]);
   assert.equal(normalized.timezone, 'Europe/Moscow');
   assert.equal(normalized.availabilityCalendarIds[0], 'work');
+});
+
+test('слоты не выдаются, если Google не вернул выбранный календарь или сообщил об ошибке доступа', async () => {
+  const qa = setup();
+  qa.sql.prepare("UPDATE settings SET value=? WHERE key='schedule'").run(JSON.stringify({
+    days: [0, 1, 2, 3, 4, 5, 6], from: '10:00', to: '19:00', timezone: 'Europe/Moscow',
+    meetUrl: '', availabilityCalendarIds: ['work-calendar'],
+  }));
+
+  qa.network.freeBusyCalendars = { 'fixture-calendar': { busy: [] } };
+  assert.equal((await qa.request('slots?date=' + qa.date + '&minutes=45')).status, 503);
+
+  qa.network.freeBusyCalendars = {
+    'fixture-calendar': { busy: [] },
+    'work-calendar': { busy: [], errors: [{ reason: 'accessDenied' }] },
+  };
+  assert.equal((await qa.request('slots?date=' + qa.date + '&minutes=45')).status, 503);
+  assert.equal((await qa.book('+79161234567', 10)).status, 503);
+});
+
+test('устаревшее восстановление сохраняет trial-урок с привязанными заданиями и их данными', async () => {
+  const qa = setup();
+  const operationStartedAt = new Date(Date.now() - 10 * 60_000).toISOString();
+  const insertTrial = (id, login) => {
+    qa.sql.prepare("INSERT INTO users(id,login,password,name,role,phone,account_type,created_at) VALUES (?,?,?,'Stale trial','student','+79161234567','trial',?)")
+      .run(id, login, 'fixture-hash', new Date().toISOString());
+    qa.sql.prepare("INSERT INTO lessons(id,student_id,name,phone,trial_phone,start,end,type,status,event_id,operation_started_at) VALUES (?,?,'Stale trial','+79161234567','+79161234567',?,?, 'trial','pending',?,?)")
+      .run('lesson-' + id, id, qa.at(10), new Date(Date.parse(qa.at(10)) + 45 * 60_000).toISOString(), 'missing-event-' + id, operationStartedAt);
+    qa.sql.prepare('INSERT INTO slot_locks(slot,lesson_id) VALUES (?,?)').run('slot-' + id, 'lesson-' + id);
+  };
+  insertTrial('orphan-trial', 'orphan-login');
+  insertTrial('active-trial', 'active-login');
+  insertTrial('owned-trial', 'owned-login');
+  insertTrial('personal-linked-trial', 'personal-linked-login');
+  insertTrial('topic-linked-trial', 'topic-linked-login');
+  await qa.studentSession('active-trial');
+  qa.sql.prepare('INSERT INTO notifications(id,student_id,title,body,created_at) VALUES (?,?,?,?,?)')
+    .run('owned-notification', 'owned-trial', 'QA', 'Keep this account', new Date().toISOString());
+
+  qa.sql.prepare('INSERT INTO assignments(id,topic_id,student_id,lesson_id,title,kind,prompt,created_at) VALUES (?,?,?,?,?,?,?,?)')
+    .run('personal-linked-assignment', null, 'personal-linked-trial', 'lesson-personal-linked-trial', 'Personal', 'text', 'Keep the personal assignment', new Date().toISOString());
+  qa.sql.prepare("INSERT INTO lesson_preparation_items(id,lesson_id,kind,topic_id,assignment_id,position,completed_at) VALUES ('personal-linked-preparation','lesson-personal-linked-trial','assignment',NULL,'personal-linked-assignment',0,NULL)").run();
+  qa.sql.prepare("INSERT INTO courses(id,title,position) VALUES ('recovery-course','Recovery course',0)").run();
+  qa.sql.prepare("INSERT INTO topics(id,course_id,title,position,content,format) VALUES ('recovery-topic','recovery-course','Recovery topic',0,'','md')").run();
+  qa.sql.prepare("INSERT INTO course_enrollments(id,course_id,student_id) VALUES ('recovery-enrollment','recovery-course','topic-linked-trial')").run();
+  qa.sql.prepare("INSERT INTO topic_access(id,topic_id,student_id) VALUES ('recovery-access','recovery-topic','topic-linked-trial')").run();
+  qa.sql.prepare('INSERT INTO assignments(id,topic_id,student_id,lesson_id,title,kind,prompt,created_at) VALUES (?,?,NULL,?,?,?,?,?)')
+    .run('topic-linked-assignment', 'recovery-topic', 'lesson-topic-linked-trial', 'Topic', 'text', 'Keep the topic assignment', new Date().toISOString());
+  qa.sql.prepare("INSERT INTO lesson_preparation_items(id,lesson_id,kind,topic_id,assignment_id,position,completed_at) VALUES ('topic-linked-preparation','lesson-topic-linked-trial','assignment',NULL,'topic-linked-assignment',0,NULL)").run();
+  qa.sql.prepare("DELETE FROM course_enrollments WHERE student_id='topic-linked-trial'").run();
+  qa.sql.prepare("DELETE FROM topic_access WHERE student_id='topic-linked-trial'").run();
+  qa.sql.prepare('INSERT INTO assignment_images(id,assignment_id,object_key,content_type,size_bytes,original_name,created_at,storage_backend) VALUES (?,?,?,?,?,?,?,?)')
+    .run('personal-linked-image', 'personal-linked-assignment', 'assignment-images/personal-linked.png', 'image/png', 8, 'personal.png', new Date().toISOString(), 'r2');
+  qa.sql.prepare('INSERT INTO assignment_images(id,assignment_id,object_key,content_type,size_bytes,original_name,created_at,storage_backend) VALUES (?,?,?,?,?,?,?,?)')
+    .run('topic-linked-image', 'topic-linked-assignment', 'assignment-images/topic-linked.png', 'image/png', 8, 'topic.png', new Date().toISOString(), 'r2');
+  const deletionQueue = JSON.stringify({ object_key: 'assignment-images/topic-linked.png', storage_backend: 'r2' });
+  const personalDeletionQueue = JSON.stringify({ object_key: 'assignment-images/personal-linked.png', storage_backend: 'r2' });
+  qa.sql.prepare('INSERT INTO settings(key,value) VALUES (?,?)')
+    .run('assignment-image-delete:recovery:topic-linked-image', deletionQueue);
+  qa.sql.prepare('INSERT INTO settings(key,value) VALUES (?,?)')
+    .run('assignment-image-delete:recovery:personal-linked-image', personalDeletionQueue);
+
+  await qa.modules['@/lib/maintenance'].maintain(qa.env);
+
+  assert.equal(qa.sql.prepare("SELECT id FROM lessons WHERE id='lesson-orphan-trial'").get(), undefined);
+  assert.equal(qa.sql.prepare("SELECT id FROM users WHERE id='orphan-trial'").get(), undefined);
+  assert.equal(qa.sql.prepare("SELECT COUNT(*) AS count FROM slot_locks WHERE lesson_id='lesson-orphan-trial'").get().count, 0);
+  assert.equal(qa.sql.prepare("SELECT id FROM lessons WHERE id='lesson-active-trial'").get(), undefined);
+  assert.ok(qa.sql.prepare("SELECT id FROM users WHERE id='active-trial' AND account_type='trial'").get());
+  assert.equal(qa.sql.prepare("SELECT COUNT(*) AS count FROM slot_locks WHERE lesson_id='lesson-active-trial'").get().count, 0);
+  assert.equal(qa.sql.prepare("SELECT id FROM lessons WHERE id='lesson-owned-trial'").get(), undefined);
+  assert.ok(qa.sql.prepare("SELECT id FROM users WHERE id='owned-trial' AND account_type='trial'").get());
+  for (const [accountId, assignmentId] of [
+    ['personal-linked-trial', 'personal-linked-assignment'],
+    ['topic-linked-trial', 'topic-linked-assignment'],
+  ]) {
+    const linkedLessonId = 'lesson-' + accountId;
+    assert.ok(qa.sql.prepare('SELECT id FROM users WHERE id=? AND account_type=\'trial\'').get(accountId));
+    const linkedLesson = qa.sql.prepare('SELECT id,status,operation_started_at,cancelled_at FROM lessons WHERE id=? AND student_id=?').get(linkedLessonId, accountId);
+    assert.ok(linkedLesson);
+    assert.equal(linkedLesson.status, 'cancelled');
+    assert.equal(linkedLesson.operation_started_at, null);
+    assert.equal(linkedLesson.cancelled_at, operationStartedAt);
+    assert.equal(qa.sql.prepare('SELECT lesson_id FROM assignments WHERE id=?').get(assignmentId).lesson_id, linkedLessonId);
+    assert.equal(qa.sql.prepare('SELECT COUNT(*) AS count FROM slot_locks WHERE lesson_id=?').get(linkedLessonId).count, 0);
+    assert.ok(qa.sql.prepare('SELECT id FROM lesson_preparation_items WHERE lesson_id=? AND assignment_id=?').get(linkedLessonId, assignmentId));
+  }
+  assert.ok(qa.sql.prepare("SELECT id FROM assignment_images WHERE id='personal-linked-image'").get());
+  assert.ok(qa.sql.prepare("SELECT id FROM assignment_images WHERE id='topic-linked-image'").get());
+  assert.equal(qa.sql.prepare("SELECT value FROM settings WHERE key='assignment-image-delete:recovery:topic-linked-image'").get().value, deletionQueue);
+  assert.equal(qa.sql.prepare("SELECT value FROM settings WHERE key='assignment-image-delete:recovery:personal-linked-image'").get().value, personalDeletionQueue);
+  assert.deepEqual(qa.network.r2Deletes, []);
+  assert.equal(qa.sql.prepare('SELECT COUNT(*) AS count FROM assignments a LEFT JOIN lessons l ON l.id=a.lesson_id WHERE a.lesson_id IS NOT NULL AND l.id IS NULL').get().count, 0);
+});
+
+test('сохранение задания повторно проверяет урок после атомарного stale-recovery', async () => {
+  const qa = setup();
+  const teacher = await qa.teacherSession();
+  const operationStartedAt = new Date(Date.now() - 10 * 60_000).toISOString();
+  qa.sql.prepare("INSERT INTO users(id,login,password,name,role,phone,account_type,created_at) VALUES ('racing-trial','racing-login','fixture-hash','Racing trial','student','+79161234567','trial',?)")
+    .run(new Date().toISOString());
+  qa.sql.prepare("INSERT INTO lessons(id,student_id,name,phone,trial_phone,start,end,type,status,event_id,operation_started_at) VALUES ('racing-lesson','racing-trial','Racing trial','+79161234567','+79161234567',?,?, 'trial','pending','missing-racing-event',?)")
+    .run(qa.at(10), new Date(Date.parse(qa.at(10)) + 45 * 60_000).toISOString(), operationStartedAt);
+  qa.sql.prepare("INSERT INTO slot_locks(slot,lesson_id) VALUES ('racing-slot','racing-lesson')").run();
+  qa.network.afterAssignmentLessonRead = () => qa.modules['@/lib/maintenance'].maintain(qa.env);
+
+  const result = await qa.request('assignments', {
+    student_id: 'racing-trial', lesson_id: 'racing-lesson', title: 'Racing assignment', kind: 'text', prompt: 'Keep the lesson reference valid.',
+  }, teacher);
+
+  assert.equal(result.status, 409);
+  assert.equal(qa.sql.prepare("SELECT id FROM lessons WHERE id='racing-lesson'").get(), undefined);
+  assert.equal(qa.sql.prepare("SELECT id FROM users WHERE id='racing-trial'").get(), undefined);
+  assert.equal(qa.sql.prepare('SELECT COUNT(*) AS count FROM assignments a LEFT JOIN lessons l ON l.id=a.lesson_id WHERE a.lesson_id IS NOT NULL AND l.id IS NULL').get().count, 0);
 });
 
 test('Миграция сохраняет старые записи и блокирует новый дубль в другом формате', async () => {
@@ -535,6 +658,103 @@ test('Удаление ученика перед созданием комнат
   const result = await qa.request('rooms', {}, cookie);
   assert.equal(result.status, 404);
   assert.equal(qa.sql.prepare('SELECT COUNT(*) AS count FROM rooms WHERE student_id=?').get(student.id).count, 0);
+});
+
+test('прочтение уведомлений ограничено собственными уведомлениями ученика', async () => {
+  const qa = setup();
+  const teacher = await qa.teacherSession();
+  const first = await qa.createStudent(teacher, { name: 'First Student' });
+  const second = await qa.createStudent(teacher, { name: 'Second Student' });
+  qa.sql.prepare('INSERT INTO notifications (id,student_id,title,body,created_at) VALUES (?,?,?,?,?)')
+    .run('first-unread', first.student.id, 'First', 'Own notice', new Date().toISOString());
+  qa.sql.prepare('INSERT INTO notifications (id,student_id,title,body,created_at) VALUES (?,?,?,?,?)')
+    .run('second-unread', second.student.id, 'Second', 'Other notice', new Date().toISOString());
+
+  assert.equal((await qa.request('notifications/read', {}, first.cookie)).status, 200);
+  assert.equal(qa.sql.prepare("SELECT read FROM notifications WHERE id='first-unread'").get().read, 1);
+  assert.equal(qa.sql.prepare("SELECT read FROM notifications WHERE id='second-unread'").get().read, 0);
+
+  assert.equal((await qa.request('notifications/read', {}, teacher)).status, 403);
+  assert.equal(qa.sql.prepare("SELECT read FROM notifications WHERE id='second-unread'").get().read, 0);
+});
+
+test('GET комнаты возвращает 304 только пока не менялись код, версия и активность', async () => {
+  const qa = setup();
+  const teacher = await qa.teacherSession();
+  const { cookie } = await qa.createStudent(teacher);
+  const created = await qa.request('rooms', {}, cookie);
+  assert.equal(created.status, 201);
+  const roomId = created.data.room.id;
+  const path = 'rooms/' + roomId;
+
+  const first = await qa.request(path, undefined, cookie);
+  assert.equal(first.status, 200);
+  const firstEtag = first.headers.get('etag');
+  assert.match(firstEtag || '', /^W\/"room-\d+-\d+"$/);
+
+  const unchanged = await qa.request(path, undefined, cookie, '192.0.2.1', 'GET', { 'If-None-Match': firstEtag });
+  assert.equal(unchanged.status, 304);
+  assert.equal(unchanged.data, null);
+  assert.equal(unchanged.headers.get('etag'), firstEtag);
+
+  const strongEquivalent = firstEtag.replace(/^W\//, '');
+  const strongMatch = await qa.request(path, undefined, cookie, '192.0.2.1', 'GET', { 'If-None-Match': strongEquivalent });
+  assert.equal(strongMatch.status, 304);
+
+  const listMatch = await qa.request(path, undefined, cookie, '192.0.2.1', 'GET', { 'If-None-Match': `W/"older,revision", ${strongEquivalent}` });
+  assert.equal(listMatch.status, 304);
+
+  const wildcardMatch = await qa.request(path, undefined, cookie, '192.0.2.1', 'GET', { 'If-None-Match': '*' });
+  assert.equal(wildcardMatch.status, 304);
+
+  const staleMatch = await qa.request(path, undefined, cookie, '192.0.2.1', 'GET', { 'If-None-Match': 'W/"room-999-999"' });
+  assert.equal(staleMatch.status, 200);
+
+  qa.sql.prepare('UPDATE rooms SET last_active=last_active+1 WHERE id=?').run(roomId);
+  const touched = await qa.request(path, undefined, cookie, '192.0.2.1', 'GET', { 'If-None-Match': firstEtag });
+  assert.equal(touched.status, 200);
+  const touchedEtag = touched.headers.get('etag');
+  assert.notEqual(touchedEtag, firstEtag);
+
+  qa.sql.prepare("UPDATE rooms SET revision=revision+1,student_code='print(42)' WHERE id=?").run(roomId);
+  const edited = await qa.request(path, undefined, cookie, '192.0.2.1', 'GET', { 'If-None-Match': touchedEtag });
+  assert.equal(edited.status, 200);
+  assert.equal(edited.data.room.student_code, 'print(42)');
+  assert.notEqual(edited.headers.get('etag'), touchedEtag);
+
+  const cachedEdit = await qa.request(path, undefined, cookie, '192.0.2.1', 'GET', { 'If-None-Match': edited.headers.get('etag') });
+  assert.equal(cachedEdit.status, 304);
+});
+
+test('GET списка комнат применяет weak comparison к If-None-Match', async () => {
+  const qa = setup();
+  const teacher = await qa.teacherSession();
+  const { cookie } = await qa.createStudent(teacher);
+  const created = await qa.request('rooms', {}, cookie);
+  assert.equal(created.status, 201);
+  const roomId = created.data.room.id;
+  qa.sql.prepare('UPDATE rooms SET last_active=last_active-1000 WHERE id=?').run(roomId);
+
+  const first = await qa.request('rooms', undefined, cookie);
+  assert.equal(first.status, 200);
+  const etag = first.headers.get('etag');
+  assert.match(etag || '', /^W\/"rooms-.+"$/);
+  const firstRoom = first.data.rooms.find(room => room.id === roomId);
+  assert.ok(firstRoom);
+
+  const strongEquivalent = etag.replace(/^W\//, '');
+  assert.equal((await qa.request('rooms', undefined, cookie, '192.0.2.1', 'GET', { 'If-None-Match': strongEquivalent })).status, 304);
+  assert.equal((await qa.request('rooms', undefined, cookie, '192.0.2.1', 'GET', { 'If-None-Match': `W/"stale,tag", ${strongEquivalent}` })).status, 304);
+  assert.equal((await qa.request('rooms', undefined, cookie, '192.0.2.1', 'GET', { 'If-None-Match': '*' })).status, 304);
+  assert.equal((await qa.request('rooms', undefined, cookie, '192.0.2.1', 'GET', { 'If-None-Match': 'W/"rooms-stale"' })).status, 200);
+
+  const touched = await qa.request('rooms/' + roomId, {}, cookie);
+  assert.equal(touched.status, 200);
+  assert.ok(touched.data.room.last_active > firstRoom.last_active);
+  const refreshed = await qa.request('rooms', undefined, cookie, '192.0.2.1', 'GET', { 'If-None-Match': etag });
+  assert.equal(refreshed.status, 200);
+  assert.notEqual(refreshed.headers.get('etag'), etag);
+  assert.equal(refreshed.data.rooms.find(room => room.id === roomId).last_active, touched.data.room.last_active);
 });
 
 test('Не отключает SaluteJazz, если событие урока не удалось удалить', async () => {

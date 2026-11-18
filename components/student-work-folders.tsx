@@ -5,6 +5,7 @@ import {ArrowLeft,BarChart3,Check,ChevronDown,FileCode2,FolderOpen,MessageSquare
 import {Button,Empty,Tag} from './site-ui';
 import {Assignment,Submission,User,dateLabel,resultStatus} from '@/lib/domain';
 import MarkdownContent from './markdown-content';
+import {clearFeedbackAfterSuccessfulReview} from '@/lib/review-feedback';
 
 type Props={
  submissions:Submission[];
@@ -12,7 +13,7 @@ type Props={
  students:User[];
  mode:'review'|'history';
  busy?:boolean;
- onReview?:(submission:Submission,status:'passed'|'needs_work',feedback:string)=>Promise<void>;
+ onReview?:(submission:Submission,status:'passed'|'needs_work',feedback:string)=>Promise<boolean>;
 };
 
 function statusLabel(status:string){
@@ -61,7 +62,7 @@ export default function StudentWorkFolders({submissions,assignments,students,mod
       {mode==='review'&&assignment?.prompt&&<div className="review-prompt"><MarkdownContent content={assignment.prompt} preserveLineBreaks/></div>}
       <pre className={assignment?.kind==='code'?'submitted-code':''}>{submission.content}</pre>
       {mode==='history'&&submission.feedback&&<div className="feedback-box"><strong><MessageSquare size={13}/>Комментарий репетитора</strong><p>{submission.feedback}</p>{submission.feedback_at&&<small>{dateLabel(submission.feedback_at,{day:'numeric',month:'long',hour:'2-digit',minute:'2-digit'})}</small>}</div>}
-      {mode==='review'&&status==='pending'&&onReview&&<div className="review-actions"><textarea placeholder="Комментарий ученику: что получилось, что поправить…" value={feedback[submission.id]||''} onChange={event=>setFeedback(current=>({...current,[submission.id]:event.target.value}))} maxLength={2000} aria-label="Комментарий к работе"/><div className="review-actions-row"><Button className="button-small button-outline" disabled={busy||!(feedback[submission.id]||'').trim()} onClick={async()=>{await onReview(submission,'needs_work',feedback[submission.id]||'');setFeedback(current=>({...current,[submission.id]:''}));}}><ArrowLeft size={15}/>Вернуть на доработку</Button><Button className="button-small" loading={busy} onClick={async()=>{await onReview(submission,'passed',feedback[submission.id]||'');setFeedback(current=>({...current,[submission.id]:''}));}}><Check size={15}/>Принять работу</Button></div></div>}
+      {mode==='review'&&status==='pending'&&onReview&&<div className="review-actions"><textarea placeholder="Комментарий ученику: что получилось, что поправить…" value={feedback[submission.id]||''} onChange={event=>setFeedback(current=>({...current,[submission.id]:event.target.value}))} maxLength={2000} aria-label="Комментарий к работе"/><div className="review-actions-row"><Button className="button-small button-outline" disabled={busy||!(feedback[submission.id]||'').trim()} onClick={async()=>{await clearFeedbackAfterSuccessfulReview(()=>onReview(submission,'needs_work',feedback[submission.id]||''),()=>setFeedback(current=>({...current,[submission.id]:''})));}}><ArrowLeft size={15}/>Вернуть на доработку</Button><Button className="button-small" loading={busy} onClick={async()=>{await clearFeedbackAfterSuccessfulReview(()=>onReview(submission,'passed',feedback[submission.id]||''),()=>setFeedback(current=>({...current,[submission.id]:''})));}}><Check size={15}/>Принять работу</Button></div></div>}
      </article>;
     })}
    </div>

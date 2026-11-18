@@ -17,7 +17,7 @@
     "deploy:cloudflare": "node scripts/deploy-cloudflare.mjs",
     "course:python:seed": "node scripts/generate-python-course-seed.mjs course-data/python/CODETOGETHER_COURSE.json course-data/python/CODETOGETHER_ASSIGNMENTS.json drizzle/0014_python_course_seed.sql",
     "check": "tsc --noEmit",
-    "test": "node --experimental-strip-types --test tests/assignment-images.test.ts tests/assignment-prompt-format.test.mjs tests/assignment-prompt-migration.test.mjs tests/material-links.test.ts tests/domain.test.ts tests/collaboration.test.ts tests/typing.test.ts tests/runtime.test.mjs tests/turtle-shim.test.mjs tests/migration.test.mjs tests/booking-recovery.test.mjs",
+    "test": "node --experimental-strip-types --test tests/assignment-images.test.ts tests/assignment-prompt-format.test.mjs tests/assignment-prompt-migration.test.mjs tests/material-links.test.ts tests/domain.test.ts tests/collaboration.test.ts tests/typing.test.ts tests/room-activity.test.ts tests/runtime.test.mjs tests/turtle-shim.test.mjs tests/migration.test.mjs tests/booking-recovery.test.mjs tests/ui-flow.test.ts",
     "test:seo-pages": "node scripts/test-seo-pages.mjs",
     "test:integration": "node scripts/test-integration.mjs",
     "test:assignment-images-api": "node scripts/test-assignment-images-api.mjs",

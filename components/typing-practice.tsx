@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { api } from './site-ui';
 import { calculateTypingMetrics, keepLatestTypingAttempts, type TypingLanguage } from '@/lib/typing';
+import { reportRoomTypingActivity } from '@/lib/room-activity';
 import { Check, Clock3, Keyboard, RotateCcw, Target, Trophy } from 'lucide-react';
 
 type TypingAttempt = {
@@ -37,7 +38,7 @@ const keyboardRows: Record<TypingLanguage, string[][]> = {
   en: [['q','w','e','r','t','y','u','i','o','p'], ['a','s','d','f','g','h','j','k','l'], ['z','x','c','v','b','n','m']],
 };
 
-export default function TypingPractice({ roomId, studentId, teacher, demo }: { roomId: string; studentId: string; teacher: boolean; demo: boolean }) {
+export default function TypingPractice({ roomId, studentId, teacher, demo, onActivity }: { roomId: string; studentId: string; teacher: boolean; demo: boolean; onActivity: () => void }) {
   const [language, setLanguage] = useState<TypingLanguage>('ru');
   const [exerciseIndex, setExerciseIndex] = useState(0);
   const [typed, setTyped] = useState('');
@@ -102,6 +103,7 @@ export default function TypingPractice({ roomId, studentId, teacher, demo }: { r
   function onType(value: string) {
     if (teacher || completed) return;
     const next = value.slice(0, exercise.text.length);
+    reportRoomTypingActivity(typed, next, onActivity);
     const start = startedAt ?? performance.now();
     if (!startedAt && next.length) setStartedAt(start);
     setTyped(next);
