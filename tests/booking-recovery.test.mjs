@@ -102,7 +102,7 @@ function setup(beforeRecovery = () => {}) {
   }));
   const events = new Map();
   let etag = 0;
-  const network = { lostResponse: false, unavailableAfterPatch: false, unavailable: false, skipPatch: false, failDelete: false, failJazzDisable: false, afterFreeBusy: null, freeBusyCalendars: null, afterAssignmentLessonRead: null, beforeManualInsert: null, beforeRoomInsert: null, beforeAssignmentImageMetadataDelete: null, jazzEnabled: false, jazzRoom: null, disabledRooms: [], busy: [], r2Uploads: [], r2Deletes: [] };
+  const network = { lostResponse: false, unavailableAfterPatch: false, unavailable: false, skipPatch: false, failDelete: false, deleteMissingEventReturns404: false, failJazzDisable: false, afterFreeBusy: null, freeBusyCalendars: null, afterAssignmentLessonRead: null, beforeManualInsert: null, beforeRoomInsert: null, beforeAssignmentImageMetadataDelete: null, jazzEnabled: false, jazzRoom: null, disabledRooms: [], busy: [], r2Uploads: [], r2Deletes: [] };
   const calendarFetch = async (url, options) => {
     const path = new URL(url).pathname;
     if (path === '/token') return Response.json({ access_token: 'fixture', expires_in: 3600 });
@@ -122,6 +122,7 @@ function setup(beforeRecovery = () => {}) {
     const eventId = path.split('/').at(-1);
     if (options.method === 'DELETE') {
       if (network.failDelete) throw new Error('Calendar delete failed');
+      if (network.deleteMissingEventReturns404 && !events.has(eventId)) return new Response(null, { status: 404 });
       events.delete(eventId);
       return new Response(null, { status: 204 });
     }
@@ -651,6 +652,66 @@ test('Сверка не снимает удержания, если событи
     assert.equal(qa.lesson(id).move_id, operationId);
     assert.equal(qa.locks(id), originalLockCount + 1);
   }
+});
+
+test('Репетитор удаляет зависший перенос, если события уже нет в календаре', async () => {
+  const qa = setup();
+  const teacher = await qa.teacherSession();
+  const { student, cookie: studentCookie } = await qa.createStudent(teacher, { balance: 1 });
+  const booked = await qa.request('book', { start: qa.at(10), minutes: 55 }, studentCookie);
+  assert.equal(booked.status, 201, JSON.stringify(booked.data));
+
+  const { id, event_id: eventId } = booked.data.lesson;
+  const originalBalance = student.balance;
+  const originalLocks = qa.locks(id);
+  const operationId = 'move-with-deleted-calendar-event';
+  const targetStart = qa.at(12);
+  const targetEnd = new Date(Date.parse(targetStart) + 55 * 60_000).toISOString();
+  qa.sql.prepare("UPDATE lessons SET status='updating',operation_started_at=?,move_id=?,move_start=?,move_end=? WHERE id=?")
+    .run(new Date().toISOString(), operationId, targetStart, targetEnd, id);
+  qa.sql.prepare('INSERT INTO slot_locks(slot,lesson_id) VALUES (?,?)').run('stuck-old-window', id);
+  qa.sql.prepare('INSERT INTO slot_locks(slot,lesson_id) VALUES (?,?)').run('stuck-target-window', id);
+  qa.sql.prepare("INSERT INTO assignments (id,student_id,lesson_id,title,kind,prompt,created_at) VALUES ('kept-task',?,?,'Keep this task','text','Keep its response history',?)")
+    .run(student.id, id, new Date().toISOString());
+  qa.sql.prepare("INSERT INTO lesson_preparation_items (id,lesson_id,kind,assignment_id,position) VALUES ('removed-preparation',?,'assignment','kept-task',0)")
+    .run(id);
+  qa.events.delete(eventId);
+  qa.network.deleteMissingEventReturns404 = true;
+
+  const denied = await qa.request('lessons/' + id + '/move-delete', {}, studentCookie);
+  assert.equal(denied.status, 403);
+  assert.equal(qa.lesson(id).status, 'updating');
+  assert.equal(qa.locks(id), originalLocks + 2);
+
+  qa.network.failDelete = true;
+  const retryable = await qa.request('lessons/' + id + '/move-delete', {}, teacher);
+  assert.equal(retryable.status, 503);
+  assert.equal(qa.lesson(id).status, 'deleting');
+  assert.equal(qa.locks(id), originalLocks + 2);
+
+  qa.network.failDelete = false;
+  const deleted = await qa.request('lessons/' + id + '/move-delete', {}, teacher);
+  assert.equal(deleted.status, 200, JSON.stringify(deleted.data));
+  assert.equal(deleted.data.deleted, true);
+  assert.equal(qa.lesson(id), undefined);
+  assert.equal(qa.locks(id), 0);
+  assert.equal(qa.sql.prepare("SELECT lesson_id FROM assignments WHERE id='kept-task'").get().lesson_id, null);
+  assert.equal(qa.sql.prepare("SELECT COUNT(*) AS n FROM lesson_preparation_items WHERE id='removed-preparation'").get().n, 0);
+  assert.equal(qa.sql.prepare('SELECT balance FROM users WHERE id=?').get(student.id).balance, originalBalance);
+  assert.equal(qa.events.has(eventId), false);
+});
+
+test('Удаление через маршрут для зависшего переноса не затрагивает запланированный урок', async () => {
+  const qa = setup();
+  const teacher = await qa.teacherSession();
+  const { cookie } = await qa.createStudent(teacher, { balance: 1 });
+  const booked = await qa.request('book', { start: qa.at(10), minutes: 55 }, cookie);
+  assert.equal(booked.status, 201, JSON.stringify(booked.data));
+
+  const result = await qa.request('lessons/' + booked.data.lesson.id + '/move-delete', {}, teacher);
+  assert.equal(result.status, 409);
+  assert.equal(qa.lesson(booked.data.lesson.id).status, 'scheduled');
+  assert.equal(qa.events.has(booked.data.lesson.event_id), true);
 });
 
 test('Репетитор вручную назначает уроки вне доступности, поверх занятых событий и без баланса', async () => {

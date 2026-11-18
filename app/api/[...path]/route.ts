@@ -737,6 +737,39 @@ async function route(request:Request){
  }
  if(path[0]==='lessons'&&path[1]&&method==='POST'){
    const {u,l}=await lessonAccess(request,path[1]);
+   if(path[2]==='move-delete'){
+     requireValue(u.role==='teacher','Удалить зависший урок может только репетитор.',403);
+     requireValue((l.status==='updating'||l.status==='deleting')&&l.move_id&&l.move_start&&l.move_end,
+       'Нет зависшего переноса, который можно удалить.',409);
+     if(l.status==='updating'){
+       const claimed=await db().prepare(`
+         UPDATE lessons SET status='deleting',operation_started_at=?
+         WHERE id=? AND status='updating' AND move_id=? AND start=? AND end=? AND move_start=? AND move_end=?
+       `).bind(now(),l.id,l.move_id,l.start,l.end,l.move_start,l.move_end).run();
+       requireValue(claimed.meta.changes===1,'Состояние переноса уже изменилось. Обнови расписание.',409);
+     }
+
+     // Calendar DELETE is idempotent: a missing or already deleted event is success.
+     // Keep the lesson in `deleting` if the calendar request fails so the tutor can retry.
+     if(l.event_id)await calendar(eventPath(l.event_id),'DELETE');
+     if(l.jazz_room_id){
+       try{await disableSaluteJazzRoom(l.jazz_room_id,secrets,2500);}
+       catch(error){await deferSaluteJazzRoomClose(l.jazz_room_id,error);}
+     }
+
+     const moveBindings=[l.id,l.move_id,l.start,l.end,l.move_start,l.move_end];
+     const moveStillDeleting="EXISTS (SELECT 1 FROM lessons WHERE id=? AND status='deleting' AND move_id=? AND start=? AND end=? AND move_start=? AND move_end=?)";
+     const statements=[
+       db().prepare(`DELETE FROM slot_locks WHERE lesson_id=? AND ${moveStillDeleting}`).bind(l.id,...moveBindings),
+       db().prepare(`UPDATE assignments SET lesson_id=NULL WHERE lesson_id=? AND ${moveStillDeleting}`).bind(l.id,...moveBindings),
+       db().prepare(`DELETE FROM lesson_preparation_items WHERE lesson_id=? AND ${moveStillDeleting}`).bind(l.id,...moveBindings),
+       ...(l.student_id?[db().prepare(`DELETE FROM settings WHERE key=? AND value=? AND ${moveStillDeleting}`).bind('cancel-lock:'+l.student_id,l.id,...moveBindings)]:[]),
+       db().prepare(`DELETE FROM lessons WHERE id=? AND status='deleting' AND move_id=? AND start=? AND end=? AND move_start=? AND move_end=?`).bind(...moveBindings),
+     ];
+     const deleted=await db().batch(statements);
+     requireValue(deleted[deleted.length-1]?.meta.changes===1,'Перенос уже изменён. Обнови расписание и повтори удаление.',409);
+     return json({deleted:true});
+   }
    if(path[2]==='move-retry'){
      requireValue(l.status==='updating'&&l.move_id&&l.move_start&&l.move_end&&l.event_id,'Нет переноса, ожидающего подтверждения.',409);
      await confirmLessonMove({
