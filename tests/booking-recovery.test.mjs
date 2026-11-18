@@ -569,6 +569,90 @@ test('При недоступной сверке оба окна удержив�
   assert.equal(qa.locks(id), 0);
 });
 
+test('Репетитор может сверить застрявший перенос с фактическим временем Google Календаря', async () => {
+  const qa = setup();
+  const teacher = await qa.teacherSession();
+  const { cookie: studentCookie } = await qa.createStudent(teacher, { balance: 1 });
+  const booked = await qa.request('book', { start: qa.at(10), minutes: 55 }, studentCookie);
+  assert.equal(booked.status, 201, JSON.stringify(booked.data));
+
+  const { id, event_id: eventId } = booked.data.lesson;
+  const original = qa.lesson(id);
+  const originalLockCount = qa.locks(id);
+  const operationId = 'stuck-calendar-move';
+  const targetStart = qa.at(12);
+  const targetEnd = new Date(Date.parse(targetStart) + 55 * 60_000).toISOString();
+  qa.sql.prepare("UPDATE lessons SET status='updating',operation_started_at=?,move_id=?,move_start=?,move_end=? WHERE id=?")
+    .run(new Date().toISOString(), operationId, targetStart, targetEnd, id);
+  qa.sql.prepare('INSERT INTO slot_locks(slot,lesson_id) VALUES (?,?)').run('old-window', id);
+  qa.sql.prepare('INSERT INTO slot_locks(slot,lesson_id) VALUES (?,?)').run('target-window', id);
+
+  const event = qa.events.get(eventId);
+  const actualStart = qa.at(14);
+  const actualEnd = new Date(Date.parse(actualStart) + 55 * 60_000).toISOString();
+  qa.events.set(eventId, {
+    ...event,
+    start: { dateTime: actualStart, timeZone: 'Europe/Moscow' },
+    end: { dateTime: actualEnd, timeZone: 'Europe/Moscow' },
+  });
+
+  const studentAttempt = await qa.request('lessons/' + id + '/move-reconcile', {}, studentCookie);
+  assert.equal(studentAttempt.status, 403);
+  assert.equal(qa.lesson(id).status, 'updating');
+  assert.equal(qa.locks(id), originalLockCount + 2);
+
+  const reconciled = await qa.request('lessons/' + id + '/move-reconcile', {}, teacher);
+  assert.equal(reconciled.status, 200, JSON.stringify(reconciled.data));
+  assert.equal(reconciled.data.lesson.status, 'scheduled');
+  assert.equal(reconciled.data.lesson.start, actualStart);
+  assert.equal(reconciled.data.lesson.end, actualEnd);
+  assert.equal(reconciled.data.lesson.move_id, null);
+  assert.equal(reconciled.data.lesson.move_start, null);
+  assert.equal(reconciled.data.lesson.move_end, null);
+  assert.equal(reconciled.data.lesson.operation_started_at, null);
+  assert.equal(qa.locks(id), 0);
+  assert.equal(qa.lesson(id).start, actualStart);
+  assert.equal(qa.events.get(eventId).start.dateTime, actualStart);
+  assert.equal(original.start, qa.at(10));
+});
+
+test('Сверка не снимает удержания, если событие отсутствует, отменено или имеет неверную длительность', async () => {
+  for (const invalidEvent of ['missing', 'cancelled', 'wrong-duration']) {
+    const qa = setup();
+    const teacher = await qa.teacherSession();
+    const { cookie } = await qa.createStudent(teacher, { balance: 1 });
+    const booked = await qa.request('book', { start: qa.at(10), minutes: 55 }, cookie);
+    assert.equal(booked.status, 201, JSON.stringify(booked.data));
+    const { id, event_id: eventId } = booked.data.lesson;
+    const originalLockCount = qa.locks(id);
+    const operationId = 'stuck-calendar-move-' + invalidEvent;
+    const targetStart = qa.at(12);
+    const targetEnd = new Date(Date.parse(targetStart) + 55 * 60_000).toISOString();
+    qa.sql.prepare("UPDATE lessons SET status='updating',operation_started_at=?,move_id=?,move_start=?,move_end=? WHERE id=?")
+      .run(new Date().toISOString(), operationId, targetStart, targetEnd, id);
+    qa.sql.prepare('INSERT INTO slot_locks(slot,lesson_id) VALUES (?,?)').run('held-' + invalidEvent, id);
+
+    if (invalidEvent === 'missing') {
+      qa.events.delete(eventId);
+    } else if (invalidEvent === 'cancelled') {
+      qa.events.set(eventId, { ...qa.events.get(eventId), status: 'cancelled' });
+    } else {
+      const actualStart = qa.at(14);
+      qa.events.set(eventId, {
+        ...qa.events.get(eventId),
+        start: { dateTime: actualStart, timeZone: 'Europe/Moscow' },
+        end: { dateTime: new Date(Date.parse(actualStart) + 50 * 60_000).toISOString(), timeZone: 'Europe/Moscow' },
+      });
+    }
+
+    const result = await qa.request('lessons/' + id + '/move-reconcile', {}, teacher);
+    assert.equal(result.status, 409);
+    assert.equal(qa.lesson(id).status, 'updating');
+    assert.equal(qa.lesson(id).move_id, operationId);
+    assert.equal(qa.locks(id), originalLockCount + 1);
+  }
+});
+
 test('Репетитор вручную назначает уроки вне доступности, поверх занятых событий и без баланса', async () => {
   const qa = setup();
   const teacher = await qa.teacherSession();
