@@ -75,3 +75,36 @@ export async function confirmLessonMove(move: Move, environment?: ServerEnv) {
     `).bind(move.target.start, move.target.end, move.lessonId, move.operationId),
   ]);
 }
+
+export async function reconcileLessonMoveFromCalendar(move: Move, durationMinutes: number, environment?: ServerEnv) {
+  let event: CalendarEvent;
+  try {
+    event = await calendar(eventPath(move.eventId, environment), 'GET', undefined, {}, environment);
+  } catch {
+    throw new HttpError('Не удалось прочитать событие Google Календаря. Перенос пока не сверён.', 503);
+  }
+
+  requireValue(event && event.status !== 'cancelled', 'Активное событие урока не найдено в Google Календаре.', 409);
+  const startMs = Date.parse(event.start?.dateTime ?? '');
+  const endMs = Date.parse(event.end?.dateTime ?? '');
+  requireValue(Number.isFinite(startMs) && Number.isFinite(endMs) && endMs > startMs,
+    'В событии Google Календаря нет корректной даты и времени.', 409);
+  requireValue(endMs - startMs === durationMinutes * 60_000,
+    `Длительность события в Google Календаре должна быть ${durationMinutes} минут. Исправь её и повтори сверку.`, 409);
+
+  const actual = {start:new Date(startMs).toISOString(),end:new Date(endMs).toISOString()};
+  const database = db(environment);
+  const [, updated] = await database.batch([
+    database.prepare(`
+      DELETE FROM slot_locks WHERE lesson_id=?
+      AND EXISTS (SELECT 1 FROM lessons WHERE id=? AND status='updating' AND move_id=? AND start=? AND end=? AND move_start=? AND move_end=?)
+    `).bind(move.lessonId,move.lessonId,move.operationId,move.original.start,move.original.end,move.target.start,move.target.end),
+    database.prepare(`
+      UPDATE lessons SET start=?,end=?,status='scheduled',operation_started_at=NULL,move_id=NULL,move_start=NULL,move_end=NULL
+      WHERE id=? AND status='updating' AND move_id=? AND start=? AND end=? AND move_start=? AND move_end=?
+    `).bind(actual.start,actual.end,move.lessonId,move.operationId,move.original.start,move.original.end,move.target.start,move.target.end),
+  ]);
+  requireValue(Number(updated?.meta.changes)===1,
+    'Состояние переноса уже изменилось. Обнови расписание и повтори сверку.', 409);
+  return actual;
+}

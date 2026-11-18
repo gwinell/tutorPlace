@@ -3,7 +3,7 @@ import {Lesson,canReschedule,lessonDurationMinutes,monthBounds,resultStatus,PYTH
 import {documentFrom,encode,decode,replaceText,Y} from '@/lib/collaboration';
 import {ROOM_STARTERS,starterLanguage,type RoomLanguage} from '@/lib/room-presets';
 import {normalizeTrialPhone,limitTrialBooking} from '@/lib/trial-booking';
-import {reserveLessonMove,confirmLessonMove} from '@/lib/lesson-move';
+import {reserveLessonMove,confirmLessonMove,reconcileLessonMoveFromCalendar} from '@/lib/lesson-move';
 import {createSaluteJazzRoom,disableSaluteJazzRoom,saluteJazzConfigured} from '@/lib/salutejazz';
 import {isGithubMaterialContentType,normalizeGithubSource} from '@/lib/github-source';
 import {assignmentImageExtension,assignmentImageStorageBackend,canReadAssignmentImage,cleanupOrphanedAssignmentImages,deleteQueuedAssignmentImage,getAssignmentImageObject,MAX_ASSIGNMENT_IMAGE_BYTES,pendingAssignmentImageId,putAssignmentImageObject,replacePendingAssignmentImage,sanitizeAssignmentImageName,validateAssignmentImage,type AssignmentImageContentType,type AssignmentImageStorageBackend,AssignmentImageStorageError} from '@/lib/assignment-images';
@@ -744,6 +744,15 @@ async function route(request:Request){
        original:{start:l.start,end:l.end},target:{start:l.move_start,end:l.move_end},
      });
      return json({lesson:await db().prepare('SELECT * FROM lessons WHERE id=?').bind(l.id).first()});
+   }
+   if(path[2]==='move-reconcile'){
+     requireValue(u.role==='teacher','Сверить время с Google Календарём может только репетитор.',403);
+     requireValue(l.status==='updating'&&l.move_id&&l.move_start&&l.move_end&&l.event_id,'Нет переноса, ожидающего сверки.',409);
+     const calendarInterval=await reconcileLessonMoveFromCalendar({
+       lessonId:l.id,eventId:l.event_id,operationId:l.move_id,
+       original:{start:l.start,end:l.end},target:{start:l.move_start,end:l.move_end},
+     },lessonDurationMinutes(l.type));
+     return json({lesson:await db().prepare('SELECT * FROM lessons WHERE id=?').bind(l.id).first(),calendarInterval});
    }
    requireValue(l.status==='scheduled','Урок уже изменён. Обнови расписание.',409);
    if(!path[2]){
