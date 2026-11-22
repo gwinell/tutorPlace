@@ -1,51 +1,221 @@
 'use client';
-/* eslint-disable @next/next/no-img-element -- локальный оптимизированный статичный ассет /tutor-1024.webp, next/image не даёт выигрыша */
-import { useState, useEffect } from 'react';
-import { ArrowUpRight, ArrowRight, CalendarDays, Clock3, Video, BookOpen, Code2, ChevronDown, Check, Menu, X, Sparkles, GraduationCap, Terminal, FileCode2, LockKeyhole, MessageSquare, Plus, Heart, CircleCheck, Braces, Monitor } from 'lucide-react';
-import { Brand, Button, ThemeToggle, SectionTitle, Tag, CheckItem } from './site-ui';
-import PublicReviews from './public-reviews';
-import { PRICES } from '@/lib/domain';
-import { ServiceLinks } from './service-links';
-import { ScrollReveals } from './scroll-reveals';
+/* eslint-disable @next/next/no-img-element -- tutor portraits come from moderator-approved profiles. */
 
-const RATE_GROUPS = [
- { title: 'Информатика', items: [['Информатика', '1 000 ₽ / час'], ['ЕГЭ по информатике', '1 200 ₽ / 60 мин.'], ['МЦКО по информатике', '700 ₽ / час'], ['ОГЭ по информатике', '800–1 000 ₽ / час'], ['Проверка домашнего задания', '500 ₽ / час']] },
- { title: 'Программирование', items: [['Обучение программированию', '1 000 ₽ / час'], ['Языки программирования', '1 000 ₽ / час'], ['KuMir', '700 ₽ / час'], ['Python', '1 000 ₽ / час'], ['Pandas', '1 200 ₽ / час'], ['Веб-кодинг', '900 ₽ / час']] },
-];
+import { useEffect, useState } from 'react';
+import { ArrowRight, ArrowUpRight, BookOpen, CalendarDays, Check, GraduationCap, Search, Video, X } from 'lucide-react';
+import { api, ThemeToggle } from './site-ui';
 
-export default function Marketing({book,login,dark,toggle,openDemo}:{book:()=>void;login:()=>void;dark:boolean;toggle:()=>void;openDemo:()=>void}){
- const [menu,setMenu]=useState(false),[preview,setPreview]=useState('calendar'),[faq,setFaq]=useState<number|null>(0),[scrolled,setScrolled]=useState(false);
- useEffect(()=>{const onScroll=()=>setScrolled(window.scrollY>10);onScroll();window.addEventListener('scroll',onScroll,{passive:true});return()=>window.removeEventListener('scroll',onScroll);},[]);
- const go=(id:string)=>{document.getElementById(id)?.scrollIntoView({behavior:'smooth'});setMenu(false);};
- const faqs=[['Нужен ли опыт в программировании?','Нет, начать можно с нуля. Разберём переменные, условия и циклы на простых задачах. Если ты уже писал код, подберём задания под твой уровень.'],['Как проходит бесплатный пробный урок?','Пробный урок длится 45 минут. При записи выбери цель занятий и, если нужно, оставь комментарий. Сразу после подтверждения появятся логин и пароль от личного кабинета: там будут расписание и ссылка на встречу. На уроке познакомимся, обсудим план и вместе решим небольшую задачу.'],['Что понадобится для занятий?','Компьютер или ноутбук, интернет и микрофон. Ссылку на видеовстречу найдёшь в личном кабинете. Конспекты и расписание можно открыть и с телефона.'],['Можно ли перенести или отменить занятие?','Перенести занятие можно не позднее чем за 2 часа до начала. Если до урока осталось меньше двух часов, его можно отменить. Первые три отмены оплаченных занятий за календарный месяц — без списания. Начиная с четвёртой списывается одно занятие. Отмена бесплатного пробного урока в это правило не входит.'],['Как оплачиваются занятия?','Оплату обсуждаем напрямую. На сайте нельзя оплатить занятие или пакет; в личном кабинете видны баланс и уведомления об оплате.']];
- return <div className="marketing">
-  <ScrollReveals/>
-  <header className={scrolled?'site-header is-scrolled':'site-header'}><div className="container header-inner"><Brand onClick={()=>window.scrollTo({top:0,behavior:'smooth'})}/><nav className={menu?'header-nav is-open':'header-nav'} aria-label="Основная навигация">{[['Обо мне','about'],['Как учимся','how'],['Платформа','platform'],['Стоимость','pricing']].map(([title,id])=><button key={id} onClick={()=>go(id)}>{title}</button>)}</nav><div className="header-actions"><ThemeToggle dark={dark} toggle={toggle}/><Button className="button-outline login-button" onClick={login}>Личный кабинет <ArrowUpRight size={16}/></Button><button className="icon-button mobile-menu" aria-label={menu?'Закрыть меню':'Открыть меню'} onClick={()=>setMenu(!menu)}>{menu?<X/>:<Menu/>}</button></div></div></header>
-  <main>
-   <section className="hero container" id="about">
-    <div className="hero-copy"><div className="hero-eyebrow"><span className="status-dot"/>Индивидуальные уроки информатики и Python.</div><h1>Разобраться в коде.<br/>Написать <span>свою программу.</span><svg className="title-swish" viewBox="0 0 410 20" fill="none"><path pathLength={1} d="M4 13C107 0 279 1 404 12M53 18C161 8 286 9 361 15" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/></svg></h1><p className="hero-description">На занятии ученик сам пишет и запускает код. Разберём школьную информатику, подготовку к экзамену или Python — начнём с того, что сейчас вызывает вопросы.</p><Button className="hero-cta" onClick={book}>Записаться на бесплатное пробное занятие <ArrowUpRight size={20}/></Button><div className="hero-note"><Clock3 size={15}/><span>45 минут: познакомимся, решим задачу и обсудим план занятий</span></div><div className="hero-topics"><span><Code2 size={15}/> Python</span><span>Информатика</span><span>Онлайн, один на один</span></div><div className="hero-byline"><span className="hero-byline-icon" aria-hidden="true"><Code2 size={20} strokeWidth={2}/></span><span>Привет, я Руслан<small>Репетитор по информатике и Python</small></span></div></div>
-    <div className="hero-visual"><div className="portrait-backdrop"><span className="decor-code decor-code-top">{'{ }'}</span><span className="decor-orbit"/><span className="decor-cross">+</span><div className="portrait-grid"/><img className="tutor-portrait" src="/tutor-1024.webp" width={1024} height={682} alt="Руслан Гильметдинов, репетитор по информатике и Python" fetchPriority="high"/></div><div className="floating-code"><div className="window-dots"><i/><i/><i/><span>hello_world.py</span></div><code><span className="code-pink">def</span> <span className="code-yellow">say_hello</span>():<br/>{'    '}<span className="code-pink">return</span> <span className="code-green">&quot;Привет, мир&quot;</span><br/><br/><span className="code-muted"># Первая программа</span><br/><span className="code-yellow">say_hello</span>() <span className="code-caret">▏</span></code></div><div className="portrait-sticker"><span><GraduationCap size={21}/></span>Разбираем<br/><strong>на практике</strong><svg viewBox="0 0 60 40"><path d="M3 3C6 30 30 35 55 18M43 15L56 18L48 30" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"/></svg></div></div>
-   </section>
-   <section className="benefit-strip container" data-motion="reveal"><div><span className="benefit-icon"><Video size={22}/></span><p><strong>Один на один</strong><small>Можно задавать вопросы и разбирать тему в своём темпе</small></p></div><div><span className="benefit-icon"><Braces size={23}/></span><p><strong>Ученик сам пишет и запускает код</strong><small>Каждую тему проверяем на задаче</small></p></div><div><span className="benefit-icon"><Monitor size={22}/></span><p><strong>Личный кабинет</strong><small>Расписание, конспекты и задания</small></p></div></section>
-   <section className="section container about-section" data-motion="reveal"><div className="about-heading"><span className="eyebrow"><span className="short-line"/>Давай знакомиться</span><h2>Разбираемся,<br/><span className="muted-heading">почему код работает.</span></h2><div className="about-tags"><Tag>Прикладная информатика</Tag><Tag color="neutral">Школа 21 · Data Science</Tag></div></div><div className="about-text"><p>Меня зовут <strong>Руслан Гильметдинов</strong>. Я репетитор по информатике и программированию на Python, учусь на третьем курсе прикладной информатики и изучаю Data Science в Школе 21.</p><p>Сначала разбираем тему и решаем несколько задач. Потом применяем её в коде — так постепенно переходим от коротких упражнений к собственным проектам.</p><p>Можно разбирать школьную информатику, готовиться к ОГЭ, ЕГЭ и МЦКО или изучать Python с нуля. Дальше перейдём к функциям, объектно-ориентированному программированию и работе с данными.</p><span className="about-signature">На занятии ученик пишет код сам.<Heart size={16}/></span></div><blockquote className="teacher-quote"><p>«Хочу, чтобы ученик мог сам разобраться в задаче и написать решение. Поэтому я объясняю ход мысли, а не просто показываю готовый код».</p><cite>Руслан Гильметдинов</cite></blockquote></section>
-   <section className="section container tutor-story-section" data-motion="reveal" aria-labelledby="tutor-story-title">
-    <div className="tutor-story-heading"><span className="eyebrow"><span className="short-line"/>Обо мне и занятиях</span><h2 id="tutor-story-title">Объясняю тему.<br/><span className="muted-heading">Ученик пишет код.</span></h2><p>Занимаюсь с учениками с 2024 года. На уроке важно не только получить ответ, но и понять, как к нему прийти.</p></div>
-    <div className="tutor-story-grid">
-     <article className="tutor-story-card"><span className="tutor-story-icon"><CalendarDays size={19}/></span><div><span className="eyebrow">Опыт</span><h3>С 2024 года</h3><p>Провожу индивидуальные занятия по информатике и программированию.</p></div></article>
-     <article className="tutor-story-card"><span className="tutor-story-icon"><GraduationCap size={20}/></span><div><span className="eyebrow">Образование</span><h3>КГЭУ · прикладная информатика</h3><p>Учусь на третьем курсе по направлению «Прикладная информатика и искусственный интеллект».</p></div></article>
-     <article className="tutor-story-card"><span className="tutor-story-icon"><BookOpen size={19}/></span><div><span className="eyebrow">Цели занятий</span><h3>Школа, экзамены и проекты</h3><p>Можно разобрать школьную тему, подготовиться к ОГЭ, ЕГЭ или МЦКО либо изучать программирование для себя. Цель и уровень определим до начала занятий.</p></div></article>
-     <article className="tutor-story-card tutor-story-card-featured"><span className="tutor-story-icon"><Code2 size={19}/></span><div><span className="eyebrow">Мой подход</span><h3>Код пишет сам ученик</h3><p>Ученик сам набирает и запускает программу. Если появляется ошибка, вместе ищем причину. Я задаю вопросы и подсказываю, а решение ученик доводит сам. В конце темы — небольшой проект или скрипт.</p></div></article>
+type PublicTutor = {
+  id: string;
+  name: string;
+  headline?: string | null;
+  bio?: string | null;
+  subjects: string[];
+  price_per_lesson?: number | null;
+  portrait_url?: string | null;
+  experience?: string | null;
+  qualification?: string | null;
+};
+
+type DirectoryResponse = { tutors: PublicTutor[]; subjects: string[] };
+
+export default function Marketing({
+  book,
+  login,
+  dark,
+  toggle,
+}: {
+  book: (tutorId?: string) => void;
+  login: () => void;
+  dark: boolean;
+  toggle: () => void;
+}) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [query, setQuery] = useState('');
+  const [subject, setSubject] = useState('');
+  const [tutors, setTutors] = useState<PublicTutor[]>([]);
+  const [subjects, setSubjects] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [reload, setReload] = useState(0);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => {
+      setLoading(true);
+      const params = new URLSearchParams();
+      if (subject) params.set('subject', subject);
+      if (query.trim()) params.set('q', query.trim());
+      void api<DirectoryResponse>(`public/tutors${params.size ? `?${params}` : ''}`, 'GET', undefined, controller.signal)
+        .then((result) => {
+          setTutors(Array.isArray(result?.tutors) ? result.tutors : []);
+          setSubjects(Array.isArray(result?.subjects) ? result.subjects : []);
+          setError('');
+        })
+        .catch((requestError: unknown) => {
+          if (controller.signal.aborted) return;
+          setError(requestError instanceof Error ? requestError.message : 'Каталог временно недоступен. Попробуйте позже.');
+          setTutors([]);
+          setSubjects([]);
+        })
+        .finally(() => {
+          if (!controller.signal.aborted) setLoading(false);
+        });
+    }, query ? 220 : 0);
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort();
+    };
+  }, [query, subject, reload]);
+
+  function jumpToCatalog() {
+    document.getElementById('tutors')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setMenuOpen(false);
+  }
+
+  function formatPrice(price?: number | null) {
+    if (!price || price < 1) return null;
+    return `${new Intl.NumberFormat('ru-RU').format(price)} ₽ за занятие`;
+  }
+
+  const navClass = menuOpen ? 'tp-nav tp-nav-open' : 'tp-nav';
+
+  return (
+    <div className="marketing tp-shell" id="top">
+      <header className="tp-header">
+        <div className="tp-container tp-header-inner">
+          <a className="tp-brand" href="#top" aria-label="TutorPlace — главная">
+            <span className="tp-brand-mark" aria-hidden="true"><span /></span>
+            <span>TutorPlace</span>
+          </a>
+          <nav className={navClass} aria-label="Основная навигация">
+            <button type="button" onClick={jumpToCatalog}>Репетиторы</button>
+            <a href="#how" onClick={() => setMenuOpen(false)}>Как это работает</a>
+            <a href="#for-tutors" onClick={() => setMenuOpen(false)}>Для репетиторов</a>
+          </nav>
+          <div className="tp-header-actions">
+            <ThemeToggle dark={dark} toggle={toggle} />
+            <button type="button" className="tp-login" onClick={login}>Войти <ArrowUpRight size={15} /></button>
+            <button type="button" className="tp-menu-button" aria-label={menuOpen ? 'Закрыть меню' : 'Открыть меню'} onClick={() => setMenuOpen((value) => !value)}>
+              {menuOpen ? <X size={20} /> : <span className="tp-menu-lines" />}
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <main>
+        <section className="tp-hero tp-container">
+          <div className="tp-hero-copy">
+            <span className="tp-kicker"><span className="tp-kicker-mark" /> Учёба в своём темпе</span>
+            <h1>Найдите репетитора для <span>своей цели</span></h1>
+            <p className="tp-hero-lead">Разные предметы, разные подходы. Выберите преподавателя, договоритесь о занятии и учитесь онлайн в одном пространстве.</p>
+            <div className="tp-hero-actions">
+              <button type="button" className="tp-button tp-button-primary" onClick={jumpToCatalog}>Найти репетитора <ArrowRight size={17} /></button>
+              <a className="tp-text-link" href="/?register=tutor">Я репетитор <ArrowUpRight size={15} /></a>
+            </div>
+            <div className="tp-hero-note"><Check size={15} /><span>Видеовстреча, общая доска и материалы для урока</span></div>
+          </div>
+
+          <div className="tp-hero-art" aria-label="Рабочее пространство онлайн-урока">
+            <div className="tp-paper-shadow" />
+            <div className="tp-lesson-card">
+              <div className="tp-lesson-top"><span>УРОК ОНЛАЙН</span><span className="tp-live-mark"><i /> Встреча</span></div>
+              <div className="tp-board-scene">
+                <div className="tp-board-tabs"><span className="tp-board-tab-active">Доска</span><span>Заметки</span></div>
+                <div className="tp-board-content">
+                  <span className="tp-board-stroke tp-stroke-one" />
+                  <span className="tp-board-stroke tp-stroke-two" />
+                  <span className="tp-board-stroke tp-stroke-three" />
+                  <span className="tp-board-dot" />
+                  <span className="tp-board-label">обсуждаем вместе</span>
+                </div>
+              </div>
+              <div className="tp-lesson-tools">
+                <span><Video size={16} /> Видеовстреча</span>
+                <span><BookOpen size={16} /> Материалы</span>
+                <span><CalendarDays size={16} /> Расписание</span>
+              </div>
+            </div>
+            <span className="tp-art-caption"><GraduationCap size={18} /> Урок, где можно спрашивать</span>
+          </div>
+        </section>
+
+        <section className="tp-directory tp-container" id="tutors" aria-labelledby="tp-directory-title">
+          <div className="tp-section-heading">
+            <div>
+              <span className="tp-kicker"><span className="tp-kicker-mark tp-kicker-mark-green" /> Каталог преподавателей</span>
+              <h2 id="tp-directory-title">Выберите своё направление</h2>
+            </div>
+            <p>Откройте анкету и подберите время для первого занятия.</p>
+          </div>
+
+          <div className="tp-directory-controls">
+            <label className="tp-search">
+              <Search size={18} aria-hidden="true" />
+              <span className="tp-visually-hidden">Поиск по имени, предмету или описанию</span>
+              <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Предмет или имя репетитора" />
+              {query && <button type="button" onClick={() => setQuery('')} aria-label="Очистить поиск"><X size={16} /></button>}
+            </label>
+            <div className="tp-subject-filters" aria-label="Фильтр по предмету">
+              <button type="button" className={!subject ? 'tp-filter-active' : ''} aria-pressed={!subject} onClick={() => setSubject('')}>Все направления</button>
+              {subjects.map((item) => <button type="button" className={subject === item ? 'tp-filter-active' : ''} aria-pressed={subject === item} key={item} onClick={() => setSubject(subject === item ? '' : item)}>{item}</button>)}
+            </div>
+          </div>
+
+          {loading ? (
+            <div className="tp-directory-state" role="status">Загружаем анкеты репетиторов…</div>
+          ) : error ? (
+            <div className="tp-directory-state tp-state-error" role="alert"><strong>Не удалось открыть каталог</strong><span>{error}</span><button type="button" onClick={() => setReload((value) => value + 1)}>Повторить запрос</button></div>
+          ) : tutors.length ? (
+            <div className="tp-tutor-grid">
+              {tutors.map((tutor, index) => (
+                <article className={`tp-tutor-card tp-tutor-tone-${index % 3}`} key={tutor.id}>
+                  <div className="tp-tutor-card-top">
+                    {tutor.portrait_url ? <img className="tp-tutor-avatar" src={tutor.portrait_url} alt={tutor.name} loading="lazy" /> : <span className="tp-tutor-avatar tp-avatar-initials" aria-hidden="true">{tutor.name.trim().split(/\s+/).slice(0, 2).map((part) => part[0]).join('').toLocaleUpperCase('ru-RU')}</span>}
+                    <div className="tp-tutor-card-heading"><span className="tp-profile-label">Репетитор</span><h3>{tutor.name}</h3><p>{tutor.headline || tutor.qualification || 'Индивидуальные занятия онлайн'}</p></div>
+                  </div>
+                  {tutor.subjects.length > 0 && <div className="tp-tutor-subjects">{tutor.subjects.slice(0, 3).map((item) => <span key={item}>{item}</span>)}</div>}
+                  {(tutor.bio || tutor.experience) && <p className="tp-tutor-bio">{tutor.bio || tutor.experience}</p>}
+                  <div className="tp-tutor-card-bottom">
+                    <span className="tp-tutor-price">{formatPrice(tutor.price_per_lesson) || 'Условия в анкете'}</span>
+                    <button type="button" className="tp-book-link" onClick={() => book(tutor.id)}>Выбрать время <ArrowRight size={15} /></button>
+                  </div>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <div className="tp-directory-empty">
+              <div className="tp-empty-mark"><BookOpen size={23} /></div>
+              <div><h3>{query || subject ? 'По вашему запросу пока нет анкет' : 'Анкеты появятся после проверки'}</h3><p>{query || subject ? 'Измените предмет или поисковый запрос.' : 'Репетиторы создают профили, а администратор проверяет их перед публикацией.'}</p></div>
+              {(query || subject) && <button type="button" className="tp-text-link" onClick={() => { setQuery(''); setSubject(''); }}>Сбросить фильтры <X size={14} /></button>}
+            </div>
+          )}
+        </section>
+
+        <section className="tp-how tp-container" id="how">
+          <div className="tp-section-heading">
+            <div><span className="tp-kicker"><span className="tp-kicker-mark tp-kicker-mark-blue" /> Как начать</span><h2>От поиска — к первому уроку</h2></div>
+            <p>Вы выбираете преподавателя и время. Дальше урок проходит в личном пространстве.</p>
+          </div>
+          <ol className="tp-steps">
+            <li><span>01</span><div><h3>Выберите репетитора</h3><p>Сравните предметы, подход и условия занятий в анкетах.</p></div></li>
+            <li><span>02</span><div><h3>Подберите время</h3><p>Посмотрите доступные окна и отправьте заявку на урок.</p></div></li>
+            <li><span>03</span><div><h3>Учитесь онлайн</h3><p>Общайтесь с репетитором, встречайтесь и работайте на общей доске.</p></div></li>
+          </ol>
+        </section>
+
+        <section className="tp-for-tutors tp-container" id="for-tutors">
+          <div className="tp-tutor-callout-art" aria-hidden="true"><span className="tp-book-line" /><span className="tp-book-line" /><span className="tp-book-line" /><span className="tp-book-marker" /></div>
+          <div><span className="tp-kicker"><span className="tp-kicker-mark tp-kicker-mark-coral" /> Для репетиторов</span><h2>Ведите занятия и учеников в одном месте</h2><p>Создайте анкету, добавьте учеников и планируйте уроки. Публичный профиль появится в каталоге после проверки.</p></div>
+          <a className="tp-button tp-button-paper" href="/?register=tutor">Зарегистрироваться <ArrowRight size={17} /></a>
+        </section>
+      </main>
+
+      <footer className="tp-footer tp-container">
+        <a className="tp-brand" href="#top"><span className="tp-brand-mark" aria-hidden="true"><span /></span><span>TutorPlace</span></a>
+        <nav aria-label="Документы"><a href="/offer">Условия использования</a><a href="/privacy">Обработка данных</a></nav>
+        <span>Уроки, которые подходят именно вам</span>
+      </footer>
     </div>
-    <div className="tutor-personal-note"><Heart size={18}/><p><strong>Вне занятий фотографирую и интересуюсь визуальным искусством.</strong> Люблю ретро-стиль 2000-х и музыку Ren.</p></div>
-   </section>
-   <section className="section how-section" data-motion="reveal" id="how"><div className="container"><SectionTitle eyebrow="Как проходят занятия" title={<>Разбираем тему.<br/>Пишем код сами.</>} description="Темп зависит от цели и того, насколько хорошо уже знакома тема."/><div className="steps-grid">{[{n:'01',icon:MessageSquare,title:'Выбираем, с чего начать',body:'На пробном уроке обсуждаем цель и решаем короткую задачу. Так становится понятно, с чего начать: со школьной темы, подготовки к экзамену или основ Python.'},{n:'02',icon:BookOpen,title:'Проверяем тему на задаче',body:'Сначала разбираем идею на примере, затем ученик пишет и запускает код. Если что-то не работает, ищем место ошибки и выясняем, почему она появилась.'},{n:'03',icon:Code2,title:'Закрепляем в проекте',body:'Применяем тему в небольшом проекте — например, игре или приложении. Если что-то пока не получается, возвращаемся к этому и разбираем ещё раз.'}].map(x=><div className="step-card" key={x.n}><div className="step-top"><span className="step-number">{x.n}</span><x.icon size={24}/></div><h3>{x.title}</h3><p>{x.body}</p></div>)}</div></div></section>
-   <section className="section container projects-section" data-motion="reveal"><SectionTitle eyebrow="Проекты на Python" title="Что можно написать на занятиях?" description="Подберём проект по твоему уровню. Вот несколько примеров."/><div className="projects-grid"><div className="project-card"><div className="project-art snake-art"><div className="game-top"><span>SNAKE.PY</span><span>SCORE 003</span></div><div className="snake-board"><i className="snake-piece s1"/><i className="snake-piece s2"/><i className="snake-piece s3"/><i className="snake-piece s4"/><i className="snake-piece s5"/><i className="snake-food"/></div><span className="game-caption">нажми пробел, чтобы играть</span></div><div className="project-info"><div><Tag color="neutral">Python · Pygame</Tag><h3>Твоя версия «Змейки»</h3><p>Игровой цикл и столкновения.<br/>Добавим управление и изменим правила.</p></div><ArrowUpRight size={22}/></div></div><div className="project-card"><div className="project-art app-art"><div className="mini-app"><div className="mini-app-bar"><span className="window-dots"><i/><i/><i/></span><span>список дел</span></div><div className="mini-app-content"><h4>Мои задачи <span>↗</span></h4><p>Что нужно сделать сегодня?</p><div className="mini-todo checked"><span><Check size={10}/></span><s>Написать первую программу</s></div><div className="mini-todo"><span/>Добавить задачу</div><div className="mini-todo"><span/>Показать друзьям</div><div className="mini-add"><Plus size={12}/> Новая задача</div></div></div><Code2 className="project-code-mark" size={48} strokeWidth={1.5} aria-hidden="true"/></div><div className="project-info"><div><Tag color="neutral">Python · Интерфейсы</Tag><h3>Простое приложение</h3><p>Список дел, калькулятор или заметки.<br/>Выберем задачу и напишем для неё программу.</p></div><ArrowUpRight size={22}/></div></div><div className="project-card"><div className="project-art pong-art"><div className="pong-score">01<span>:</span>02</div><div className="pong-line"/><div className="paddle paddle-one"/><div className="paddle paddle-two"/><div className="pong-ball"/><div className="pong-title">PONG<span>сделано на Python</span></div></div><div className="project-info"><div><Tag color="neutral">Python · Pygame</Tag><h3>Пинг-понг на Python</h3><p>Физика столкновений, очки и соперник.<br/>Добавим собственные правила.</p></div><ArrowUpRight size={22}/></div></div></div><p className="projects-note">Это примеры. Идею и сложность выберем вместе — с учётом твоего опыта и интересов.</p></section>
-   <section className="section platform-section" data-motion="reveal" id="platform"><div className="container"><div className="platform-heading"><SectionTitle eyebrow="Личный кабинет ученика" title={<>Расписание, материалы<br/>и задания в одном месте.</>} description="Логин и пароль появятся сразу после записи на пробный урок. В кабинете будут расписание, ссылка на встречу, конспекты и задания."/><Button className="button-outline" onClick={openDemo}>Посмотреть личный кабинет <ArrowUpRight size={17}/></Button></div><div className="platform-showcase"><div className="platform-feature-tabs">{[{id:'calendar',icon:CalendarDays,title:'Расписание',body:'Время занятий и ссылки на видеовстречи. Свободное время можно выбрать самостоятельно.'},{id:'notes',icon:BookOpen,title:'Конспекты и задания',body:'Конспекты, Jupyter-блокноты и домашние задания с проверкой.'},{id:'code',icon:Code2,title:'Общая комната для кода',body:'Файлы ученика и репетитора открыты рядом. Можно писать и запускать код на Python или Lua.'}].map(x=><button className={preview===x.id?'feature-tab active':'feature-tab'} key={x.id} onClick={()=>setPreview(x.id)}><span className="feature-tab-icon"><x.icon size={21}/></span><span><strong>{x.title}</strong><small>{x.body}</small></span><ArrowUpRight size={18}/></button>)}<p className="platform-access"><LockKeyhole size={14}/> Кабинет и данные для входа появятся после записи</p></div><div className="platform-preview"><div className="preview-top"><span className="window-dots"><i/><i/><i/></span><span><LockKeyhole size={10}/> codeTogether / мой кабинет</span><span className="preview-demo-label">Пример интерфейса</span></div><div className="preview-layout"><aside><Code2 size={22}/><CalendarDays className={preview==='calendar'?'selected':''} size={19}/><BookOpen className={preview==='notes'?'selected':''} size={19}/><Terminal className={preview==='code'?'selected':''} size={19}/><span className="preview-avatar">А</span></aside><div className="preview-main" key={preview}>{preview==='calendar'?<><div className="preview-welcome"><div><span>Пример личного кабинета</span><h4>Привет, Александр <Code2 className="preview-welcome-icon" size={16} aria-hidden="true"/></h4></div><Tag color="green">4 занятия на балансе</Tag></div><div className="preview-week"><strong>Твоё расписание</strong><span>Ноябрь <ChevronDown size={11}/></span></div><div className="preview-days">{['Пн','Вт','Ср','Чт','Пт','Сб','Вс'].map((d,i)=><div key={d} className={i===2?'active':''}><span>{d}</span><strong>{9+i}</strong>{[0,2,4].includes(i)&&<i/>}</div>)}</div><div className="preview-lesson"><div className="preview-date">11<small>СРЕДА</small></div><div><Tag>Ближайший урок</Tag><h5>Функции: собираем всё вместе</h5><p><Clock3 size={11}/>16:00–16:55<span>·</span><Video size={11}/>Онлайн</p></div><div className="preview-join">На урок <ArrowUpRight size={13}/></div></div><div className="preview-homework"><span><FileCode2 size={16}/><span><strong>Есть немного практики</strong><small>Закрепи функции перед следующим уроком</small></span></span><ArrowRight size={15}/></div></>:preview==='notes'?<><div className="preview-welcome"><div><span>Материалы по Python</span><h4>Конспекты и практика</h4></div><BookOpen size={23}/></div><div className="preview-progress"><span>Основы Python</span><span>Тема 4</span></div><div className="progress-track"><i style={{width:'66%'}}/></div>{['Первые шаги в Python','Условия и логика','Циклы и списки','Функции'].map((t,i)=><div className={'preview-topic '+(i===3?'current':'')} key={t}><span>{i<3?<Check size={13}/>:<BookOpen size={13}/>}</span><div><strong>{t}</strong><small>{i===3?'Изучаем сейчас · .ipynb':'Конспект и домашнее задание'}</small></div><ArrowUpRight size={14}/></div>)}</>:<><div className="preview-welcome"><div><span>Совместная комната</span><h4>Комната программирования</h4></div><Tag color="green"><span className="status-dot"/>На связи</Tag></div><div className="mini-editor"><div><FileCode2 size={12}/> student.py <span>Python</span></div><pre><span className="code-muted">1  # Пишем первую функцию</span><br/>2  <span className="code-pink">def</span> <span className="code-yellow">square</span>(number):<br/>3      <span className="code-pink">return</span> number ** 2<br/>4<br/>5  <span className="code-yellow">print</span>(square(5))<br/><span className="editor-cursor">Руслан</span></pre><div className="mini-terminal"><span>Терминал</span><p>› 25</p></div></div></>}</div></div></div></div><div className="platform-footnote"><CircleCheck size={16}/> Материалы доступны между занятиями <span/><CircleCheck size={16}/> Удобно с компьютера и телефона</div></div></section>
-   <ServiceLinks/>
-   <section className="section container pricing-section" data-motion="reveal" id="pricing"><SectionTitle eyebrow="Стоимость занятий" title="Сколько стоят занятия" description="Индивидуальное занятие длится 55 минут."/><div className="pricing-grid">{PRICES.map((p,i)=><div className={'price-card '+(i===2?'featured':'')} key={p.count}>{i===2&&<span className="price-ribbon">Пакет из 8 занятий <Sparkles size={13}/></span>}<div className="price-count">{p.count} <span>{p.count===1?'занятие':p.count===4?'занятия':'занятий'}</span></div><div className="price-total">{p.total.toLocaleString('ru-RU')} <span>₽</span></div><div className="price-each">{p.each.toLocaleString('ru-RU')} ₽ за занятие{i>0&&<Tag color={i===2?'purple':'neutral'}>−{Math.round((1-p.each/1000)*100)}%</Tag>}</div><div className="price-line"/><CheckItem>Индивидуально, онлайн</CheckItem><CheckItem>Материалы и домашняя практика</CheckItem><CheckItem>Доступ к учебной платформе</CheckItem><Button className={i===2?'':'button-outline'} onClick={book}>Записаться на пробный урок <ArrowUpRight size={17}/></Button></div>)}</div><details className="service-rates"><summary><span><strong>Стоимость по направлениям</strong><small>Индивидуальные ставки для предметов и экзаменов</small></span><ChevronDown size={19}/></summary><div className="service-rates-grid">{RATE_GROUPS.map(group=><div className="service-rate-group" key={group.title}><h3>{group.title}</h3><ul>{group.items.map(([name,price])=><li key={name}><span>{name}</span><strong>{price}</strong></li>)}</ul></div>)}</div><p className="service-rates-note">Бесплатное вводное занятие — 45 минут. Пакеты выше рассчитаны на обычные занятия по 55 минут.</p></details><div className="pricing-note"><LockKeyhole size={15}/> Оплату занятий обсудим лично. На сайте нет онлайн-оплаты; баланс виден в личном кабинете.</div></section>
-   <section className="section container reviews-section" data-motion="reveal"><div><span className="eyebrow">Отзывы</span><h2>Отзывы учеников<br/>и родителей</h2></div><PublicReviews/></section>
-   <section className="section container faq-section" data-motion="reveal"><SectionTitle eyebrow="Бесплатный пробный урок" title="Остались вопросы?"/><div className="faq-list">{faqs.map(([q,a],i)=><div className={'faq-item '+(faq===i?'open':'')} key={q}><button aria-expanded={faq===i} aria-controls={"faq-answer-"+i} onClick={()=>setFaq(faq===i?null:i)}><span>{q}</span><Plus size={21}/></button><div className="faq-body" id={"faq-answer-"+i} aria-hidden={faq!==i}><div><p>{a}</p></div></div></div>)}</div></section>
-   <section className="container final-cta" data-motion="reveal"><div className="cta-doodle"><Code2 size={32}/></div><div><span className="eyebrow">Бесплатный пробный урок · 45 минут</span><h2>Разберём задачу<br/>и обсудим занятия.</h2><p>Познакомимся, попробуем написать код и решим, с какой темы начать.</p><Button onClick={book}>Записаться на бесплатное пробное занятие <ArrowUpRight size={20}/></Button></div><div className="cta-code"><span className="code-comment"># Информатика и Python</span><p><span>you</span>.start()</p><span className="cta-arrow">↗</span><div className="cta-caption">Репетитор<br/>Руслан Гильметдинов</div></div></section>
-  </main><footer className="container footer"><div><Brand onClick={()=>window.scrollTo({top:0,behavior:'smooth'})}/><p>Репетитор по информатике и Python.</p></div><div className="footer-links"><button onClick={()=>go('about')}>Обо мне</button><button onClick={()=>go('pricing')}>Стоимость</button><button onClick={login}>Личный кабинет <ArrowUpRight size={13}/></button><a href="/offer">Оферта</a><a href="/privacy">Обработка данных</a></div><div className="footer-bottom"><span>© {new Date().getFullYear()} codeTogether · Руслан Гильметдинов</span><span>Индивидуальные занятия онлайн. <Heart size={13}/></span></div></footer>
- </div>;
+  );
 }

@@ -2,7 +2,7 @@
 import React, { useEffect, useRef } from 'react';
 import { ArrowRight, Code2, X, Loader2, Sun, Moon, Check } from 'lucide-react';
 
-export function Brand({onClick}:{onClick?:()=>void}) { return <button className="brand" onClick={onClick} aria-label="codeTogether — на главную"><span className="brand-mark"><Code2 size={24}/></span><span>code<span className="brand-accent">Together</span><span className="brand-dot">.</span></span></button>; }
+export function Brand({onClick}:{onClick?:()=>void}) { return <button className="brand" onClick={onClick} aria-label="TutorPlace — на главную"><span className="brand-mark"><Code2 size={24}/></span><span>Tutor<span className="brand-accent">Place</span><span className="brand-dot">.</span></span></button>; }
 export function Button({children,className='',loading=false,...props}:React.ButtonHTMLAttributes<HTMLButtonElement>&{loading?:boolean}) { return <button className={'button '+className} {...props} disabled={props.disabled||loading}>{loading?<Loader2 size={18} className="spin"/>:null}{children}</button>; }
 export function ThemeToggle({dark,toggle}:{dark:boolean;toggle:()=>void}) {return <button className="icon-button theme-toggle" aria-label={dark?'Включить светлую тему':'Включить тёмную тему'} onClick={toggle}>{dark?<Sun size={19}/>:<Moon size={19}/>}</button>;}
 export function Modal({children,title,onClose,wide=false}:{children:React.ReactNode;title:string;onClose:()=>void;wide?:boolean}){

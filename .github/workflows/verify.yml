@@ -32,27 +32,25 @@ jobs:
       - run: npm run build
       - run: npm run test:assignment-images-api
       - run: npm run test:typing-api
-      - name: Apply disposable local D1 migrations
-        run: ./node_modules/.bin/wrangler d1 migrations apply DB --local --config wrangler.dev.jsonc --persist-to .wrangler/state
-      - name: Start local app for D1 integration checks
+      - name: Apply disposable local SQLite migrations
+        run: DATABASE_PATH=.data/ci.sqlite npm run db:migrate:sqlite
+      - name: Start local app for integration checks
         shell: bash
         run: |
-          node scripts/run-framework.mjs dev > "$RUNNER_TEMP/codetogether-dev.log" 2>&1 &
-          echo "$!" > "$RUNNER_TEMP/codetogether-dev.pid"
+          DATABASE_PATH=.data/ci.sqlite npm run dev -- --hostname 127.0.0.1 --port 3000 > "$RUNNER_TEMP/tutorplace-dev.log" 2>&1 &
+          echo "$!" > "$RUNNER_TEMP/tutorplace-dev.pid"
           for attempt in $(seq 1 60); do
-            if curl --silent --fail --output /dev/null http://127.0.0.1:5173/; then exit 0; fi
+            if curl --silent --fail --output /dev/null http://127.0.0.1:3000/; then exit 0; fi
             sleep 1
           done
-          cat "$RUNNER_TEMP/codetogether-dev.log"
+          cat "$RUNNER_TEMP/tutorplace-dev.log"
           exit 1
       - name: Check public SEO pages, robots, sitemap, and structured data
         run: npm run test:seo-pages
-      - name: Run D1 course integration checks
-        run: npm run test:integration
       - name: Stop local app
         if: always()
         shell: bash
         run: |
-          if [ -f "$RUNNER_TEMP/codetogether-dev.pid" ]; then
-            kill "$(cat "$RUNNER_TEMP/codetogether-dev.pid")" 2>/dev/null || true
+          if [ -f "$RUNNER_TEMP/tutorplace-dev.pid" ]; then
+            kill "$(cat "$RUNNER_TEMP/tutorplace-dev.pid")" 2>/dev/null || true
           fi

@@ -27,10 +27,7 @@
         "./*"
       ]
     },
-    "types": [
-      "node",
-      "@cloudflare/workers-types"
-    ],
+    "types": ["node"],
     "allowImportingTsExtensions": true
   },
   "include": [
@@ -45,8 +42,6 @@
     "node_modules",
     "examples",
     "dist",
-    ".vinext",
-    ".wrangler",
     ".sites-runtime",
     "outputs",
     "work"

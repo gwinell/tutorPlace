@@ -1,4 +1,4 @@
-import {db,secrets,HttpError,requireValue,auth,currentUser,safeUser,passwordHash,verifyPassword,hash,now,id,schedule,normalizeSchedule,calendarConfigured,calendar,eventPath,slots,slotKeys,httpsUrl,cleanup} from '@/lib/server';
+import {db,secrets,HttpError,requireValue,auth,currentUser,safeUser,passwordHash,verifyPassword,hash,now,id,schedule,clearScheduleCache,normalizeSchedule,calendarConfigured,calendar,eventPath,slots,slotKeys,httpsUrl,cleanup} from '@/lib/server';
 import {Lesson,canReschedule,lessonDurationMinutes,monthBounds,resultStatus,PYTHON_START,TEACHER_START} from '@/lib/domain';
 import {documentFrom,encode,decode,replaceText,Y} from '@/lib/collaboration';
 import {ROOM_STARTERS,starterLanguage,type RoomLanguage} from '@/lib/room-presets';
@@ -9,7 +9,7 @@ import {isGithubMaterialContentType,normalizeGithubSource} from '@/lib/github-so
 import {assignmentImageExtension,assignmentImageStorageBackend,canReadAssignmentImage,cleanupOrphanedAssignmentImages,deleteQueuedAssignmentImage,getAssignmentImageObject,MAX_ASSIGNMENT_IMAGE_BYTES,pendingAssignmentImageId,putAssignmentImageObject,replacePendingAssignmentImage,sanitizeAssignmentImageName,validateAssignmentImage,type AssignmentImageContentType,type AssignmentImageStorageBackend,AssignmentImageStorageError} from '@/lib/assignment-images';
 import {normalizeAssignmentPrompt} from '@/lib/assignment-prompt-format.mjs';
 export const dynamic='force-dynamic';
-// D1 projects differ per query; request bodies below use endpoint-specific fields.
+// Query results are intentionally typed at the database edge; request payloads use endpoint-specific fields.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row=Record<string,any>;
 type ApiBody = {
@@ -114,7 +114,7 @@ async function deferSaluteJazzRoomClose(roomId:string,error:unknown){
  }catch(queueError){console.error('SaluteJazz room cleanup could not be queued:',roomId,queueError instanceof Error?queueError.message:'Unknown error');}
 }
 async function teacher(request:Request){return auth(request,true);}
-async function lessonAccess(request:Request,lessonId:string){const u=await auth(request);const l=await db().prepare('SELECT * FROM lessons WHERE id=?').bind(lessonId).first<Row>();requireValue(l&&(u.role==='teacher'||l.student_id===u.id),'Урок не найден.',404);return {u,l:l!};}
+async function lessonAccess(request:Request,lessonId:string){const u=await auth(request);const l=await db().prepare('SELECT * FROM lessons WHERE id=?').bind(lessonId).first<Row>();requireValue(l&&((u.role==='teacher'&&l.tutor_id===u.id)||(u.role==='student'&&l.student_id===u.id)||Boolean(u.is_platform_admin)),'Урок не найден.',404);return {u,l:l!};}
 async function route(request:Request){
  const url=new URL(request.url),path=url.pathname.replace(/^\/api\//,'').split('/').filter(Boolean),method=request.method;
  const imageUpload=path[0]==='assignments'&&path[1]&&path[2]==='images'&&method==='POST';
@@ -127,9 +127,9 @@ async function route(request:Request){
    const length=Number(request.headers.get('content-length')||0);requireValue(imageUpload?(!length||length<=MAX_ASSIGNMENT_IMAGE_BYTES+65536):length<2200000,'Размер запроса слишком большой.',413);
  }
  if(imageUpload){
-   await teacher(request);const assignmentId=path[1];
+   const imageOwner=await teacher(request),assignmentId=path[1];
    requireValue(/^[a-zA-Z0-9_-]{1,100}$/.test(assignmentId),'Некорректный номер задания.',400);
-   const assignment=await db().prepare('SELECT id,prompt FROM assignments WHERE id=?').bind(assignmentId).first<Row>();requireValue(assignment,'Сначала сохрани задание.',404);
+   const assignment=await db().prepare("SELECT a.id,a.prompt FROM assignments a WHERE a.id=? AND (?=1 OR (a.student_id IN (SELECT student_id FROM tutor_students WHERE tutor_id=? AND status='active')) OR a.topic_id IN (SELECT t.id FROM topics t JOIN courses c ON c.id=t.course_id WHERE c.tutor_id=?))").bind(assignmentId,imageOwner.is_platform_admin?1:0,imageOwner.id,imageOwner.id).first<Row>();requireValue(assignment,'Сначала сохрани задание.',404);
    const contentType=request.headers.get('content-type')||'';requireValue(contentType.toLowerCase().startsWith('multipart/form-data;'),'Отправь изображение как multipart/form-data.',415);
    const bytes=await readLimitedBytes(request,MAX_ASSIGNMENT_IMAGE_BYTES+65536);let data:FormData;try{data=await new Request(url,{method:'POST',headers:{'Content-Type':contentType},body:bytes.slice().buffer as ArrayBuffer}).formData();}catch{throw new HttpError('Не удалось прочитать изображение.',400);}
    const file=data.get('file');requireValue(file instanceof File,'Выбери изображение.',400);requireValue(file.size>0&&file.size<=MAX_ASSIGNMENT_IMAGE_BYTES,'Размер изображения не должен превышать 8 МБ.',413);
@@ -186,9 +186,10 @@ async function route(request:Request){
  if(path[0]==='assignment-images'&&path[1]&&method==='GET'){
    const user=await auth(request),image=await db().prepare('SELECT i.id,i.object_key,i.content_type,i.size_bytes,i.storage_backend,a.id AS assignment_id,a.topic_id,a.student_id,a.lesson_id FROM assignment_images i JOIN assignments a ON a.id=i.assignment_id WHERE i.id=?').bind(path[1]).first<Row>();
    requireValue(image,'Изображение не найдено.',404);
-   const courseAccess=user.role!=='teacher'&&!!image!.topic_id&&!!await db().prepare(`SELECT a.id FROM assignments a JOIN topics t ON t.id=a.topic_id JOIN course_enrollments e ON e.course_id=t.course_id AND e.student_id=? JOIN topic_access x ON x.topic_id=COALESCE(t.parent_topic_id,t.id) AND x.student_id=? WHERE a.id=?`).bind(user.id,user.id,image!.assignment_id).first();
-   const lessonBelongsToUser=user.role==='teacher'||!image!.lesson_id||!!await db().prepare('SELECT id FROM lessons WHERE id=? AND student_id=?').bind(image!.lesson_id,user.id).first();
-   requireValue(canReadAssignmentImage({role:user.role,targetBelongsToUser:image!.student_id===user.id||courseAccess,lessonBelongsToUser}),'Изображение недоступно.',403);
+   const studentCourseAccess=user.role==='student'&&!!image!.topic_id&&!!await db().prepare(`SELECT a.id FROM assignments a JOIN topics t ON t.id=a.topic_id JOIN course_enrollments e ON e.course_id=t.course_id AND e.student_id=? JOIN topic_access x ON x.topic_id=COALESCE(t.parent_topic_id,t.id) AND x.student_id=? WHERE a.id=?`).bind(user.id,user.id,image!.assignment_id).first();
+   const tutorOwnsAssignment=user.role==='teacher'&&(Boolean(user.is_platform_admin)||Boolean(image!.student_id&&await db().prepare("SELECT student_id FROM tutor_students WHERE tutor_id=? AND student_id=? AND status='active'").bind(user.id,image!.student_id).first())||Boolean(image!.topic_id&&await db().prepare('SELECT t.id FROM topics t JOIN courses c ON c.id=t.course_id WHERE t.id=? AND c.tutor_id=?').bind(image!.topic_id,user.id).first()));
+   const lessonBelongsToUser=!image!.lesson_id||!!await db().prepare(user.role==='teacher'?'SELECT id FROM lessons WHERE id=? AND (?=1 OR tutor_id=?)':'SELECT id FROM lessons WHERE id=? AND student_id=?').bind(...(user.role==='teacher'?[image!.lesson_id,user.is_platform_admin?1:0,user.id]:[image!.lesson_id,user.id])).first();
+   requireValue(canReadAssignmentImage({role:user.role,targetBelongsToUser:user.role==='teacher'?tutorOwnsAssignment:Boolean(image!.student_id===user.id||studentCourseAccess),lessonBelongsToUser}),'Изображение недоступно.',403);
    const backend:AssignmentImageStorageBackend=image!.storage_backend==='filesystem'?'filesystem':'r2';
    let bytes:Uint8Array;try{bytes=await getAssignmentImageObject(String(image!.object_key),backend,secrets);}catch(error){if(error instanceof AssignmentImageStorageError)throw new HttpError(error.status===404?'Изображение не найдено.':'Хранилище изображений временно недоступно.',error.status===404?404:503);throw error;}
    requireValue(bytes.byteLength===Number(image!.size_bytes)&&bytes.byteLength<=MAX_ASSIGNMENT_IMAGE_BYTES,'Изображение повреждено.',502);
@@ -198,7 +199,7 @@ async function route(request:Request){
  if(path[0]==='demo'&&path[1]==='compile-kumir'){
    requireValue(method==='POST','Компиляция принимает только POST.',404);
    requireValue(typeof body.code==='string'&&body.code.trim().length>0&&body.code.length<=100000,'Исходный файл должен содержать от 1 до 100 000 символов.');
-   const ip=request.headers.get('cf-connecting-ip')?.trim()||request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()||'unknown';
+   const ip=request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()||'unknown';
    const clientHash=await hash(`demo-kumir:${ip.slice(0,200)}`),windowStart=Math.floor(Date.now()/60000)*60000,database=db();
    const [,limit]=await database.batch([
      database.prepare('DELETE FROM demo_kumir_compile_limits WHERE window_start < ?').bind(windowStart-120000),
@@ -233,22 +234,22 @@ async function route(request:Request){
  if(path[0]==='logout'&&method==='POST'){const token=request.headers.get('cookie')?.match(/(?:^|;\s*)ct-session=([^;]+)/)?.[1];if(token)await db().prepare('DELETE FROM sessions WHERE id=?').bind(await hash(token)).run();return json({ok:true},200,{'Set-Cookie':'ct-session=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0'+(url.protocol==='https:'?'; Secure':'')});}
  if(path[0]==='login'&&method==='POST'){
    requireValue(typeof body.login==='string'&&body.login.length<=100&&typeof body.password==='string'&&body.password.length<=128,'Проверь логин и пароль.');
-   // D1 serializes this counter across Worker instances. No in-memory-only throttling.
-   const rateKey='login:'+await hash(request.headers.get('cf-connecting-ip')||'local')+':'+Math.floor(Date.now()/60000);
+   const rateKey='login:'+await hash(request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()||'local')+':'+Math.floor(Date.now()/60000);
    await db().prepare('INSERT INTO settings (key,value) VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=CAST(CAST(value AS INTEGER)+1 AS TEXT)').bind(rateKey,'1').run();
    const rate=await db().prepare('SELECT value FROM settings WHERE key=?').bind(rateKey).first<{value:string}>();requireValue(Number(rate?.value)<=12,'Слишком много попыток. Подожди минуту.',429);
    let user=await db().prepare('SELECT * FROM users WHERE login=?').bind(body.login.trim()).first<Row>();
    if(!user&&secrets.ADMIN_LOGIN&&secrets.ADMIN_PASSWORD&&body.login===secrets.ADMIN_LOGIN&&await hash(body.password)===await hash(secrets.ADMIN_PASSWORD)){
-     const uid=id();await db().prepare('INSERT OR IGNORE INTO users (id,login,password,name,role,balance,created_at) VALUES (?,?,?,?,?,?,?)').bind(uid,secrets.ADMIN_LOGIN,await passwordHash(body.password),'Руслан','teacher',0,now()).run();user=await db().prepare('SELECT * FROM users WHERE login=?').bind(body.login).first<Row>();
+     const uid=id(),timestamp=now();await db().prepare('INSERT OR IGNORE INTO users (id,login,password,name,role,balance,created_at,is_platform_admin) VALUES (?,?,?,?,?,?,?,1)').bind(uid,secrets.ADMIN_LOGIN,await passwordHash(body.password),'Администратор','teacher',0,timestamp).run();await db().prepare("INSERT OR IGNORE INTO tutor_profiles(tutor_id,headline,subjects_json,published,approved,created_at,updated_at) SELECT id,'','[]',0,0,?,? FROM users WHERE login=?").bind(timestamp,timestamp,secrets.ADMIN_LOGIN).run();user=await db().prepare('SELECT * FROM users WHERE login=?').bind(body.login).first<Row>();
    }
-   const valid=await verifyPassword(body.password,user?.password||'nonexistent:0000000000000000000000000000000000000000000000000000000000000000');requireValue(user&&valid,'Неверный логин или пароль.',401);
+   const valid=await verifyPassword(body.password,user?.password||'nonexistent:0000000000000000000000000000000000000000000000000000000000000000');requireValue(user&&valid,'Неверный логин или пароль.',401);requireValue(user.registration_status!=='pending','Анкета ещё на проверке. Войти можно после одобрения.',403);
    const token=crypto.randomUUID()+crypto.randomUUID();await db().prepare('INSERT INTO sessions (id,user_id,expires_at) VALUES (?,?,?)').bind(await hash(token),user!.id,Date.now()+7*86400000).run();
    return json({user:safeUser(user)},200,{'Set-Cookie':'ct-session='+token+'; Path=/; HttpOnly; SameSite=Strict; Max-Age=604800'+(url.protocol==='https:'?'; Secure':'')});
  }
  if(path[0]==='slots'&&method==='GET'){
    const minutes=Number(url.searchParams.get('minutes')||45);requireValue(minutes===45||minutes===55,'Некорректная длительность.');if(minutes===55)await auth(request);
-   const exclude=url.searchParams.get('exclude')||undefined;if(exclude)await lessonAccess(request,exclude);
-   return json(await slots(url.searchParams.get('date')||'',minutes,exclude));
+   const exclude=url.searchParams.get('exclude')||undefined;let tutorId=url.searchParams.get('tutorId')||undefined;if(exclude){const access=await lessonAccess(request,exclude);tutorId=String(access.l.tutor_id||tutorId||'');}
+   if(tutorId)requireValue(!!await db().prepare('SELECT tutor_id FROM tutor_profiles WHERE tutor_id=? AND approved=1').bind(tutorId).first(),'Анкета репетитора не найдена.',404);
+   return json(await slots(url.searchParams.get('date')||'',minutes,exclude,tutorId));
  }
  if(path[0]==='payment-link'&&method==='POST'){
    await teacher(request);
@@ -306,22 +307,21 @@ async function route(request:Request){
    requireValue(student,'Выбери ученика.',404);
    const start=text(body.start,40),startMs=Date.parse(start);
    requireValue(Number.isFinite(startMs)&&startMs>Date.now(),'Укажи будущее время урока.');
-   requireValue(calendarConfigured(),'Сначала подключи Google Календарь.',503);
    const lessonStart=new Date(startMs).toISOString(),lessonEnd=new Date(startMs+55*60000).toISOString();
-   const lessonId=id(),eventId=lessonId.replaceAll('-',''),scheduleValue=await schedule();
+   const lessonId=id(),eventId=lessonId.replaceAll('-',''),scheduleValue=await schedule((await teacher(request)).id);
    const topic=text(body.topic,200)||'Индивидуальное занятие';
-   const inserted=await db().prepare("INSERT INTO lessons (id,student_id,name,start,end,type,status,event_id,operation_started_at,meet_url,topic) SELECT ?,id,?,?,?,'paid','pending',?,?,?,? FROM users WHERE id=? AND role='student'")
-     .bind(lessonId,student!.name,lessonStart,lessonEnd,eventId,now(),scheduleValue.meetUrl,topic,student!.id).run();
+   const tutorUser=await teacher(request);
+   const inserted=await db().prepare("INSERT INTO lessons (id,student_id,tutor_id,name,start,end,type,status,event_id,operation_started_at,meet_url,topic) SELECT ?,id,?,?,?,?,'paid','pending',?,?,?,? FROM users WHERE id=? AND role='student' AND EXISTS (SELECT 1 FROM tutor_students WHERE tutor_id=? AND student_id=? AND status='active')")
+     .bind(lessonId,tutorUser.id,student!.name,lessonStart,lessonEnd,eventId,now(),scheduleValue.meetUrl,topic,student!.id,tutorUser.id,student!.id).run();
    requireValue(inserted.meta.changes===1,'Ученик не найден.',404);
    let jazzRoomId:string|null=null,meetingUrl=scheduleValue.meetUrl,calendarAttempted=false;
    try{
      if(saluteJazzConfigured(secrets)){
-       const room=await createSaluteJazzRoom('codeTogether · Урок',secrets);
+       const room=await createSaluteJazzRoom('TutorPlace · Урок',secrets);
        jazzRoomId=room.roomId;meetingUrl=room.roomUrl;
        await db().prepare("UPDATE lessons SET jazz_room_id=?,meet_url=? WHERE id=? AND status='pending'").bind(jazzRoomId,meetingUrl,lessonId).run();
      }
-     calendarAttempted=true;
-     await calendar(eventPath(),'POST',{id:eventId,summary:'codeTogether · Урок · '+student!.name,description:topic,start:{dateTime:lessonStart,timeZone:'Europe/Moscow'},end:{dateTime:lessonEnd,timeZone:'Europe/Moscow'},...(meetingUrl?{location:meetingUrl}:{})});
+     if(calendarConfigured()){calendarAttempted=true;await calendar(eventPath(),'POST',{id:eventId,summary:'TutorPlace · Урок · '+student!.name,description:topic,start:{dateTime:lessonStart,timeZone:'Europe/Moscow'},end:{dateTime:lessonEnd,timeZone:'Europe/Moscow'},...(meetingUrl?{location:meetingUrl}:{})});}
      const scheduled=await db().prepare("UPDATE lessons SET status='scheduled',operation_started_at=NULL WHERE id=? AND status='pending'").bind(lessonId).run();
      requireValue(scheduled.meta.changes===1,'Не удалось сохранить урок. Обнови расписание.',409);
    }catch(error){
@@ -338,6 +338,7 @@ async function route(request:Request){
  }
  if(path[0]==='book'&&method==='POST'){
    let u=await currentUser(request);const paid=body.minutes===55;if(paid&&u?.role==='teacher'){const target=await db().prepare("SELECT * FROM users WHERE id=? AND role='student'").bind(body.studentId).first<Row>();requireValue(target,'Выбери ученика.');u=safeUser(target);}requireValue(!paid||u?.role==='student','Урок бронируется из кабинета ученика.',403);
+   const requestedTutorId=text(body.tutorId,100);const tutor=requestedTutorId?await db().prepare("SELECT u.id FROM users u JOIN tutor_profiles p ON p.tutor_id=u.id WHERE u.id=? AND p.approved=1 AND p.published=1").bind(requestedTutorId).first<{id:string}>():u?.role==='student'?await db().prepare('SELECT tutor_id id FROM tutor_students WHERE student_id=? AND status="active" ORDER BY created_at LIMIT 1').bind(u.id).first<{id:string}>():await db().prepare("SELECT u.id FROM users u JOIN tutor_profiles p ON p.tutor_id=u.id WHERE p.approved=1 AND p.published=1 ORDER BY p.created_at LIMIT 1").first<{id:string}>();requireValue(tutor,'Пока нет доступных анкет для записи.',404);const tutorId=tutor.id;
    const name=paid?u!.name:text(body.name,80);
    const phone=paid?null:normalizeTrialPhone(body.phone);
    const goals=paid?[]:Array.isArray(body.goals)?[...new Set(body.goals.filter((goal):goal is string=>typeof goal==='string'&&TRIAL_GOALS.includes(goal as typeof TRIAL_GOALS[number])))]:[];
@@ -349,16 +350,16 @@ async function route(request:Request){
    requireValue(Number.isFinite(Date.parse(start)),'Выбери время.');
    if(!paid)await limitTrialBooking(request);
    const date=new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Moscow',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(start));
-   const available=await slots(date,paid?55:45);
+   const available=await slots(date,paid?55:45,undefined,tutorId);
    const slot=available.slots.find(s=>s.start===start);
    requireValue(slot,'Это время уже занято или пока недоступно.',409);
-   const lid=id(),eventId=lid.replaceAll('-',''),s=await schedule();
+   const lid=id(),eventId=lid.replaceAll('-',''),s=await schedule(tutorId);
    const database=db(),trialUserId=paid?null:id(),trialPassword=paid?null:randomCredential(16),trialPasswordHash=trialPassword?await passwordHash(trialPassword):null;
    let trialUserLogin=paid?null:trialLogin();
    const sessionToken=!paid&&!u?crypto.randomUUID()+crypto.randomUUID():null;
    const sessionHash=sessionToken?await hash(sessionToken):null,sessionExpires=Date.now()+7*86400000;
-   const paidInsert=database.prepare("INSERT INTO lessons (id,student_id,name,start,end,type,status,event_id,operation_started_at,meet_url,topic) SELECT ?,?,?,?,?,?,'pending',?,?,?,? WHERE (SELECT balance FROM users WHERE id=?)>(SELECT COUNT(*) FROM lessons WHERE student_id=? AND type='paid' AND status IN ('scheduled','pending','updating','completing')) AND NOT EXISTS (SELECT 1 FROM lessons WHERE status IN ('scheduled','pending','updating') AND start<? AND end>?) AND NOT EXISTS (SELECT 1 FROM lessons WHERE status='updating' AND move_start<? AND move_end>?)")
-     .bind(lid,u?.id||'',name,slot.start,slot.end,'paid',eventId,now(),s.meetUrl,'Индивидуальное занятие',u?.id||'',u?.id||'',slot.end,slot.start,slot.end,slot.start);
+   const paidInsert=database.prepare("INSERT INTO lessons (id,student_id,tutor_id,name,start,end,type,status,event_id,operation_started_at,meet_url,topic) SELECT ?,id,?,?,?,?,?,'pending',?,?,?,? WHERE 1=1 AND NOT EXISTS (SELECT 1 FROM lessons WHERE tutor_id=? AND status IN ('scheduled','pending','updating') AND start<? AND end>?) AND NOT EXISTS (SELECT 1 FROM lessons WHERE tutor_id=? AND status='updating' AND move_start<? AND move_end>?)")
+     .bind(lid,tutorId,name,slot.start,slot.end,'paid',eventId,now(),s.meetUrl,'Индивидуальное занятие',tutorId,slot.end,slot.start,tutorId,slot.end,slot.start);
    const trialUserInsert=()=>database.prepare(`
      INSERT INTO users (id,login,password,name,role,phone,account_type,created_at)
      SELECT ?,?,?,?,'student',?,'trial',?
@@ -367,16 +368,16 @@ async function route(request:Request){
        AND NOT EXISTS (SELECT 1 FROM lessons WHERE status='updating' AND move_start<? AND move_end>?)
    `).bind(trialUserId,trialUserLogin,trialPasswordHash,name,phone,now(),phone,slot.end,slot.start,slot.end,slot.start);
    const trialLessonInsert=()=>database.prepare(`
-     INSERT INTO lessons (id,student_id,name,phone,trial_phone,trial_goals,trial_comment,start,end,type,status,event_id,operation_started_at,privacy_consent_at,privacy_policy_version,meet_url,topic)
-     SELECT ?,?,?,?,?,?,?,?,?,'trial','pending',?,?,?,?,?,?
+     INSERT INTO lessons (id,student_id,tutor_id,name,phone,trial_phone,trial_goals,trial_comment,start,end,type,status,event_id,operation_started_at,privacy_consent_at,privacy_policy_version,meet_url,topic)
+     SELECT ?,?,?,?,?,?,?,?,?,?,'trial','pending',?,?,?,?,?,?
      WHERE EXISTS (SELECT 1 FROM users WHERE id=? AND role='student' AND account_type='trial')
        AND NOT EXISTS (SELECT 1 FROM lessons WHERE trial_phone=? AND type='trial' AND status IN ('scheduled','pending','updating'))
        AND NOT EXISTS (SELECT 1 FROM lessons WHERE status IN ('scheduled','pending','updating') AND start<? AND end>?)
        AND NOT EXISTS (SELECT 1 FROM lessons WHERE status='updating' AND move_start<? AND move_end>?)
-   `).bind(lid,trialUserId,name,phone,phone,JSON.stringify(goals),trialComment,slot.start,slot.end,eventId,now(),now(),PRIVACY_POLICY_VERSION,s.meetUrl,'Бесплатный пробный урок',trialUserId,phone,slot.end,slot.start,slot.end,slot.start);
+   `).bind(lid,trialUserId,tutorId,name,phone,phone,JSON.stringify(goals),trialComment,slot.start,slot.end,eventId,now(),now(),PRIVACY_POLICY_VERSION,s.meetUrl,'Бесплатный пробный урок',trialUserId,phone,slot.end,slot.start,slot.end,slot.start);
    const locks=slotKeys(slot.start,slot.end).map(key=>database.prepare(
-     'INSERT INTO slot_locks (slot,lesson_id) SELECT ?,? WHERE EXISTS (SELECT 1 FROM lessons WHERE id=?)'
-   ).bind(key,lid,lid));
+     'INSERT INTO tutor_slot_locks (tutor_id,slot,lesson_id) SELECT ?,?,? WHERE EXISTS (SELECT 1 FROM lessons WHERE id=?)'
+   ).bind(tutorId,key,lid,lid));
    let reserved=false;
    for(let attempt=0;attempt<(paid?1:6);attempt++){
      try{
@@ -391,7 +392,7 @@ async function route(request:Request){
        if(!paid&&/UNIQUE constraint failed: users\.login/i.test(message)&&attempt<5){trialUserLogin=trialLogin();continue;}
        if(e instanceof HttpError)throw e;
        if(/UNIQUE constraint failed: lessons\.trial_phone/i.test(message))throw new HttpError('На этот телефон уже записан пробный урок. Свяжись с репетитором для изменения записи.',409);
-       if(/UNIQUE constraint failed: slot_locks\.slot|SQLITE_CONSTRAINT_UNIQUE/i.test(message))throw new HttpError('Это время только что заняли. Выбери другое окно.',409);
+       if(/UNIQUE constraint failed: tutor_slot_locks\.(tutor_id|slot)|SQLITE_CONSTRAINT_UNIQUE/i.test(message))throw new HttpError('Это время только что заняли. Выбери другое окно.',409);
        console.error('Booking reservation failed:',message||'Unknown error');
        throw new HttpError('Не удалось зарезервировать время. Попробуй ещё раз.',503);
      }
@@ -400,12 +401,11 @@ async function route(request:Request){
    let jazzRoomId:string|null=null,meetingUrl=s.meetUrl,calendarAttempted=false;
    try{
      if(saluteJazzConfigured(secrets)){
-       const room=await createSaluteJazzRoom('codeTogether · '+(paid?'Урок':'Пробный урок'),secrets);
+       const room=await createSaluteJazzRoom('TutorPlace · '+(paid?'Урок':'Пробный урок'),secrets);
        jazzRoomId=room.roomId;meetingUrl=room.roomUrl;
        await db().prepare("UPDATE lessons SET jazz_room_id=?,meet_url=? WHERE id=? AND status='pending'").bind(jazzRoomId,meetingUrl,lid).run();
      }
-     calendarAttempted=true;
-     await calendar(eventPath(),'POST',{id:eventId,summary:'codeTogether · '+(paid?'Урок':'Пробный урок')+' · '+name,description:paid?'Индивидуальное занятие по Python':'Пробный урок, 45 минут. Телефон: '+phone,start:{dateTime:slot!.start,timeZone:'Europe/Moscow'},end:{dateTime:slot!.end,timeZone:'Europe/Moscow'},...(meetingUrl?{location:meetingUrl}:{})});
+     if(calendarConfigured()){calendarAttempted=true;await calendar(eventPath(),'POST',{id:eventId,summary:'TutorPlace · '+(paid?'Урок':'Пробный урок')+' · '+name,description:paid?'Индивидуальное занятие':'Пробный урок, 45 минут.',start:{dateTime:slot!.start,timeZone:'Europe/Moscow'},end:{dateTime:slot!.end,timeZone:'Europe/Moscow'},...(meetingUrl?{location:meetingUrl}:{})});}
      const finalized=await database.batch([
        database.prepare("UPDATE lessons SET status='scheduled',operation_started_at=NULL WHERE id=? AND status='pending'").bind(lid),
        ...(sessionToken?[database.prepare("INSERT INTO sessions (id,user_id,expires_at) SELECT ?,?,? WHERE EXISTS (SELECT 1 FROM lessons WHERE id=? AND status='scheduled')").bind(sessionHash,trialUserId,sessionExpires,lid)]:[]),
@@ -416,49 +416,52 @@ async function route(request:Request){
      let calendarCleared=!calendarAttempted,roomCleared=!jazzRoomId;
      if(calendarAttempted){try{await calendar(eventPath(eventId),'DELETE');calendarCleared=true;}catch{calendarCleared=false;}}
      if(jazzRoomId){try{await db().prepare("UPDATE lessons SET jazz_room_id=?,jazz_room_needs_recreation=1 WHERE id=? AND status='pending'").bind(jazzRoomId,lid).run();try{await disableSaluteJazzRoom(jazzRoomId,secrets);roomCleared=true;}catch{roomCleared=false;}}catch{roomCleared=false;}}
-     if(calendarCleared&&roomCleared)await database.batch([database.prepare('DELETE FROM slot_locks WHERE lesson_id=?').bind(lid),database.prepare("DELETE FROM lessons WHERE id=? AND status='pending'").bind(lid),...(trialUserId?[database.prepare('DELETE FROM sessions WHERE user_id=?').bind(trialUserId),database.prepare("DELETE FROM users WHERE id=? AND account_type='trial' AND NOT EXISTS (SELECT 1 FROM lessons WHERE student_id=?)").bind(trialUserId,trialUserId)]:[])]);
+     if(calendarCleared&&roomCleared)await database.batch([database.prepare('DELETE FROM slot_locks WHERE lesson_id=?').bind(lid),database.prepare('DELETE FROM tutor_slot_locks WHERE lesson_id=?').bind(lid),database.prepare("DELETE FROM lessons WHERE id=? AND status='pending'").bind(lid),...(trialUserId?[database.prepare('DELETE FROM sessions WHERE user_id=?').bind(trialUserId),database.prepare("DELETE FROM users WHERE id=? AND account_type='trial' AND NOT EXISTS (SELECT 1 FROM lessons WHERE student_id=?)").bind(trialUserId,trialUserId)]:[])]);
      else throw new HttpError('Не удалось безопасно завершить создание встречи. Время оставлено зарезервированным для сверки; свяжись с репетитором.',503);
      throw e;
    }
+   await database.prepare("INSERT OR IGNORE INTO tutor_students(tutor_id,student_id,status,created_at) VALUES(?,?,'active',?)").bind(tutorId,trialUserId||u?.id,now()).run();
+   await database.prepare('INSERT OR IGNORE INTO conversations(id,tutor_id,student_id,created_at,updated_at) VALUES(?,?,?,?,?)').bind(id(),tutorId,trialUserId||u?.id,now(),now()).run();
    const lesson=await database.prepare('SELECT * FROM lessons WHERE id=?').bind(lid).first();
    const trialAccount=trialUserId?{user:{id:trialUserId,name,role:'student',account_type:'trial',login:trialUserLogin,balance:0,price_per_lesson:1000},credentials:{login:trialUserLogin,password:trialPassword},autoLogin:!u}:undefined;
    const cookie=sessionToken?'ct-session='+sessionToken+'; Path=/; HttpOnly; SameSite=Strict; Max-Age=604800'+(url.protocol==='https:'?'; Secure':''):undefined;
    return json({lesson,...(trialAccount?{trialAccount}:{})},201,cookie?{'Set-Cookie':cookie}:{});
  }
  if(path[0]==='balances'&&method==='GET'){
-   await teacher(request);
-   return json({balances:await all("SELECT id,balance FROM users WHERE role='student'")});
+   const balanceOwner=await teacher(request);
+   return json({balances:await all("SELECT id,balance FROM users WHERE role='student' AND (?=1 OR id IN (SELECT student_id FROM tutor_students WHERE tutor_id=? AND status='active'))",balanceOwner.is_platform_admin?1:0,balanceOwner.id)});
  }
  if(path[0]==='workspace'&&method==='GET'){
    const u=await auth(request);await cleanup();const isTeacher=u.role==='teacher';
-   const courses=isTeacher?await all('SELECT * FROM courses ORDER BY position,title'):await all('SELECT c.* FROM courses c JOIN course_enrollments e ON e.course_id=c.id WHERE e.student_id=? ORDER BY c.position,c.title',u.id);
-   const courseEnrollments=isTeacher?await all('SELECT course_id,student_id FROM course_enrollments'):[];
-   const topics=isTeacher?await all('SELECT id,course_id,parent_topic_id,title,description,format,colab_url,github_url,position FROM topics ORDER BY course_id,parent_topic_id,position,title'):await all('SELECT t.id,t.course_id,t.parent_topic_id,t.title,t.description,t.format,t.position,CASE WHEN a.id IS NULL THEN NULL ELSE t.github_url END github_url,CASE WHEN a.id IS NULL THEN 1 ELSE 0 END locked,CASE WHEN a.id IS NULL THEN NULL ELSE t.colab_url END colab_url FROM topics t JOIN course_enrollments e ON e.course_id=t.course_id AND e.student_id=? LEFT JOIN topic_access a ON a.topic_id=COALESCE(t.parent_topic_id,t.id) AND a.student_id=? ORDER BY t.course_id,t.parent_topic_id,t.position,t.title',u.id,u.id);
-   const assignments=isTeacher?await all('SELECT * FROM assignments'):await all(`SELECT a.id,a.topic_id,a.student_id,a.lesson_id,a.title,a.kind,a.prompt,a.options FROM assignments a
+   if(u.role==='support')return json({user:u,lessons:[],courses:[],courseEnrollments:[],topics:[],topicAccess:[],assignments:[],preparationItems:[],submissions:[],students:[],rooms:[],notifications:[],paymentLink:null,paymentRequests:[],paymentReminderPopupEnabled:false,schedule:undefined,configured:false});
+   const courses=isTeacher?await all('SELECT * FROM courses WHERE tutor_id=? ORDER BY position,title',u.id):await all('SELECT c.* FROM courses c JOIN course_enrollments e ON e.course_id=c.id WHERE e.student_id=? ORDER BY c.position,c.title',u.id);
+   const courseEnrollments=isTeacher?await all('SELECT course_id,student_id FROM course_enrollments WHERE course_id IN (SELECT id FROM courses WHERE tutor_id=?)',u.id):[];
+   const topics=isTeacher?await all('SELECT id,course_id,parent_topic_id,title,description,format,colab_url,github_url,position FROM topics WHERE course_id IN (SELECT id FROM courses WHERE tutor_id=?) ORDER BY course_id,parent_topic_id,position,title',u.id):await all('SELECT t.id,t.course_id,t.parent_topic_id,t.title,t.description,t.format,t.position,CASE WHEN a.id IS NULL THEN NULL ELSE t.github_url END github_url,CASE WHEN a.id IS NULL THEN 1 ELSE 0 END locked,CASE WHEN a.id IS NULL THEN NULL ELSE t.colab_url END colab_url FROM topics t JOIN course_enrollments e ON e.course_id=t.course_id AND e.student_id=? LEFT JOIN topic_access a ON a.topic_id=COALESCE(t.parent_topic_id,t.id) AND a.student_id=? ORDER BY t.course_id,t.parent_topic_id,t.position,t.title',u.id,u.id);
+   const assignments=isTeacher?await all("SELECT * FROM assignments WHERE student_id IN (SELECT student_id FROM tutor_students WHERE tutor_id=? AND status='active') OR topic_id IN (SELECT t.id FROM topics t JOIN courses c ON c.id=t.course_id WHERE c.tutor_id=?)",u.id,u.id):await all(`SELECT a.id,a.topic_id,a.student_id,a.lesson_id,a.title,a.kind,a.prompt,a.options FROM assignments a
      WHERE ((a.topic_id IS NOT NULL AND EXISTS (SELECT 1 FROM topics t JOIN course_enrollments e ON e.course_id=t.course_id AND e.student_id=? JOIN topic_access x ON x.topic_id=COALESCE(t.parent_topic_id,t.id) AND x.student_id=? WHERE t.id=a.topic_id))
        OR (a.topic_id IS NULL AND a.student_id=?))
        AND (a.lesson_id IS NULL OR EXISTS (SELECT 1 FROM lessons l WHERE l.id=a.lesson_id AND l.student_id=?))`,u.id,u.id,u.id,u.id);
-   const topicAccess=isTeacher?await all('SELECT topic_id,student_id FROM topic_access'):[];
-   const preparationItems=isTeacher?await all('SELECT * FROM lesson_preparation_items ORDER BY lesson_id,position'):await all('SELECT p.* FROM lesson_preparation_items p JOIN lessons l ON l.id=p.lesson_id WHERE l.student_id=? ORDER BY p.lesson_id,p.position',u.id);
+   const topicAccess=isTeacher?await all('SELECT topic_id,student_id FROM topic_access WHERE student_id IN (SELECT student_id FROM tutor_students WHERE tutor_id=? AND status="active")',u.id):[];
+   const preparationItems=isTeacher?await all('SELECT p.* FROM lesson_preparation_items p JOIN lessons l ON l.id=p.lesson_id WHERE l.tutor_id=? ORDER BY p.lesson_id,p.position',u.id):await all('SELECT p.* FROM lesson_preparation_items p JOIN lessons l ON l.id=p.lesson_id WHERE l.student_id=? ORDER BY p.lesson_id,p.position',u.id);
    const [paymentLink,paymentRequests,paymentReminderPopupSetting]=await Promise.all([
      db().prepare("SELECT value FROM settings WHERE key='payment-link'").first<{value:string}>(),
-     isTeacher?all('SELECT * FROM payment_requests ORDER BY created_at DESC'):all('SELECT * FROM payment_requests WHERE student_id=? ORDER BY created_at DESC',u.id),
+     isTeacher?all('SELECT * FROM payment_requests WHERE student_id IN (SELECT student_id FROM tutor_students WHERE tutor_id=? AND status="active") ORDER BY created_at DESC',u.id):all('SELECT * FROM payment_requests WHERE student_id=? ORDER BY created_at DESC',u.id),
      db().prepare("SELECT value FROM settings WHERE key='payment-reminder-popup'").first<{value:string}>(),
    ]);
-   return json({user:u,lessons:isTeacher?await all('SELECT * FROM lessons ORDER BY start'):await all('SELECT * FROM lessons WHERE student_id=? ORDER BY start',u.id),courses,courseEnrollments,topics,topicAccess,assignments,preparationItems,submissions:isTeacher?await all('SELECT * FROM submissions ORDER BY created_at'):await all('SELECT * FROM submissions WHERE student_id=? ORDER BY created_at',u.id),students:isTeacher?(await all("SELECT * FROM users WHERE role='student'")).map(safeUser):[u],rooms:isTeacher?await all('SELECT * FROM rooms'):await all('SELECT * FROM rooms WHERE student_id=?',u.id),notifications:isTeacher?await all('SELECT * FROM notifications ORDER BY created_at DESC'):await all('SELECT * FROM notifications WHERE student_id=? ORDER BY created_at DESC',u.id),paymentLink:paymentLink?.value||null,paymentRequests,paymentReminderPopupEnabled:paymentReminderPopupSetting?.value!=='0',schedule:isTeacher?await schedule():undefined,configured:calendarConfigured(),saluteJazzConfigured:saluteJazzConfigured(secrets)});
+   return json({user:u,lessons:isTeacher?await all('SELECT * FROM lessons WHERE tutor_id=? ORDER BY start',u.id):await all('SELECT * FROM lessons WHERE student_id=? ORDER BY start',u.id),courses,courseEnrollments,topics,topicAccess,assignments,preparationItems,submissions:isTeacher?await all('SELECT * FROM submissions WHERE student_id IN (SELECT student_id FROM tutor_students WHERE tutor_id=? AND status="active") ORDER BY created_at',u.id):await all('SELECT * FROM submissions WHERE student_id=? ORDER BY created_at',u.id),students:isTeacher?(await all("SELECT u.* FROM users u JOIN tutor_students ts ON ts.student_id=u.id WHERE ts.tutor_id=? AND ts.status='active'",u.id)).map(safeUser):[u],rooms:isTeacher?await all('SELECT * FROM rooms WHERE student_id IN (SELECT student_id FROM tutor_students WHERE tutor_id=? AND status="active")',u.id):await all('SELECT * FROM rooms WHERE student_id=?',u.id),notifications:isTeacher?await all('SELECT * FROM notifications WHERE student_id IN (SELECT student_id FROM tutor_students WHERE tutor_id=? AND status="active") ORDER BY created_at DESC',u.id):await all('SELECT * FROM notifications WHERE student_id=? ORDER BY created_at DESC',u.id),paymentLink:paymentLink?.value||null,paymentRequests,paymentReminderPopupEnabled:paymentReminderPopupSetting?.value!=='0',schedule:isTeacher?await schedule(u.id):undefined,configured:true,saluteJazzConfigured:saluteJazzConfigured(secrets)});
  }
  if(path[0]==='trial-accounts'&&path[1]==='backfill'&&method==='POST'){
-   await teacher(request);
-   const database=db(),current=now(),appointments=await all("SELECT id,name,phone,trial_phone,start FROM lessons WHERE type='trial' AND status='scheduled' AND start>? AND student_id IS NULL ORDER BY start,id",current);
+   const actingTutor=await teacher(request);
+   const database=db(),current=now(),appointments=await all("SELECT id,name,phone,trial_phone,start FROM lessons WHERE type='trial' AND tutor_id=? AND status='scheduled' AND start>? AND student_id IS NULL ORDER BY start,id",actingTutor.id,current);
    const grouped=new Map<string,Row[]>();
    for(const appointment of appointments){const phone=normalizeTrialPhone(appointment.trial_phone||appointment.phone),key=phone||'lesson:'+appointment.id,group=grouped.get(key)||[];group.push(appointment);grouped.set(key,group);}
    const accounts:{id:string;name:string;phone:string|null;start:string;login:string;password:string}[]=[];let linked=0;
    for(const [key,group] of grouped){
      const phone=key.startsWith('lesson:')?normalizeTrialPhone(group[0].phone):key;
-     const existing=phone?await database.prepare("SELECT id FROM users WHERE role='student' AND account_type='trial' AND phone=? ORDER BY created_at LIMIT 1").bind(phone).first<{id:string}>():null;
+     const existing=phone?await database.prepare("SELECT u.id FROM users u JOIN tutor_students ts ON ts.student_id=u.id AND ts.tutor_id=? AND ts.status='active' WHERE u.role='student' AND u.account_type='trial' AND u.phone=? ORDER BY u.created_at LIMIT 1").bind(actingTutor.id,phone).first<{id:string}>():null;
      if(existing){
        const updates=group.map(lesson=>database.prepare("UPDATE lessons SET student_id=? WHERE id=? AND student_id IS NULL AND type='trial' AND status='scheduled' AND start>?").bind(existing.id,lesson.id,current));
-       const results=await database.batch(updates);linked+=results.reduce((count,result)=>count+result.meta.changes,0);continue;
+       const results=await database.batch(updates);const attached=results.reduce((count,result)=>count+result.meta.changes,0);if(attached){await database.prepare("INSERT OR IGNORE INTO tutor_students(tutor_id,student_id,status,created_at) VALUES(?,?,'active',?)").bind(actingTutor.id,existing.id,now()).run();await database.prepare('INSERT OR IGNORE INTO conversations(id,tutor_id,student_id,created_at,updated_at) VALUES(?,?,?,?,?)').bind(id(),actingTutor.id,existing.id,now(),now()).run();}linked+=attached;continue;
      }
      const userId=id(),name=text(group[0].name,80)||'Ученик',password=randomCredential(16),passwordDigest=await passwordHash(password),createdAt=now();
      let login=trialLogin(),migrated=0;
@@ -473,28 +476,30 @@ async function route(request:Request){
        }catch(error){const message=error instanceof Error?error.message:'';if(/UNIQUE constraint failed: users\.login/i.test(message)&&attempt<5){login=trialLogin();continue;}throw error;}
      }
      linked+=migrated;
-     if(migrated)accounts.push({id:userId,name,phone,start:group[0].start,login,password});
+     if(migrated){await database.prepare("INSERT OR IGNORE INTO tutor_students(tutor_id,student_id,status,created_at) VALUES(?,?,'active',?)").bind(actingTutor.id,userId,now()).run();await database.prepare('INSERT OR IGNORE INTO conversations(id,tutor_id,student_id,created_at,updated_at) VALUES(?,?,?,?,?)').bind(id(),actingTutor.id,userId,now(),now()).run();accounts.push({id:userId,name,phone,start:group[0].start,login,password});}
    }
    return json({accounts,linked});
  }
  if(path[0]==='students'&&!path[1]&&method==='POST'){
-   await teacher(request);requireValue(text(body.name)&&text(body.parent_name)&&text(body.login),'Обязательны имя, возраст, родитель и логин.');requireValue(Number.isInteger(body.age)&&body.age!>=1&&body.age!<=100,'Укажи корректный возраст.');requireValue(Number.isSafeInteger(body.balance)&&body.balance!>=-1000000&&body.balance!<=1000000&&(!body.balance||body.balance>=0||Boolean(body.id)),'Баланс должен быть целым числом от -1 000 000 до 1 000 000.');requireValue(body.price_per_lesson===undefined||Number.isInteger(body.price_per_lesson)&&body.price_per_lesson!>=1&&body.price_per_lesson!<=1000000,'Цена занятия должна быть целым числом от 1 до 1 000 000 ₽.');requireValue(!body.password||typeof body.password==='string'&&body.password.length>=8&&body.password.length<=128,'Пароль — от 8 до 128 символов.');
-   const uid=body.id||id();const existing=body.id?await db().prepare("SELECT id,price_per_lesson FROM users WHERE id=? AND role='student'").bind(body.id).first<{id:string;price_per_lesson:number}>():null;requireValue(!body.id||existing,'Ученик не найден.',404);if(!existing)requireValue(body.password,'Укажи пароль.');const pricePerLesson=body.price_per_lesson??existing?.price_per_lesson??1000;
-   try{if(existing){await db().prepare('UPDATE users SET name=?,age=?,parent_name=?,login=?,phone=?,parent_phone=?,balance=?,price_per_lesson=? WHERE id=?').bind(text(body.name),body.age,text(body.parent_name),text(body.login,100),text(body.phone),text(body.parent_phone),body.balance,pricePerLesson,uid).run();if(body.password)await db().batch([db().prepare('UPDATE users SET password=? WHERE id=?').bind(await passwordHash(body.password),uid),db().prepare('DELETE FROM sessions WHERE user_id=?').bind(uid)]);}else{await db().prepare("INSERT INTO users (id,name,age,parent_name,login,password,phone,parent_phone,balance,price_per_lesson,role,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,'student',?)").bind(uid,text(body.name),body.age,text(body.parent_name),text(body.login,100),await passwordHash(body.password!),text(body.phone),text(body.parent_phone),body.balance,pricePerLesson,now()).run();}}catch(e){if(e instanceof HttpError)throw e;throw new HttpError('Этот логин уже используется. Выбери другой.',409);}
+   const actingTutor=await teacher(request);requireValue(text(body.name)&&text(body.parent_name)&&text(body.login),'Обязательны имя, возраст, родитель и логин.');requireValue(Number.isInteger(body.age)&&body.age!>=1&&body.age!<=100,'Укажи корректный возраст.');requireValue(Number.isSafeInteger(body.balance)&&body.balance!>=-1000000&&body.balance!<=1000000&&(!body.balance||body.balance>=0||Boolean(body.id)),'Баланс должен быть целым числом от -1 000 000 до 1 000 000.');requireValue(body.price_per_lesson===undefined||Number.isInteger(body.price_per_lesson)&&body.price_per_lesson!>=1&&body.price_per_lesson!<=1000000,'Цена занятия должна быть целым числом от 1 до 1 000 000 ₽.');requireValue(!body.password||typeof body.password==='string'&&body.password.length>=8&&body.password.length<=128,'Пароль — от 8 до 128 символов.');
+   const uid=body.id||id();const existing=body.id?await db().prepare("SELECT id,price_per_lesson FROM users WHERE id=? AND role='student' AND (?=1 OR EXISTS (SELECT 1 FROM tutor_students WHERE tutor_id=? AND student_id=users.id AND status='active'))").bind(body.id,actingTutor.is_platform_admin?1:0,actingTutor.id).first<{id:string;price_per_lesson:number}>():null;requireValue(!body.id||existing,'Ученик не найден.',404);if(!existing)requireValue(body.password,'Укажи пароль.');const pricePerLesson=body.price_per_lesson??existing?.price_per_lesson??1000;
+   try{if(existing){await db().prepare('UPDATE users SET name=?,age=?,parent_name=?,login=?,phone=?,parent_phone=?,balance=?,price_per_lesson=? WHERE id=?').bind(text(body.name),body.age,text(body.parent_name),text(body.login,100),text(body.phone),text(body.parent_phone),body.balance,pricePerLesson,uid).run();if(body.password)await db().batch([db().prepare('UPDATE users SET password=? WHERE id=?').bind(await passwordHash(body.password),uid),db().prepare('DELETE FROM sessions WHERE user_id=?').bind(uid)]);}else{await db().prepare("INSERT INTO users (id,name,age,parent_name,login,password,phone,parent_phone,balance,price_per_lesson,role,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,'student',?)").bind(uid,text(body.name),body.age,text(body.parent_name),text(body.login,100),await passwordHash(body.password!),text(body.phone),text(body.parent_phone),body.balance,pricePerLesson,now()).run();await db().prepare("INSERT OR IGNORE INTO tutor_students(tutor_id,student_id,status,created_at) VALUES(?,?,'active',?)").bind(actingTutor.id,uid,now()).run();await db().prepare('INSERT OR IGNORE INTO conversations(id,tutor_id,student_id,created_at,updated_at) VALUES(?,?,?,?,?)').bind(id(),actingTutor.id,uid,now(),now()).run();}}catch(e){if(e instanceof HttpError)throw e;throw new HttpError('Этот логин уже используется. Выбери другой.',409);}
    return json({ok:true});
  }
  if(path[0]==='students'&&path[1]&&path[2]==='promote'&&method==='POST'){
    await teacher(request);
-   const studentId=text(path[1],100),student=await db().prepare("SELECT id,account_type FROM users WHERE id=? AND role='student'").bind(studentId).first<{id:string;account_type:string}>();
+   const actingTutor=await teacher(request),studentId=text(path[1],100),student=await db().prepare("SELECT id,account_type FROM users WHERE id=? AND role='student' AND (?=1 OR EXISTS (SELECT 1 FROM tutor_students WHERE tutor_id=? AND student_id=users.id AND status='active'))").bind(studentId,actingTutor.is_platform_admin?1:0,actingTutor.id).first<{id:string;account_type:string}>();
    requireValue(student,'Ученик не найден.',404);
    if(student!.account_type==='trial')await db().prepare("UPDATE users SET account_type='regular' WHERE id=? AND role='student' AND account_type='trial'").bind(studentId).run();
    return json({ok:true,account_type:'regular'});
  }
  if(path[0]==='students'&&path[1]&&method==='DELETE'){
    await teacher(request);
-   const studentId=path[1];
-   const student=await db().prepare("SELECT id FROM users WHERE id=? AND role='student'").bind(studentId).first();
+   const actingTutor=await teacher(request),studentId=path[1];
+   const student=await db().prepare("SELECT id FROM users WHERE id=? AND role='student' AND (?=1 OR EXISTS (SELECT 1 FROM tutor_students WHERE tutor_id=? AND student_id=users.id AND status='active'))").bind(studentId,actingTutor.is_platform_admin?1:0,actingTutor.id).first();
    requireValue(student,'Ученик не найден.',404);
+   const otherTutor=await db().prepare("SELECT tutor_id FROM tutor_students WHERE student_id=? AND tutor_id<>? AND status='active' LIMIT 1").bind(studentId,actingTutor.id).first();
+   if(otherTutor&&!actingTutor.is_platform_admin){await db().prepare("UPDATE tutor_students SET status='archived' WHERE tutor_id=? AND student_id=?").bind(actingTutor.id,studentId).run();return json({ok:true,detached:true});}
    const active=await db().prepare("SELECT COUNT(*) AS count FROM lessons WHERE student_id=? AND status IN ('scheduled','pending','updating','completing')").bind(studentId).first<{count:number}>();
    requireValue(Number(active?.count)===0,'Сначала отмени или заверши активные уроки ученика.',409);
    const database=db(),absent="NOT EXISTS (SELECT 1 FROM users WHERE id=? AND role='student')";
@@ -570,11 +575,11 @@ async function route(request:Request){
    if(selectedCalendars.length&&calendarsChanged){calendarList=await calendar('users/me/calendarList?maxResults=250') as {items:CalendarItem[]};const accessible=new Set(calendarList.items.filter(item=>['owner','writer','writerWithoutPrivateAccess','reader','freeBusyReader'].includes(item.accessRole||'')).map(item=>item.id));requireValue(selectedCalendars.every(calendarId=>accessible.has(calendarId)),'Один из календарей недоступен. Обнови список и выбери календарь снова.',409);}
    const targetIds=new Set(calendarList.items.filter(item=>item.id===secrets.GOOGLE_CALENDAR_ID||(secrets.GOOGLE_CALENDAR_ID==='primary'&&item.primary)).map(item=>item.id));
    if(calendarsChanged&&selectedCalendars.length)requireValue(!selectedCalendars.some(calendarId=>targetIds.has(calendarId)),'Календарь для новых уроков уже проверяется автоматически.');
-   const normalized=normalizeSchedule({weeklyAvailability,dateOverrides,availabilityCalendarIds:selectedCalendars,timezone:text(body.timezone,64)||'Europe/Moscow',meetUrl:httpsUrl(body.meetUrl)});
-   await db().prepare("INSERT INTO settings (key,value) VALUES ('schedule',?) ON CONFLICT(key) DO UPDATE SET value=excluded.value").bind(JSON.stringify(normalized)).run();return json({ok:true});
+   const meetUrl=text(body.meetUrl,2000).trim();const normalized=normalizeSchedule({weeklyAvailability,dateOverrides,availabilityCalendarIds:selectedCalendars,timezone:text(body.timezone,64)||'Europe/Moscow',meetUrl:meetUrl?httpsUrl(meetUrl):''});
+   await db().prepare("INSERT INTO tutor_settings (tutor_id,key,value) VALUES (?,'schedule',?) ON CONFLICT(tutor_id,key) DO UPDATE SET value=excluded.value").bind((await teacher(request)).id,JSON.stringify(normalized)).run();clearScheduleCache((await teacher(request)).id);return json({ok:true});
  }
  if(path[0]==='courses'&&path[1]&&method==='DELETE'){
-   await teacher(request);const courseId=text(path[1],100);requireValue(courseId,'Курс не найден.',404);requireValue(await db().prepare('SELECT id FROM courses WHERE id=?').bind(courseId).first(),'Курс не найден.',404);
+   const actingTutor=await teacher(request),courseId=text(path[1],100);requireValue(courseId,'Курс не найден.',404);requireValue(await db().prepare('SELECT id FROM courses WHERE id=? AND (?=1 OR tutor_id=?)').bind(courseId,actingTutor.is_platform_admin?1:0,actingTutor.id).first(),'Курс не найден.',404);
    const results=await db().batch([
      db().prepare(`INSERT INTO settings (key,value)
        SELECT 'assignment-image-delete:course:' || ? || ':' || i.id, json_object('object_key',i.object_key,'storage_backend',i.storage_backend)
@@ -596,26 +601,27 @@ async function route(request:Request){
    return json({ok:true});
  }
  if(path[0]==='courses'&&method==='POST'){
-   await teacher(request);const courseId=text(body.id,100)||id(),title=text(body.title,120),description=text(body.description,1000);requireValue(title,'Укажи название курса.');
-   const existing=body.id?await db().prepare('SELECT id,position FROM courses WHERE id=?').bind(courseId).first<Row>():null;
+   const actingTutor=await teacher(request),courseId=text(body.id,100)||id(),title=text(body.title,120),description=text(body.description,1000);requireValue(title,'Укажи название курса.');
+   const existing=body.id?await db().prepare('SELECT id,position FROM courses WHERE id=? AND (?=1 OR tutor_id=?)').bind(courseId,actingTutor.is_platform_admin?1:0,actingTutor.id).first<Row>():null;requireValue(!body.id||existing,'Курс не найден.',404);
    const studentIds=Array.isArray(body.studentIds)?[...new Set(body.studentIds.filter((x):x is string=>typeof x==='string'&&x.length<=100))]:[];requireValue(studentIds.length<=200,'В одном курсе может быть не более 200 учеников.');
    if(studentIds.length){const found=await all(`SELECT id FROM users WHERE role='student' AND id IN (${studentIds.map(()=>'?').join(',')})`,...studentIds);requireValue(found.length===studentIds.length,'В списке есть неизвестный ученик.');}
-   const position=Number.isInteger(body.position)&&body.position!>=0?body.position!:existing?.position??Number((await db().prepare('SELECT COALESCE(MAX(position),-1)+1 position FROM courses').first<Row>())?.position||0);
-   const statements=[db().prepare('INSERT INTO courses (id,title,description,position) VALUES (?,?,?,?) ON CONFLICT(id) DO UPDATE SET title=excluded.title,description=excluded.description,position=excluded.position').bind(courseId,title,description||null,position)];
+   if(studentIds.length){const linked=await all(`SELECT student_id id FROM tutor_students WHERE tutor_id=? AND status='active' AND student_id IN (${studentIds.map(()=>'?').join(',')})`,actingTutor.id,...studentIds);requireValue(actingTutor.is_platform_admin||linked.length===studentIds.length,'В списке есть ученик другого репетитора.',403);}
+   const position=Number.isInteger(body.position)&&body.position!>=0?body.position!:existing?.position??Number((await db().prepare('SELECT COALESCE(MAX(position),-1)+1 position FROM courses WHERE tutor_id=?').bind(actingTutor.id).first<Row>())?.position||0);
+   const statements=[db().prepare('INSERT INTO courses (id,tutor_id,title,description,position) VALUES (?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET title=excluded.title,description=excluded.description,position=excluded.position WHERE courses.tutor_id=excluded.tutor_id').bind(courseId,actingTutor.id,title,description||null,position)];
    if(studentIds.length)statements.push(db().prepare(`DELETE FROM course_enrollments WHERE course_id=? AND student_id NOT IN (${studentIds.map(()=>'?').join(',')})`).bind(courseId,...studentIds));else statements.push(db().prepare('DELETE FROM course_enrollments WHERE course_id=?').bind(courseId));
    statements.push(...studentIds.map(studentId=>db().prepare('INSERT OR IGNORE INTO course_enrollments (id,course_id,student_id) VALUES (?,?,?)').bind(id(),courseId,studentId)));
    await db().batch(statements);return json({ok:true,id:courseId});
  }
  if(path[0]==='topics'&&path[1]==='order'&&method==='POST'){
-   await teacher(request);const courseId=text(body.courseId,100),parentTopicId=text(body.parentTopicId,100)||null,topicIds=Array.isArray(body.topicIds)?body.topicIds:[];requireValue(await db().prepare('SELECT id FROM courses WHERE id=?').bind(courseId).first(),'Курс не найден.');
+   const actingTutor=await teacher(request),courseId=text(body.courseId,100),parentTopicId=text(body.parentTopicId,100)||null,topicIds=Array.isArray(body.topicIds)?body.topicIds:[];requireValue(await db().prepare('SELECT id FROM courses WHERE id=? AND (?=1 OR tutor_id=?)').bind(courseId,actingTutor.is_platform_admin?1:0,actingTutor.id).first(),'Курс не найден.');
    if(parentTopicId)requireValue(await db().prepare('SELECT id FROM topics WHERE id=? AND course_id=? AND parent_topic_id IS NULL').bind(parentTopicId,courseId).first(),'Основная тема не найдена.',404);
    requireValue(topicIds.length<=500&&topicIds.every((x):x is string=>typeof x==='string')&&new Set(topicIds).size===topicIds.length,'Некорректный порядок тем.');
    const topics=await all('SELECT id FROM topics WHERE course_id=? AND parent_topic_id IS ?',courseId,parentTopicId);requireValue(topics.length===topicIds.length&&topics.every(t=>topicIds.includes(t.id)),'Список тем изменился. Обнови страницу.',409);
    await db().batch(topicIds.map((topicId:string,position:number)=>db().prepare('UPDATE topics SET position=? WHERE id=? AND course_id=? AND parent_topic_id IS ?').bind(position,topicId,courseId,parentTopicId)));return json({ok:true});
  }
  if(path[0]==='topics'&&method==='POST'){
-   await teacher(request);const courseId=text(body.course_id,100),topicId=text(body.id,100)||id(),parentTopicId=text(body.parent_topic_id,100)||null;let githubUrl=text(body.github_url,2000)||null;const existing=await db().prepare('SELECT id,course_id,parent_topic_id FROM topics WHERE id=?').bind(topicId).first<Row>();
-   requireValue(text(body.title)&&['md','ipynb'].includes(body.format||''),'Проверь название и формат материала.');requireValue(await db().prepare('SELECT id FROM courses WHERE id=?').bind(courseId).first(),'Курс не найден.');
+   const actingTutor=await teacher(request),courseId=text(body.course_id,100),topicId=text(body.id,100)||id(),parentTopicId=text(body.parent_topic_id,100)||null;let githubUrl=text(body.github_url,2000)||null;const existing=await db().prepare('SELECT id,course_id,parent_topic_id FROM topics WHERE id=?').bind(topicId).first<Row>();
+   requireValue(text(body.title)&&['md','ipynb'].includes(body.format||''),'Проверь название и формат материала.');requireValue(await db().prepare('SELECT id FROM courses WHERE id=? AND (?=1 OR tutor_id=?)').bind(courseId,actingTutor.is_platform_admin?1:0,actingTutor.id).first(),'Курс не найден.');
    if(existing)requireValue(existing.course_id===courseId,'Нельзя переместить существующую тему в другой курс.',409);
    if(parentTopicId){const parent=await db().prepare('SELECT id FROM topics WHERE id=? AND course_id=? AND parent_topic_id IS NULL').bind(parentTopicId,courseId).first();requireValue(parent&&parentTopicId!==topicId,'Подтема должна относиться к основной теме этого курса.');requireValue(!await db().prepare('SELECT id FROM topics WHERE parent_topic_id=? LIMIT 1').bind(topicId).first(),'Тема с подтемами не может стать подтемой.',409);}
    else if(existing?.parent_topic_id){/* Saving a subtopic without its parent is rejected below rather than silently promoting it. */requireValue(Object.prototype.hasOwnProperty.call(body,'parent_topic_id'),'Укажи основную тему для подтемы.');}
@@ -647,13 +653,14 @@ async function route(request:Request){
    requireValue(result.meta.changes===1,'Уведомление не найдено.',404);return json({ok:true});
  }
  if(path[0]==='notifications'&&method==='POST'){
-   await teacher(request);requireValue(await db().prepare("SELECT id FROM users WHERE id=? AND role='student'").bind(body.student_id).first(),'Выбери ученика.');requireValue(text(body.title)&&text(body.body,4000),'Добавь заголовок и сообщение.');requireValue(body.type===undefined||body.type==='general'||body.type==='payment_reminder','Неизвестный тип уведомления.');
+   const notificationOwner=await teacher(request);requireValue(await db().prepare("SELECT id FROM users WHERE id=? AND role='student' AND (?=1 OR EXISTS (SELECT 1 FROM tutor_students WHERE tutor_id=? AND student_id=users.id AND status='active'))").bind(body.student_id,notificationOwner.is_platform_admin?1:0,notificationOwner.id).first(),'Выбери ученика.');requireValue(text(body.title)&&text(body.body,4000),'Добавь заголовок и сообщение.');requireValue(body.type===undefined||body.type==='general'||body.type==='payment_reminder','Неизвестный тип уведомления.');
    const type=body.type==='payment_reminder'?'payment_reminder':'general',setting=await db().prepare("SELECT value FROM settings WHERE key='payment-reminder-popup'").first<{value:string}>(),popup=type==='payment_reminder'&&setting?.value!=='0'?1:0;
    await db().prepare('INSERT INTO notifications (id,student_id,title,body,created_at,read,type,popup) VALUES (?,?,?,?,?,0,?,?)').bind(id(),body.student_id,text(body.title),text(body.body,4000),now(),type,popup).run();return json({ok:true});
  }
  if(path[0]==='assignments'&&method==='POST'){
-   await teacher(request);const title=text(body.title),rawPrompt=text(body.prompt,20001);requireValue(title&&rawPrompt&&rawPrompt.length<=20000&&['code','quiz','text'].includes(body.kind||''),'Проверь данные задания.');const prompt=normalizeAssignmentPrompt(rawPrompt);requireValue(prompt.length<=20000&&prompt.trim(),'Условие после форматирования должно содержать от 1 до 20 000 символов.');const topicId=text(body.topic_id,100)||null,studentId=text(body.student_id,100)||null;requireValue(Boolean(topicId)!==Boolean(studentId),'Выбери тему курса или одного ученика.');if(topicId)requireValue(await db().prepare('SELECT id FROM topics WHERE id=?').bind(topicId).first(),'Тема не найдена.');if(studentId)requireValue(await db().prepare("SELECT id FROM users WHERE id=? AND role='student'").bind(studentId).first(),'Ученик не найден.');if(body.kind==='quiz')requireValue(Array.isArray(body.options)&&body.options.length>=2&&body.options.length<=20&&Number(body.answer)>=0&&Number(body.answer)<body.options.length,'Проверь варианты и номер правильного ответа.');const lessonId=text(body.lesson_id,100)||null;if(lessonId){const lesson=await db().prepare('SELECT student_id FROM lessons WHERE id=?').bind(lessonId).first<Row>();requireValue(lesson,'Урок не найден.');if(studentId)requireValue(lesson!.student_id===studentId,'Урок не принадлежит выбранному ученику.');if(topicId)requireValue(!!lesson!.student_id&&await studentCanReadTopic(lesson!.student_id,topicId),'У ученика нет доступа к теме, связанной с уроком.',403);}
-   const assignmentId=text(body.id,100)||id(),existingAssignment=await db().prepare('SELECT id FROM assignments WHERE id=?').bind(assignmentId).first();
+   const assignmentOwner=await teacher(request);const title=text(body.title),rawPrompt=text(body.prompt,20001);requireValue(title&&rawPrompt&&rawPrompt.length<=20000&&['code','quiz','text'].includes(body.kind||''),'Проверь данные задания.');const prompt=normalizeAssignmentPrompt(rawPrompt);requireValue(prompt.length<=20000&&prompt.trim(),'Условие после форматирования должно содержать от 1 до 20 000 символов.');const topicId=text(body.topic_id,100)||null,studentId=text(body.student_id,100)||null;requireValue(Boolean(topicId)!==Boolean(studentId),'Выбери тему курса или одного ученика.');if(topicId)requireValue(await db().prepare('SELECT t.id FROM topics t JOIN courses c ON c.id=t.course_id WHERE t.id=? AND (?=1 OR c.tutor_id=?)').bind(topicId,assignmentOwner.is_platform_admin?1:0,assignmentOwner.id).first(),'Тема не найдена.');if(studentId)requireValue(await db().prepare("SELECT id FROM users WHERE id=? AND role='student' AND (?=1 OR EXISTS (SELECT 1 FROM tutor_students WHERE tutor_id=? AND student_id=users.id AND status='active'))").bind(studentId,assignmentOwner.is_platform_admin?1:0,assignmentOwner.id).first(),'Ученик не найден.');if(body.kind==='quiz')requireValue(Array.isArray(body.options)&&body.options.length>=2&&body.options.length<=20&&Number(body.answer)>=0&&Number(body.answer)<body.options.length,'Проверь варианты и номер правильного ответа.');const lessonId=text(body.lesson_id,100)||null;if(lessonId){const {l:lesson}=await lessonAccess(request,lessonId);requireValue(lesson,'Урок не найден.');if(studentId)requireValue(lesson!.student_id===studentId,'Урок не принадлежит выбранному ученику.');if(topicId)requireValue(!!lesson!.student_id&&await studentCanReadTopic(lesson!.student_id,topicId),'У ученика нет доступа к теме, связанной с уроком.',403);}
+   const assignmentId=text(body.id,100)||id(),existingAssignment=await db().prepare("SELECT id FROM assignments WHERE id=? AND (?=1 OR student_id IN (SELECT student_id FROM tutor_students WHERE tutor_id=? AND status='active') OR topic_id IN (SELECT t.id FROM topics t JOIN courses c ON c.id=t.course_id WHERE c.tutor_id=?) OR lesson_id IN (SELECT id FROM lessons WHERE tutor_id=?))").bind(assignmentId,assignmentOwner.is_platform_admin?1:0,assignmentOwner.id,assignmentOwner.id,assignmentOwner.id).first();
+   requireValue(!body.id||existingAssignment,'Задание не найдено.',404);
    if(!existingAssignment)requireValue(!await db().prepare('SELECT id FROM assignment_images WHERE assignment_id=?').bind(assignmentId).first(),'Этот идентификатор уже использовался. Создай задание заново.',409);
    const savedAt=now(),lessonExists=lessonId?'EXISTS (SELECT 1 FROM lessons WHERE id=?)':'1',lessonBindings=lessonId?[lessonId]:[];
    const saved=await db().batch([
@@ -684,7 +691,7 @@ async function route(request:Request){
    requireValue(saved[1]?.meta.changes===1,'Задание уже удалено. Обнови страницу.',404);return json({submission});
  }
  if(path[0]==='submissions'&&path[1]&&method==='POST'){
-   await teacher(request);requireValue(body.status==='passed'||body.status==='needs_work','Некорректный результат.');const submission=await db().prepare('SELECT assignment_id,result FROM submissions WHERE id=?').bind(path[1]).first<Row>();requireValue(submission,'Работа не найдена.',404);requireValue(resultStatus(submission!.result)==='pending','Эта работа уже проверена.',409);const feedback=text(body.feedback,2000),reviewedAt=now(),updatedResult=JSON.stringify({status:body.status});
+   const reviewer=await teacher(request);requireValue(body.status==='passed'||body.status==='needs_work','Некорректный результат.');const submission=await db().prepare("SELECT s.assignment_id,s.result FROM submissions s JOIN assignments a ON a.id=s.assignment_id WHERE s.id=? AND (?=1 OR a.student_id IN (SELECT student_id FROM tutor_students WHERE tutor_id=? AND status='active') OR a.topic_id IN (SELECT t.id FROM topics t JOIN courses c ON c.id=t.course_id WHERE c.tutor_id=?) OR a.lesson_id IN (SELECT id FROM lessons WHERE tutor_id=?))").bind(path[1],reviewer.is_platform_admin?1:0,reviewer.id,reviewer.id,reviewer.id).first<Row>();requireValue(submission,'Работа не найдена.',404);requireValue(resultStatus(submission!.result)==='pending','Эта работа уже проверена.',409);const feedback=text(body.feedback,2000),reviewedAt=now(),updatedResult=JSON.stringify({status:body.status});
    const updated=await db().batch([
      db().prepare('UPDATE submissions SET result=?,feedback=?,feedback_at=? WHERE id=? AND result=?').bind(updatedResult,feedback||null,feedback?reviewedAt:null,path[1],submission!.result),
      db().prepare('UPDATE assignments SET completed_at=? WHERE id=? AND EXISTS (SELECT 1 FROM submissions WHERE id=? AND result=?)').bind(reviewedAt,submission!.assignment_id,path[1],updatedResult),
@@ -761,6 +768,7 @@ async function route(request:Request){
      const moveStillDeleting="EXISTS (SELECT 1 FROM lessons WHERE id=? AND status='deleting' AND move_id=? AND start=? AND end=? AND move_start=? AND move_end=?)";
      const statements=[
        db().prepare(`DELETE FROM slot_locks WHERE lesson_id=? AND ${moveStillDeleting}`).bind(l.id,...moveBindings),
+       db().prepare(`DELETE FROM tutor_slot_locks WHERE lesson_id=? AND ${moveStillDeleting}`).bind(l.id,...moveBindings),
        db().prepare(`UPDATE assignments SET lesson_id=NULL WHERE lesson_id=? AND ${moveStillDeleting}`).bind(l.id,...moveBindings),
        db().prepare(`DELETE FROM lesson_preparation_items WHERE lesson_id=? AND ${moveStillDeleting}`).bind(l.id,...moveBindings),
        ...(l.student_id?[db().prepare(`DELETE FROM settings WHERE key=? AND value=? AND ${moveStillDeleting}`).bind('cancel-lock:'+l.student_id,l.id,...moveBindings)]:[]),
@@ -821,7 +829,7 @@ async function route(request:Request){
      return json({lesson:await db().prepare('SELECT * FROM lessons WHERE id=?').bind(l.id).first()});
    }
    requireValue(path[2]==='cancel'||path[2]==='complete','Действие с уроком не найдено.',404);
-   if(path[2]==='complete'){requireValue(u.role==='teacher','Только репетитор завершает урок.',403);requireValue(Date.parse(l.end)<=Date.now(),'Урок ещё не завершился.');const r=await db().prepare("UPDATE lessons SET status='completing',operation_started_at=? WHERE id=? AND status='scheduled'").bind(now(),l.id).run();requireValue(r.meta.changes,'Урок уже изменён.',409);await db().batch([db().prepare("UPDATE users SET balance=balance-1 WHERE id=? AND EXISTS (SELECT 1 FROM lessons WHERE id=? AND status='completing' AND type='paid')").bind(l.student_id,l.id),db().prepare("UPDATE lessons SET status='completed',operation_started_at=NULL WHERE id=? AND status='completing'").bind(l.id),db().prepare('DELETE FROM slot_locks WHERE lesson_id=?').bind(l.id)]);await retireMeeting(l.id,l.jazz_room_id);return json({ok:true});}
+   if(path[2]==='complete'){requireValue(u.role==='teacher','Только репетитор завершает урок.',403);requireValue(Date.parse(l.end)<=Date.now(),'Урок ещё не завершился.');const r=await db().prepare("UPDATE lessons SET status='completing',operation_started_at=? WHERE id=? AND status='scheduled'").bind(now(),l.id).run();requireValue(r.meta.changes,'Урок уже изменён.',409);await db().batch([db().prepare("UPDATE users SET balance=balance-1 WHERE id=? AND EXISTS (SELECT 1 FROM lessons WHERE id=? AND status='completing' AND type='paid')").bind(l.student_id,l.id),db().prepare("UPDATE lessons SET status='completed',operation_started_at=NULL WHERE id=? AND status='completing'").bind(l.id),db().prepare('DELETE FROM slot_locks WHERE lesson_id=?').bind(l.id),db().prepare('DELETE FROM tutor_slot_locks WHERE lesson_id=?').bind(l.id)]);await retireMeeting(l.id,l.jazz_room_id);return json({ok:true});}
    const claimed=await db().prepare("UPDATE lessons SET status='updating',operation_started_at=? WHERE id=? AND status='scheduled'").bind(now(),l.id).run();requireValue(claimed.meta.changes,'Изменение уже выполняется. Обнови расписание.',409);
    let cancelExternalActionStarted=false;
    try{
@@ -830,7 +838,7 @@ async function route(request:Request){
       // Serialize cancellation count per pupil, so concurrent cancellations cannot both be free.
       const lock='cancel-lock:'+l.student_id;
       try{if(l.student_id)await db().prepare('INSERT INTO settings (key,value) VALUES (?,?)').bind(lock,l.id).run();}catch{throw new HttpError('Другая отмена ещё выполняется. Повтори через несколько секунд.',409);}
-      const bounds=monthBounds(new Date());const count=await db().prepare("SELECT COUNT(*) n FROM lessons WHERE student_id=? AND type='paid' AND status='cancelled' AND (cancelled_by IS NULL OR cancelled_by='student') AND cancelled_at>=? AND cancelled_at<?").bind(l.student_id,bounds.start,bounds.end).first<{n:number}>();const charged=u.role==='student'&&l.type==='paid'&&Number(count?.n)>=3;requireValue(u.role==='teacher'||Boolean(body.expectedCharged)===charged,'Условия отмены изменились. Обнови расписание и проверь списание.',409);await db().prepare("UPDATE lessons SET charged=? WHERE id=? AND status='updating'").bind(charged?1:0,l.id).run();cancelExternalActionStarted=true;await calendar(eventPath(l.event_id),'DELETE');await db().batch([db().prepare("UPDATE lessons SET status='cancelled',cancelled_at=?,cancelled_by=?,charged=?,operation_started_at=NULL WHERE id=? AND status='updating'").bind(now(),u.role,charged?1:0,l.id),db().prepare('DELETE FROM slot_locks WHERE lesson_id=?').bind(l.id),...(charged?[db().prepare('UPDATE users SET balance=balance-1 WHERE id=?').bind(l.student_id)]:[]),db().prepare('DELETE FROM settings WHERE key=? AND value=?').bind(lock,l.id)]);await retireMeeting(l.id,l.jazz_room_id);return json({ok:true,charged});
+      const bounds=monthBounds(new Date());const count=await db().prepare("SELECT COUNT(*) n FROM lessons WHERE student_id=? AND type='paid' AND status='cancelled' AND (cancelled_by IS NULL OR cancelled_by='student') AND cancelled_at>=? AND cancelled_at<?").bind(l.student_id,bounds.start,bounds.end).first<{n:number}>();const charged=u.role==='student'&&l.type==='paid'&&Number(count?.n)>=3;requireValue(u.role==='teacher'||Boolean(body.expectedCharged)===charged,'Условия отмены изменились. Обнови расписание и проверь списание.',409);await db().prepare("UPDATE lessons SET charged=? WHERE id=? AND status='updating'").bind(charged?1:0,l.id).run();cancelExternalActionStarted=true;await calendar(eventPath(l.event_id),'DELETE');await db().batch([db().prepare("UPDATE lessons SET status='cancelled',cancelled_at=?,cancelled_by=?,charged=?,operation_started_at=NULL WHERE id=? AND status='updating'").bind(now(),u.role,charged?1:0,l.id),db().prepare('DELETE FROM slot_locks WHERE lesson_id=?').bind(l.id),db().prepare('DELETE FROM tutor_slot_locks WHERE lesson_id=?').bind(l.id),...(charged?[db().prepare('UPDATE users SET balance=balance-1 WHERE id=?').bind(l.student_id)]:[]),db().prepare('DELETE FROM settings WHERE key=? AND value=?').bind(lock,l.id)]);await retireMeeting(l.id,l.jazz_room_id);return json({ok:true,charged});
     }
    }catch(e){if(path[2]==='cancel'&&!cancelExternalActionStarted){await db().prepare("UPDATE lessons SET status='scheduled',charged=0,operation_started_at=NULL WHERE id=? AND status='updating'").bind(l.id).run();if(l.student_id)await db().prepare('DELETE FROM settings WHERE key=? AND value=?').bind('cancel-lock:'+l.student_id,l.id).run();}throw e;}
  }

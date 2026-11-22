@@ -1,0 +1,280 @@
+.page {
+  min-height: 100vh;
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  gap: 20px;
+  padding: 24px clamp(16px, 3vw, 40px) 20px;
+  background: var(--bg, #f7f6f1);
+  color: var(--ink, #252b2a);
+}
+
+.header {
+  display: grid;
+  grid-template-columns: minmax(120px, 1fr) minmax(0, 2fr) minmax(120px, 1fr);
+  align-items: center;
+  gap: 16px;
+  width: min(100%, 1440px);
+  margin: 0 auto;
+}
+
+.brand {
+  color: var(--ink, #252b2a);
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  padding: 10px 12px;
+  border: 1px solid var(--border, #dedfd8);
+  border-radius: 9px;
+  background: var(--surface, #fff);
+  color: var(--ink, #252b2a);
+  font-size: 13px;
+}
+
+.lessonTitle {
+  min-width: 0;
+  text-align: center;
+}
+
+.kicker {
+  color: var(--muted, #6c7773);
+  font-size: 12px;
+}
+
+.lessonTitle h1 {
+  overflow: hidden;
+  margin: 4px 0 0;
+  color: var(--ink, #252b2a);
+  font-size: clamp(18px, 2vw, 24px);
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.status {
+  justify-self: end;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted, #6c7773);
+  font-size: 12px;
+}
+
+.status i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #c48a36;
+}
+
+.statusLive i {
+  background: #468a62;
+}
+
+.tabs {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 4px;
+  border: 1px solid var(--border, #dedfd8);
+  border-radius: 11px;
+  background: var(--surface, #fff);
+}
+
+.tabs button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 132px;
+  min-height: 40px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted, #6c7773);
+  font-size: 13px;
+  font-weight: 600;
+  transition: background-color 140ms ease, color 140ms ease;
+}
+
+.tabs button:hover {
+  background: var(--surface-2, #efeee8);
+  color: var(--ink, #252b2a);
+}
+
+.tabs .active {
+  background: var(--subject-accent, #e6a93a);
+  color: #252b2a;
+}
+
+.workspace {
+  position: relative;
+  min-height: min(72vh, 800px);
+  width: min(100%, 1440px);
+  margin: 0 auto;
+  overflow: hidden;
+  border: 1px solid var(--border, #dedfd8);
+  border-radius: 14px;
+  background: var(--surface, #fff);
+}
+
+.panel {
+  position: absolute;
+  inset: 0;
+  background: var(--surface, #fff);
+}
+
+.panelActive {
+  visibility: visible;
+  opacity: 1;
+}
+
+.panelHidden {
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.videoFrame,
+.boardFrame {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: min(72vh, 800px);
+  border: 0;
+  background: #fff;
+}
+
+.boardFrame {
+  position: absolute;
+  inset: 0;
+}
+
+.loading,
+.errorState {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 24px;
+  background: var(--surface, #fff);
+  color: var(--muted, #6c7773);
+  text-align: center;
+}
+
+.loading {
+  flex-direction: row;
+  font-size: 14px;
+}
+
+.errorState > svg {
+  color: #a76542;
+}
+
+.errorState strong {
+  color: var(--ink, #252b2a);
+  font-size: 16px;
+}
+
+.errorState p {
+  max-width: 520px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.errorState button {
+  margin-top: 4px;
+  padding: 10px 14px;
+  border: 1px solid var(--border, #dedfd8);
+  border-radius: 8px;
+  background: var(--surface-2, #efeee8);
+  color: var(--ink, #252b2a);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.privacyNote {
+  width: min(100%, 1440px);
+  margin: 0 auto;
+  color: var(--muted, #6c7773);
+  font-size: 12px;
+  text-align: center;
+}
+
+/* TutorPlace unslop: lesson chrome stays neutral around the actual board and call. */
+.page { gap: 16px; background: var(--bg,#f7f7f4); color: var(--ink,#202824); }
+.header { grid-template-columns: minmax(160px,1fr) minmax(0,2fr) minmax(120px,1fr); gap: 12px; }
+.brand { font-size: 18px; font-weight: 600; }
+.back { min-height: 36px; padding: 8px 10px; border-radius: 8px; background: var(--surface,#fff); font-size: 13px; }
+.lessonTitle h1 { font-weight: 500; }
+.tabs { padding: 3px; border-radius: 9px; }
+.tabs button { min-height: 36px; border-radius: 7px; font-weight: 500; }
+.workspace { border-radius: 12px; }
+.errorState button { border-radius: 8px; font-weight: 500; }
+.privacyNote { font-size: 12px; }
+
+@media (max-width: 680px) {
+  .page {
+    min-height: 100dvh;
+    gap: 14px;
+    padding: 14px 12px;
+  }
+
+  .header {
+    grid-template-columns: 1fr auto;
+    gap: 8px;
+  }
+
+  .back {
+    padding: 8px;
+  }
+
+  .lessonTitle {
+    grid-row: 2;
+    grid-column: 1 / -1;
+    text-align: left;
+  }
+
+  .status {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .tabs {
+    width: 100%;
+  }
+
+  .tabs button {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .workspace {
+    min-height: 64vh;
+    min-height: 64dvh;
+    border-radius: 10px;
+  }
+
+  .videoFrame,
+  .boardFrame {
+    min-height: 64dvh;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tabs button {
+    transition: none;
+  }
+}

@@ -1,5 +1,5 @@
-export type Role = 'student' | 'teacher';
-export type User = { id: string; name: string; role: Role; account_type?: 'regular' | 'trial'; login?: string; age?: number; parent_name?: string; phone?: string; parent_phone?: string; balance: number; price_per_lesson?: number };
+export type Role = 'student' | 'teacher' | 'support';
+export type User = { id: string; name: string; role: Role; account_type?: 'regular' | 'trial'; login?: string; email?: string; age?: number; parent_name?: string; phone?: string; parent_phone?: string; balance: number; price_per_lesson?: number; is_platform_admin?: number | boolean; registration_status?: string };
 export type PaymentRequest = {
   id: string;
   student_id: string;

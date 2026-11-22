@@ -1,0 +1,3 @@
+const encoder=new TextEncoder();
+function base64url(bytes:Uint8Array){let binary='';for(const byte of bytes)binary+=String.fromCharCode(byte);return btoa(binary).replace(/=/g,'').replace(/\+/g,'-').replace(/\//g,'_');}
+export async function signJwt(payload:Record<string,unknown>,secret:string){const header=base64url(encoder.encode(JSON.stringify({alg:'HS256',typ:'JWT'})));const body=base64url(encoder.encode(JSON.stringify(payload)));const key=await crypto.subtle.importKey('raw',encoder.encode(secret),{name:'HMAC',hash:'SHA-256'},false,['sign']);const signature=new Uint8Array(await crypto.subtle.sign('HMAC',key,encoder.encode(`${header}.${body}`)));return `${header}.${body}.${base64url(signature)}`;}

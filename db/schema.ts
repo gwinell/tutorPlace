@@ -6,8 +6,10 @@ export const users = sqliteTable('users', {
   name: text('name').notNull(), role: text('role').notNull(), age: integer('age'), parentName: text('parent_name'),
   phone: text('phone'), parentPhone: text('parent_phone'), balance: integer('balance').notNull().default(0),
   pricePerLesson: integer('price_per_lesson').notNull().default(1000), createdAt: text('created_at').notNull(),
-  accountType: text('account_type').notNull().default('regular'),
-});
+  accountType: text('account_type').notNull().default('regular'), email: text('email'),
+  isPlatformAdmin: integer('is_platform_admin').notNull().default(0),
+  registrationStatus: text('registration_status').notNull().default('active'),
+}, t => [uniqueIndex('users_email_unique').on(t.email)]);
 export const sessions = sqliteTable('sessions', { id: text('id').primaryKey(), userId: text('user_id').notNull(), expiresAt: integer('expires_at').notNull() }, t => [index('sessions_expires_at_idx').on(t.expiresAt)]);
 export const settings = sqliteTable('settings', { key: text('key').primaryKey(), value: text('value').notNull() });
 export const paymentRequests = sqliteTable('payment_requests', {
@@ -24,7 +26,7 @@ export const paymentRequests = sqliteTable('payment_requests', {
   index('payment_requests_status_created_idx').on(t.status, t.createdAt),
 ]);
 export const lessons = sqliteTable('lessons', {
-  id: text('id').primaryKey(), studentId: text('student_id'), name: text('name').notNull(), phone: text('phone'),
+  id: text('id').primaryKey(), studentId: text('student_id'), tutorId: text('tutor_id'), name: text('name').notNull(), phone: text('phone'),
   start: text('start').notNull(), end: text('end').notNull(), type: text('type').notNull(), status: text('status').notNull(),
   eventId: text('event_id'), meetUrl: text('meet_url'), jazzRoomId: text('jazz_room_id'), jazzRoomNeedsRecreation: integer('jazz_room_needs_recreation').notNull().default(0), topic: text('topic'), cancelledAt: text('cancelled_at'), cancelledBy: text('cancelled_by'), charged: integer('charged').default(0),
   trialPhone: text('trial_phone'), operationStartedAt: text('operation_started_at'),
@@ -51,7 +53,7 @@ export const demoKumirCompileLimits = sqliteTable('demo_kumir_compile_limits', {
 }, t => [index('demo_kumir_compile_limits_window_start_idx').on(t.windowStart)]);
 export const slotLocks = sqliteTable('slot_locks', { slot: text('slot').primaryKey(), lessonId: text('lesson_id').notNull() });
 export const courses = sqliteTable('courses', {
-  id: text('id').primaryKey(), title: text('title').notNull(), description: text('description'),
+  id: text('id').primaryKey(), tutorId: text('tutor_id'), title: text('title').notNull(), description: text('description'),
   position: integer('position').default(0).notNull(),
 });
 export const courseEnrollments = sqliteTable('course_enrollments', {
@@ -120,4 +122,35 @@ export const notifications = sqliteTable('notifications', {
 ]);
 export const reviews = sqliteTable('reviews', {
   id: text('id').primaryKey(), name: text('name').notNull(), body: text('body').notNull(), rating: integer('rating').notNull(), published: integer('published').default(0),
+});
+
+export const tutorProfiles = sqliteTable('tutor_profiles', {
+  tutorId: text('tutor_id').primaryKey(), headline: text('headline').notNull().default(''), bio: text('bio').notNull().default(''),
+  subjectsJson: text('subjects_json').notNull().default('[]'), experience: text('experience').notNull().default(''),
+  qualification: text('qualification').notNull().default(''), portraitUrl: text('portrait_url'), pricePerLesson: integer('price_per_lesson').notNull().default(1000),
+  published: integer('published').notNull().default(0), approved: integer('approved').notNull().default(0),
+  createdAt: text('created_at').notNull(), updatedAt: text('updated_at').notNull(),
+});
+export const tutorStudents = sqliteTable('tutor_students', {
+  tutorId: text('tutor_id').notNull(), studentId: text('student_id').notNull(), status: text('status').notNull().default('active'), createdAt: text('created_at').notNull(),
+}, t => [uniqueIndex('tutor_students_unique').on(t.tutorId,t.studentId)]);
+export const conversations = sqliteTable('conversations', {
+  id: text('id').primaryKey(), tutorId: text('tutor_id').notNull(), studentId: text('student_id').notNull(), createdAt: text('created_at').notNull(), updatedAt: text('updated_at').notNull(),
+}, t => [uniqueIndex('conversation_tutor_student_unique').on(t.tutorId,t.studentId)]);
+export const conversationMessages = sqliteTable('conversation_messages', {
+  id: text('id').primaryKey(), conversationId: text('conversation_id').notNull(), authorId: text('author_id').notNull(), body: text('body').notNull(), createdAt: text('created_at').notNull(), readAt: text('read_at'),
+}, t => [index('conversation_messages_order_idx').on(t.conversationId,t.createdAt)]);
+export const supportTickets = sqliteTable('support_tickets', {
+  id: text('id').primaryKey(), requesterId: text('requester_id').notNull(), assignedSupportId: text('assigned_support_id'), subject: text('subject').notNull(),
+  status: text('status').notNull().default('open'), createdAt: text('created_at').notNull(), updatedAt: text('updated_at').notNull(),
+});
+export const supportMessages = sqliteTable('support_messages', {
+  id: text('id').primaryKey(), ticketId: text('ticket_id').notNull(), authorId: text('author_id').notNull(), body: text('body').notNull(), createdAt: text('created_at').notNull(),
+}, t => [index('support_messages_order_idx').on(t.ticketId,t.createdAt)]);
+export const supportChatAccess = sqliteTable('support_chat_access', {
+  id: text('id').primaryKey(), ticketId: text('ticket_id').notNull(), conversationId: text('conversation_id').notNull(), supportId: text('support_id').notNull(),
+  requestedBy: text('requested_by').notNull(), purpose: text('purpose').notNull().default(''), consentedBy: text('consented_by'), consentedAt: text('consented_at'), deniedAt: text('denied_at'), expiresAt: integer('expires_at'), revokedAt: text('revoked_at'), createdAt: text('created_at').notNull(),
+});
+export const supportAccessAudit = sqliteTable('support_access_audit', {
+  id: text('id').primaryKey(), accessId: text('access_id').notNull(), supportId: text('support_id').notNull(), action: text('action').notNull(), createdAt: text('created_at').notNull(),
 });
