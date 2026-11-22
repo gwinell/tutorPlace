@@ -4,7 +4,7 @@ import path from "node:path";
 
 const source = process.env.D1_EXPORT;
 if (!source) throw new Error("Set D1_EXPORT to a Cloudflare D1 SQL export.");
-const databasePath = process.env.DATABASE_PATH || path.resolve(".data/codetogether.sqlite");
+const databasePath = process.env.DATABASE_PATH || path.resolve(".data/tutorplace.sqlite");
 await mkdir(path.dirname(databasePath), { recursive: true, mode: 0o700 });
 const database = new DatabaseSync(databasePath);
 try {

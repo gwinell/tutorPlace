@@ -3,7 +3,7 @@ import { readdirSync, mkdirSync, statSync } from "node:fs";
 import path from "node:path";
 import { normalizeAssignmentPrompt } from "../lib/assignment-prompt-format.mjs";
 
-const databasePath = process.env.DATABASE_PATH || path.resolve(".data/codetogether.sqlite");
+const databasePath = process.env.DATABASE_PATH || path.resolve(".data/tutorplace.sqlite");
 mkdirSync(path.dirname(databasePath), { recursive: true, mode: 0o700 });
 const database = new DatabaseSync(databasePath);
 database.exec("PRAGMA journal_mode=WAL; PRAGMA foreign_keys=ON; PRAGMA busy_timeout=5000;");

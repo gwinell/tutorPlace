@@ -1,0 +1,2 @@
+import { auth, db, requireValue } from './server';
+export async function authorizedLesson(request:Request,lessonId:string){const user=await auth(request);const lesson=await db().prepare('SELECT * FROM lessons WHERE id=?').bind(lessonId).first<Record<string,unknown>>();requireValue(lesson,'Урок не найден.',404);requireValue((user.role==='teacher'&&lesson!.tutor_id===user.id)||(user.role==='student'&&lesson!.student_id===user.id)||Boolean(user.is_platform_admin),'Урок не найден.',404);return {user,lesson:lesson!};}

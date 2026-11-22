@@ -15,7 +15,7 @@ export type AssignmentImageStorageBackend = 'filesystem' | 'r2';
 export type AssignmentImageAccess = { role: string; targetBelongsToUser: boolean; lessonBelongsToUser: boolean };
 
 export function canReadAssignmentImage(access: AssignmentImageAccess) {
-  return access.role === "teacher" || (access.targetBelongsToUser && access.lessonBelongsToUser);
+  return access.targetBelongsToUser && access.lessonBelongsToUser;
 }
 
 export class AssignmentImageStorageError extends Error {
@@ -86,8 +86,7 @@ export function assignmentImageDirectory(environment: Record<string, unknown>) {
 }
 
 export function assignmentImageStorageBackend(environment: Record<string, unknown>): AssignmentImageStorageBackend | null {
-  if (assignmentImageDirectory(environment)) return 'filesystem';
-  return r2S3Config(environment) ? 'r2' : null;
+  return assignmentImageDirectory(environment) ? 'filesystem' : null;
 }
 
 async function withAssignmentImageStorageLock<T>(environment: Record<string, unknown>, action: () => Promise<T>) {
@@ -253,7 +252,7 @@ export const PERSONAL_ASSIGNMENT_REVIEWED_RETENTION_DAYS = 7;
 export const PERSONAL_ASSIGNMENT_UNREVIEWED_RETENTION_DAYS = 14;
 
 function storedBackend(value: unknown): AssignmentImageStorageBackend {
-  return value === 'filesystem' ? 'filesystem' : 'r2';
+  return value === 'r2' ? 'r2' : 'filesystem';
 }
 
 function validObjectKey(value: string) {

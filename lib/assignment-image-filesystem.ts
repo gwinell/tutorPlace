@@ -93,7 +93,7 @@ export async function deleteAssignmentImageFile(root: string, objectKey: string)
   });
 }
 
-/** Remove files left between a successful filesystem write and its D1 metadata commit. */
+/** Remove files left between a successful filesystem write and its SQLite metadata commit. */
 export async function removeUntrackedAssignmentImageFiles(
   root: string,
   isTracked: (objectKey: string) => Promise<boolean>,

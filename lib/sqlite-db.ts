@@ -60,7 +60,7 @@ class BoundStatement implements SqlStatement {
 export class SqliteDatabase {
   private readonly connection: DatabaseSync;
 
-  constructor(databasePath = process.env.DATABASE_PATH || path.resolve(".data/codetogether.sqlite")) {
+  constructor(databasePath = process.env.DATABASE_PATH || path.resolve(".data/tutorplace.sqlite")) {
     mkdirSync(path.dirname(databasePath), { recursive: true, mode: 0o700 });
     this.connection = new DatabaseSync(databasePath);
     this.connection.exec("PRAGMA journal_mode=WAL; PRAGMA foreign_keys=ON; PRAGMA busy_timeout=5000;");

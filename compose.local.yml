@@ -1,0 +1,15 @@
+services:
+  whitebophir:
+    image: lovasoa/wbo:${WHITEBOPHIR_VERSION:-latest}
+    restart: unless-stopped
+    environment:
+      AUTH_SECRET_KEY: ${WHITEBOPHIR_AUTH_SECRET:?Set WHITEBOPHIR_AUTH_SECRET in .env.local}
+      WBO_HISTORY_DIR: /opt/app/server-data
+      WBO_IP_SOURCE: remoteAddress
+    ports:
+      - "127.0.0.1:5001:80"
+    volumes:
+      - whitebophir-data:/opt/app/server-data
+
+volumes:
+  whitebophir-data:

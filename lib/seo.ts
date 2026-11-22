@@ -14,13 +14,13 @@ export function createPageMetadata({ path, title, description }: PageMetadataInp
   const imageAlt = "Руслан Гильметдинов, репетитор по информатике и Python";
 
   return {
-    title,
+  title,
     description,
     alternates: { canonical },
     openGraph: {
       type: "website",
       locale: "ru_RU",
-      siteName: "codeTogether",
+      siteName: "TutorPlace",
       title,
       description,
       url: canonical,

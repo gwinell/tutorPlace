@@ -1,8 +1,0 @@
-# Copy to .dev.vars for local Worker runs. Never commit real values.
-ADMIN_LOGIN=
-ADMIN_PASSWORD=
-GOOGLE_CLIENT_ID=
-GOOGLE_CLIENT_SECRET=
-GOOGLE_REFRESH_TOKEN=
-GOOGLE_CALENDAR_ID=
-SALUTEJAZZ_SDK_KEY=

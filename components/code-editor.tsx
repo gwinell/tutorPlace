@@ -1,9 +1,6 @@
 'use client';
 import { createContext, useCallback, useContext, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState, type MouseEvent, type PointerEvent as ReactPointerEvent, type ReactNode, type Ref } from 'react';
 import {Play,Square,FileCode2,Terminal,Send,RotateCcw,LockKeyhole,ChevronDown,PenLine,Paintbrush,Bot,ZoomIn,ZoomOut,Maximize2,Minus,Plus} from 'lucide-react';
-import runtimeHost from '../public/runtime-host.js?raw';
-import luaSource from '../public/fengari.js?raw';
-import turtleSource from '../public/turtle-shim.py?raw';
 
 type TurtleEvent = { op: string; [key: string]: unknown };
 type KumirExecutor = 'robot'|'turtle'|'drawer'|'painter'|'text';
@@ -54,6 +51,7 @@ type RuntimeMessage = { ctRuntime?: boolean; channel?: string; type?: string; te
 type RuntimeProgram = { code: string; language: string; inputs: string[]; outputLimit: number; turtleSource: string; roomId?: string; demo?:boolean; kumirInput?: string; robotField?:RobotFieldState; robotView?:RobotView };
 type RuntimeController = {
   ready: boolean;
+  turtleSource: string;
   activeChannel: string | null;
   register: (channel: string, listener: (message: RuntimeMessage) => void) => () => void;
   run: (channel: string, program: RuntimeProgram) => boolean;
@@ -70,6 +68,8 @@ export function RuntimeProvider({children}:{children:ReactNode}){
  const activeEngine=useRef<'browser'|'kumir'>('browser');
  const kumirWorker=useRef<Worker|null>(null);
  const [ready,setReady]=useState(false),[activeChannel,setActiveChannel]=useState<string|null>(null);
+ const [runtimeSources,setRuntimeSources]=useState<{source:string;turtleSource:string}|null>(null);
+ useEffect(()=>{let cancelled=false;void Promise.all(['/runtime-host.js','/fengari.js','/turtle-shim.py'].map(path=>fetch(path).then(response=>{if(!response.ok)throw new Error(`Не удалось загрузить ${path}`);return response.text();}))).then(([runtimeHost,luaSource,turtleSource])=>{if(cancelled)return;const source='<!doctype html><html><head><meta charset="utf-8"><title>TutorPlace Runtime</title></head><body><script>window.CT_CHANNEL="shared-runtime";window.CT_LUA_SOURCE='+JSON.stringify(luaSource)+';window.CT_TURTLE_SOURCE='+JSON.stringify(turtleSource)+';'+runtimeHost+'</script></body></html>';setRuntimeSources({source,turtleSource});}).catch(error=>{console.error('Runtime assets could not be loaded:',error);});return()=>{cancelled=true;};},[]);
  const register=useCallback((channel:string,listener:(message:RuntimeMessage)=>void)=>{
    listeners.current.set(channel,listener);
    return()=>{if(listeners.current.get(channel)===listener)listeners.current.delete(channel);};
@@ -129,9 +129,8 @@ export function RuntimeProvider({children}:{children:ReactNode}){
    window.addEventListener('message',receive);
    return()=>window.removeEventListener('message',receive);
  },[]);
- const controller=useMemo(()=>({ready,activeChannel,register,run,stop,turtleEvent,executorEvent}),[ready,activeChannel,register,run,stop,turtleEvent,executorEvent]);
- const source='<!doctype html><html><head><meta charset="utf-8"><title>codeTogether Runtime</title></head><body><script>window.CT_CHANNEL="shared-runtime";window.CT_LUA_SOURCE='+JSON.stringify(luaSource)+';window.CT_TURTLE_SOURCE='+JSON.stringify(turtleSource)+';'+runtimeHost+'</script></body></html>';
- return <RuntimeContext.Provider value={controller}>{children}<iframe ref={frame} title="Изолированная среда выполнения" srcDoc={source} onLoad={()=>frame.current?.contentWindow?.postMessage({command:'init'},'*')} sandbox="allow-scripts" className="runtime-frame" aria-hidden="true" tabIndex={-1}/></RuntimeContext.Provider>;
+ const controller=useMemo(()=>({ready,turtleSource:runtimeSources?.turtleSource||'',activeChannel,register,run,stop,turtleEvent,executorEvent}),[ready,runtimeSources,activeChannel,register,run,stop,turtleEvent,executorEvent]);
+ return <RuntimeContext.Provider value={controller}>{children}<iframe ref={frame} title="Изолированная среда выполнения" srcDoc={runtimeSources?.source} onLoad={()=>frame.current?.contentWindow?.postMessage({command:'init'},'*')} sandbox="allow-scripts" className="runtime-frame" aria-hidden="true" tabIndex={-1}/></RuntimeContext.Provider>;
 }
 
 export type CodeEditorSelectionSnapshot = {start:number;end:number;direction:'forward'|'backward'|'none';focused:boolean};
@@ -190,7 +189,7 @@ function CodeEditorView({value,onChange,language='python',filename='student.py',
    onActivity?.();
    const viewForRun=replay?robotView:defaultRobotView;
    if(!replay){inputs.current=[];source.current=value;outputCharacters.current=0;executionElapsed.current=0;executionSegmentStarted.current=null;setTurtleEvents([]);setTurtleVisible(false);setQumirVisible(language==='kumir');setQumirHasFrame(false);setRobotEditing(false);setRobotView(defaultRobotView);robotViewRef.current=defaultRobotView;if(qumirCanvas.current){const context=qumirCanvas.current.getContext('2d');context?.clearRect(0,0,qumirCanvas.current.width,qumirCanvas.current.height);}}
-   if(!runProgram(channel,{code:source.current,language,inputs:inputs.current,outputLimit:Math.max(0,100000-outputCharacters.current),turtleSource,roomId,demo,kumirInput,robotField,robotView:viewForRun}))return;
+   if(!runProgram(channel,{code:source.current,language,inputs:inputs.current,outputLimit:Math.max(0,100000-outputCharacters.current),turtleSource:runtime.turtleSource,roomId,demo,kumirInput,robotField,robotView:viewForRun}))return;
    setOutput('');setWaiting(false);setRunning(true);setLoading(false);
    if(timer.current)clearTimeout(timer.current);
    timer.current=setTimeout(()=>{stopProgram(channel);setRunning(false);setLoading(false);setOutput(current=>current+'\nСреда не ответила. Проверь подключение и попробуй запустить снова.');},45000);
